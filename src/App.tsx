@@ -21,7 +21,7 @@ import heroImage from './images/3.png';
 import logoImage from './images/logo.png';
 import parceiroImage from './images/parceiro.png';
 
-// --- TIPAGENS DO TYPESCRIPT (Evita o erro de compilação por uso de "any") ---
+// --- TIPAGENS DO TYPESCRIPT ---
 interface Piloto {
   posicao: string;
   nome: string;
@@ -400,7 +400,7 @@ const App: React.FC = () => {
             </div>
             
             <div className="map-box glass-panel" style={{ border: '1px solid rgba(255,255,255,0.05)', height: '550px', overflow: 'hidden' }}>
-              <MapContainer center={mapCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1, background: '#0b1121' }}>
+              <MapContainer center={mapCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1, background: 'transparent' }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -582,7 +582,7 @@ const App: React.FC = () => {
                   <input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem' }} placeholder="Ex: 50h no Cessna 152, 10h no A-29" value={experiencia} onChange={e => setExperiencia(e.target.value)} />
                 </div>
                 
-                {/* Segmented Control de Simulador (Fixo para Vercel) */}
+                {/* Segmented Control de Simulador */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', gridColumn: '1 / -1', marginTop: '0.5rem' }}>
                   <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>Qual seu simulador?</label>
                   <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '0.25rem' }}>
