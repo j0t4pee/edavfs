@@ -21,6 +21,42 @@ import heroImage from './images/3.png';
 import logoImage from './images/logo.png';
 import parceiroImage from './images/parceiro.png';
 
+// --- TIPAGENS DO TYPESCRIPT (Evita o erro de compilação por uso de "any") ---
+interface Piloto {
+  posicao: string;
+  nome: string;
+  callsign: string;
+}
+
+interface Demonstracao {
+  cidade: string;
+  coordsText: string;
+  lat: number;
+  lng: number;
+  status: string;
+  cssClass: string;
+  dataHora: string;
+  tipo: string;
+}
+
+interface Mod {
+  titulo: string;
+  desc: string;
+  icon: JSX.Element;
+  isMarketplace: boolean;
+  buttonText: string;
+  buttonIcon: JSX.Element;
+  link: string;
+}
+
+interface Noticia {
+  data: string;
+  titulo: string;
+  resumo: string;
+  imagem: string;
+}
+
+// --- ÍCONES E COMPONENTES AUXILIARES ---
 const DiscordIcon = ({ size = 24, className = "" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 127.14 96.36" fill="currentColor" className={className}>
     <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a67.55,67.55,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
@@ -37,7 +73,6 @@ const customIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Componente Técnico Auxiliar para a Aeronave (Mais compacto)
 const TechItem = ({ label, value }: { label: string, value: React.ReactNode }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.4rem', marginBottom: '0.4rem', alignItems: 'center', gap: '1rem' }}>
     <span style={{ color: '#f59e0b', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', minWidth: '100px' }}>{label}</span>
@@ -52,7 +87,8 @@ const SectionHeader = ({ title }: { title: string }) => (
   </div>
 );
 
-const initialPilotos = [
+// --- DADOS MOCK DO FIREBASE ---
+const initialPilotos: Piloto[] = [
   { posicao: '1', nome: 'Cmte. Silva', callsign: 'GHOST' },
   { posicao: '2', nome: 'Cmte. Costa', callsign: 'VIPER' },
   { posicao: '3', nome: 'Cmte. Rocha', callsign: 'EAGLE' },
@@ -62,9 +98,9 @@ const initialPilotos = [
   { posicao: '7', nome: 'Cmte. Almeida', callsign: 'MAVERICK' },
 ];
 
-const initialDemonstracoes: any[] = []; 
+const initialDemonstracoes: Demonstracao[] = []; 
 
-const initialMods = [
+const initialMods: Mod[] = [
   {
     titulo: 'Aeronave A-29',
     desc: 'Módulo base do A-29 Super Tucano. Adquira no Marketplace oficial do Microsoft Flight Simulator.',
@@ -72,7 +108,7 @@ const initialMods = [
     isMarketplace: true,
     buttonText: 'Loja MSFS',
     buttonIcon: <ShoppingCart size={14} />,
-    link: '#'
+    link: '#aeronave'
   },
   {
     titulo: 'Academia da Força Aérea',
@@ -81,7 +117,7 @@ const initialMods = [
     isMarketplace: false,
     buttonText: 'Download',
     buttonIcon: <Download size={14} />,
-    link: '#'
+    link: 'https://flightsim.to'
   },
   {
     titulo: 'Discord Oficial',
@@ -90,11 +126,11 @@ const initialMods = [
     isMarketplace: false,
     buttonText: 'Acessar',
     buttonIcon: <DiscordIcon size={14} />,
-    link: '#'
+    link: 'https://discord.com'
   }
 ];
 
-const initialNoticias = [
+const initialNoticias: Noticia[] = [
   {
     data: '15 Set, 2026',
     titulo: 'EDAV confirma presença no Domingo Aéreo Virtual',
@@ -118,12 +154,12 @@ const initialNoticias = [
 const App: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showTopBtn, setShowTopBtn] = useState(false);
-  const [dbPilotos, setDbPilotos] = useState<typeof initialPilotos>([]);
-  const [dbDemonstracoes, setDbDemonstracoes] = useState<typeof initialDemonstracoes>([]);
-  const [dbMods, setDbMods] = useState<typeof initialMods>([]);
-  const [dbNoticias, setDbNoticias] = useState<typeof initialNoticias>([]);
+  const [dbPilotos, setDbPilotos] = useState<Piloto[]>([]);
+  const [dbDemonstracoes, setDbDemonstracoes] = useState<Demonstracao[]>([]);
+  const [dbMods, setDbMods] = useState<Mod[]>([]);
+  const [dbNoticias, setDbNoticias] = useState<Noticia[]>([]);
   
-  const [simulador, setSimulador] = useState('MSFS 2020'); // Valor default para o Segmented Control
+  const [simulador, setSimulador] = useState('MSFS 2020');
   const [modalAlistamento, setModalAlistamento] = useState(false);
   const [nome, setNome] = useState('');
   const [nickname, setNickname] = useState('');
@@ -186,6 +222,10 @@ const App: React.FC = () => {
 
   const submitAlistamento = (e: React.FormEvent) => {
     e.preventDefault();
+    if(!simulador) {
+      alert("Por favor, selecione qual o seu simulador.");
+      return;
+    }
     setModalAlistamento(true);
     setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setIdade(''); setWhatsapp('');
   };
@@ -193,7 +233,7 @@ const App: React.FC = () => {
   const mapCenter: [number, number] = [-15.8658, -47.9292];
 
   return (
-    <div>
+    <div id="top">
       <style>{`
         body, html {
           background-color: #030712 !important; 
@@ -243,7 +283,7 @@ const App: React.FC = () => {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           
-          <a href="#" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', gap: '2px' }}>
+          <a href="#top" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', gap: '2px' }}>
             <span style={{ fontFamily: '"Quantico", sans-serif', fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>
               ESQUADRÃO DE DEMONSTRAÇÃO AÉREA VIRTUAL
             </span>
@@ -360,7 +400,7 @@ const App: React.FC = () => {
             </div>
             
             <div className="map-box glass-panel" style={{ border: '1px solid rgba(255,255,255,0.05)', height: '550px', overflow: 'hidden' }}>
-              <MapContainer center={mapCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1, background: 'transparent' }}>
+              <MapContainer center={mapCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1, background: '#0b1121' }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -383,7 +423,7 @@ const App: React.FC = () => {
         </section>
       </div>
 
-      {/* 3. AERONAVE & MODS (COMPACTA SEM FUNDO) */}
+      {/* 3. AERONAVE & MODS */}
       <div style={{ backgroundColor: '#0b1121' }}>
         <section id="aeronave" className="section-container" style={{ padding: '6rem 2rem' }}>
           <SectionHeader title="A-29 Super Tucano" />
@@ -427,7 +467,7 @@ const App: React.FC = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                     <h3 style={{ fontSize: '1rem', color: '#f8fafc', marginBottom: '0.25rem', fontFamily: '"NormalFont", sans-serif' }}>{mod.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.75rem', lineHeight: 1.5, marginBottom: '0.75rem', fontWeight: 300 }}>{mod.desc}</p>
-                    <a href={mod.link} className="btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', background: mod.isMarketplace ? 'rgba(255,255,255,0.05)' : 'transparent', border: mod.isMarketplace ? 'none' : '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', fontWeight: 600, color: mod.isMarketplace ? '#94a3b8' : '#f8fafc', textTransform: 'uppercase', textDecoration: 'none', alignSelf: 'flex-start' }}>
+                    <a href={mod.link} target="_blank" rel="noreferrer" className="btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', background: mod.isMarketplace ? 'rgba(255,255,255,0.05)' : 'transparent', border: mod.isMarketplace ? 'none' : '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', fontWeight: 600, color: mod.isMarketplace ? '#94a3b8' : '#f8fafc', textTransform: 'uppercase', textDecoration: 'none', alignSelf: 'flex-start' }}>
                       {mod.buttonIcon} {mod.buttonText}
                     </a>
                   </div>
@@ -452,7 +492,7 @@ const App: React.FC = () => {
                     <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
                     <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: 'NormalFont, sans-serif', marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 300, flexGrow: 1, marginBottom: '1.5rem' }}>{noticia.resumo}</p>
-                    <a href="#" style={{ color: '#f8fafc', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <a href="#noticias" style={{ color: '#f8fafc', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Ler Matéria Completa <ChevronRight size={14} color="#f59e0b" />
                     </a>
                   </div>
@@ -542,7 +582,7 @@ const App: React.FC = () => {
                   <input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem' }} placeholder="Ex: 50h no Cessna 152, 10h no A-29" value={experiencia} onChange={e => setExperiencia(e.target.value)} />
                 </div>
                 
-                {/* Segmented Control de Simulador */}
+                {/* Segmented Control de Simulador (Fixo para Vercel) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', gridColumn: '1 / -1', marginTop: '0.5rem' }}>
                   <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7 }}>Qual seu simulador?</label>
                   <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '0.25rem' }}>
@@ -590,11 +630,11 @@ const App: React.FC = () => {
           </p>
           
           <div style={{ display: 'flex', gap: '1.5rem', color: '#94a3b8', opacity: 0.8 }}>
-            <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="Instagram">
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="Instagram">
               <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
             </a>
-            <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="YouTube"><Video size={20} strokeWidth={1.5} /></a>
-            <a href="#" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="Discord"><DiscordIcon size={20} /></a>
+            <a href="https://youtube.com" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="YouTube"><Video size={20} strokeWidth={1.5} /></a>
+            <a href="https://discord.com" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = 'inherit'} aria-label="Discord"><DiscordIcon size={20} /></a>
           </div>
         </div>
       </footer>
