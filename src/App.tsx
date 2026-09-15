@@ -7,7 +7,6 @@ import {
   Plane, 
   MapPin, 
   ChevronRight, 
-  Camera,
   Video,
   Download,
   Map as MapIcon,
