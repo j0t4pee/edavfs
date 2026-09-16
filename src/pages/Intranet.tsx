@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, CalendarX2, Settings, LogOut, Plus, Trash2, Edit2,
+  Users, CalendarX2, Settings, LogOut, Plus, Trash2, Edit2 
 } from 'lucide-react';
 
 import headerImage from '../images/header.jpg';
@@ -25,7 +25,6 @@ const Intranet: React.FC = () => {
 
   useEffect(() => {
     document.title = "EDAV | Intranet Oficial";
-    // Aqui você adicionará no futuro a verificação de login do Firebase
   }, []);
 
   return (
