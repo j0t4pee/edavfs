@@ -7,7 +7,6 @@ import Home from './pages/Home';
 import Intranet from './pages/Intranet';
 import Login from './pages/Login'; 
 
-// COMPONENTE CADEADO: Só deixa passar quem estiver logado!
 const RotaProtegida = ({ children }: { children: React.ReactNode }) => {
   const [carregando, setCarregando] = useState(true);
   const [autenticado, setAutenticado] = useState(false);
@@ -24,7 +23,6 @@ const RotaProtegida = ({ children }: { children: React.ReactNode }) => {
     return <div style={{ minHeight: '100vh', backgroundColor: '#020617', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', fontFamily: 'sans-serif' }}>Carregando sistema seguro...</div>;
   }
 
-  // Se estiver logado, mostra a Intranet. Se não, manda pro Login!
   return autenticado ? <>{children}</> : <Navigate to="/login" />;
 };
 
