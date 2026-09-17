@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -92,7 +94,7 @@ export default function Home() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.title = "EDAV MSFS - Esquadrilha da Fumaça | MSFS";
+    document.title = "MSFS - Esquadrilha da Fumaça";
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -167,7 +169,7 @@ export default function Home() {
 
       const sections = ['pilotos', 'agenda', 'aeronave', 'noticias', 'sobre', 'alistamento'];
       let current = '';
-
+      
       for (const section of sections) {
         const el = document.getElementById(section);
         if (el) {
@@ -189,6 +191,11 @@ export default function Home() {
   }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    closeMobileMenu();
+  };
 
   const handleCookie = (acc: boolean) => {
     localStorage.setItem('cookiePref_edav', acc ? 'accepted' : 'rejected');
@@ -326,11 +333,12 @@ export default function Home() {
           color: #94a3b8;
           text-decoration: none;
           font-weight: 600;
-          font-size: 0.85rem;
+          font-size: 1rem;
           text-transform: uppercase;
           font-family: "NormalFont", sans-serif;
           transition: color 0.3s ease;
           padding-bottom: 4px;
+          cursor: pointer;
         }
         .nav-link:hover { color: #f8fafc; }
         .nav-link::after {
@@ -349,8 +357,8 @@ export default function Home() {
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(3, 7, 18, 0.98); backdrop-filter: blur(10px); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; transform: translateY(-100%); transition: transform 0.3s ease; }
         .mobile-menu.open { transform: translateY(0); }
-        .mobile-menu a { color: #f8fafc; font-size: 1.25rem; text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; transition: color 0.3s ease; }
-        .mobile-menu a:hover, .mobile-menu a.active { color: #f59e0b; }
+        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.4rem; text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; transition: color 0.3s ease; cursor: pointer; }
+        .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #f59e0b; }
         
         .legal-tab { background: transparent; border: 1px solid #1e293b; color: #94a3b8; padding: 0.6rem 1.25rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-family: "NormalFont", sans-serif; transition: all 0.3s ease; font-size: 0.85rem; text-transform: uppercase; }
         .legal-tab:hover { background: rgba(255,255,255,0.05); color: #f8fafc; border-color: #334155; }
@@ -363,33 +371,38 @@ export default function Home() {
         @media (max-width: 900px) {
           .desktop-nav { display: none !important; }
           .mobile-toggle { display: block !important; }
-          .section-container { padding: 4rem 1.5rem !important; }
-          .map-box { height: 400px !important; }
+          .section-container { padding: 4rem 1.25rem !important; }
+          .map-box { height: 350px !important; }
           .footer-content { grid-template-columns: 1fr !important; gap: 2rem !important; text-align: center; }
           .footer-content img { margin: 0 auto; }
           .footer-content div { align-items: center !important; justify-content: center !important; }
           .responsive-grid { grid-template-columns: 1fr !important; }
+          
+          /* Ajustes Mobile do Cartão Piloto */
+          .card-piloto { min-height: 180px !important; padding: 1.2rem !important; }
+          .piloto-nome { font-size: 1.15rem !important; }
+          .piloto-posicao { font-size: 3rem !important; }
         }
       `}</style>
 
       <nav style={{ position: 'fixed', top: 0, width: '100%', zIndex: 100, background: scrolled || mobileMenuOpen ? 'rgba(11, 17, 33, 0.95)' : 'rgba(11, 17, 33, 0.2)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.3s ease', padding: scrolled || mobileMenuOpen ? '0.5rem 0' : '0.8rem 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <a href="#top" onClick={closeMobileMenu} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem' }}>
+          <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '65px', width: 'auto', display: 'block' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center' }}>
               <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
               <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 400, fontSize: '0.8rem', color: '#f59e0b', letterSpacing: '0.15em', lineHeight: 1.1 }}>MICROSOFT FLIGHT SIMULATOR</span>
             </div>
-          </a>
+          </div>
           
           <div className="desktop-nav">
-            <a href="#pilotos" className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>Pilotos</a>
-            <a href="#agenda" className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>Agenda</a>
-            <a href="#aeronave" className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</a>
-            <a href="#noticias" className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Notícias</a>
-            <a href="#sobre" className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>Sobre</a>
+            <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>Pilotos</span>
+            <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>Agenda</span>
+            <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</span>
+            <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
+            <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>Sobre</span>
             {alistamentoAberto && (
-              <a href="#alistamento" className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', borderRadius: '3px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Alistamento</a>
+              <span onClick={() => scrollToSection('alistamento')} className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ cursor: 'pointer', backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', borderRadius: '3px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Alistamento</span>
             )}
           </div>
 
@@ -400,13 +413,13 @@ export default function Home() {
       </nav>
 
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        <a href="#pilotos" className={activeSection === 'pilotos' ? 'active' : ''} onClick={closeMobileMenu}>Pilotos</a>
-        <a href="#agenda" className={activeSection === 'agenda' ? 'active' : ''} onClick={closeMobileMenu}>Agenda</a>
-        <a href="#aeronave" className={activeSection === 'aeronave' ? 'active' : ''} onClick={closeMobileMenu}>Aeronave</a>
-        <a href="#noticias" className={activeSection === 'noticias' ? 'active' : ''} onClick={closeMobileMenu}>Notícias</a>
-        <a href="#sobre" className={activeSection === 'sobre' ? 'active' : ''} onClick={closeMobileMenu}>Sobre</a>
+        <span className={activeSection === 'pilotos' ? 'active' : ''} onClick={() => scrollToSection('pilotos')}>Pilotos</span>
+        <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')}>Agenda</span>
+        <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>Aeronave</span>
+        <span className={activeSection === 'noticias' ? 'active' : ''} onClick={() => scrollToSection('noticias')}>Artigos</span>
+        <span className={activeSection === 'sobre' ? 'active' : ''} onClick={() => scrollToSection('sobre')}>Sobre</span>
         {alistamentoAberto && (
-          <a href="#alistamento" className={activeSection === 'alistamento' ? 'active' : ''} onClick={closeMobileMenu}>Alistamento</a>
+          <span className={activeSection === 'alistamento' ? 'active' : ''} onClick={() => scrollToSection('alistamento')}>Alistamento</span>
         )}
       </div>
 
@@ -418,7 +431,7 @@ export default function Home() {
       <div style={{ backgroundColor: '#0b1121' }}>
         <section id="pilotos" className="section-container">
           <SectionHeader title="Nossos Pilotos" />
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.5rem' }}>
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
             {dbPilotos.length === 0 ? (
               <p style={{ color: '#94a3b8', textAlign: 'center', gridColumn: '1 / -1', fontWeight: 300, fontFamily: 'Arial, sans-serif' }}>Carregando dados dos pilotos...</p>
             ) : (
@@ -437,25 +450,24 @@ export default function Home() {
                 return (
                   <div key={index} className="card-piloto" style={{ 
                     background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(3, 7, 18, 0.9) 100%)', 
-                    border: '1px solid rgba(255,255,255,0.05)', 
+                    border: '0px solid rgba(255,255,255,0.05)', 
                     borderRadius: '12px', 
                     position: 'relative', 
                     overflow: 'hidden', 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    justifyContent: 'center', 
+                    justifyContent: 'space-between', 
                     alignItems: 'flex-end',
-                    padding: '2.5rem 2rem',
-                    minHeight: '210px',
-                    gap: '1.5rem'
+                    padding: '1.5rem',
+                    minHeight: '170px'
                   }}>
                     
                     <img src={pilotoImage} alt="Piloto" style={{ 
                       position: 'absolute', 
-                      left: '-5%', 
-                      top: '-15%', 
-                      width: '55%', 
-                      height: '130%', 
+                      left: '-10%', 
+                      top: '-2%', 
+                      width: '60%', 
+                      height: '150%', 
                       objectFit: 'cover', 
                       objectPosition: 'left top',
                       WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%)', 
@@ -465,21 +477,31 @@ export default function Home() {
                       pointerEvents: 'none'
                     }} />
 
-                    {/* Nome e Cidade (Sem Box) */}
-                    <div style={{ zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
-                      <h3 style={{ fontSize: '1.35rem', fontWeight: 600, color: '#f8fafc', margin: '0', fontFamily: '"NormalFont", sans-serif', letterSpacing: '0.02em', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                    <div style={{ 
+                      zIndex: 2,
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'flex-end', 
+                      textAlign: 'right',
+                      maxWidth: '65%',
+                      marginTop: '10px'
+                    }}>
+                      <h3 className="piloto-nome" style={{ fontSize: '1.25rem', fontWeight: 600, color: '#f8fafc', margin: '0', fontFamily: '"NormalFont", sans-serif', letterSpacing: '0.02em', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                         {piloto.nome}
                       </h3>
-                      {piloto.cidade && (
-                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.35rem', fontWeight: 400, fontFamily: 'Arial, sans-serif', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
-                          {piloto.cidade}
-                        </div>
-                      )}
+                    
+                        
                     </div>
                     
-                    {/* Posição e Número */}
-                    <div style={{ zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                      <div style={{ fontSize: '4.2rem', fontFamily: '"PosicaoFont", sans-serif', color: '#f59e0b', lineHeight: 0.8, textShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
+                    <div style={{ 
+                      zIndex: 2,
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'flex-end', 
+                      justifyContent: 'flex-end',
+                      marginTop: 'auto'
+                    }}>
+                      <div className="piloto-posicao" style={{ fontSize: '4.2rem', fontFamily: '"PosicaoFont", sans-serif', color: '#f59e0b', lineHeight: 0.8, textShadow: '0 4px 10px rgba(0,0,0,0.5)' }}>
                         {piloto.posicao}
                       </div>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', color: '#f59e0b', marginTop: '0.5rem', fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', textAlign: 'right' }}>
@@ -615,7 +637,7 @@ export default function Home() {
                     <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: 'Arial, sans-serif' }}>{noticia.data}</span>
                     <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 300, flexGrow: 1, marginBottom: '1.5rem', fontFamily: 'Arial, sans-serif' }}>{noticia.resumo}</p>
-                    <span style={{ cursor: 'pointer', color: '#f8fafc', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Arial, sans-serif' }}>Ler Matéria Completa <ChevronRight size={14} color="#f59e0b" /></span>
+                    <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#f8fafc', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Arial, sans-serif' }}>Ler Matéria Completa <ChevronRight size={14} color="#f59e0b" /></span>
                   </div>
                 </div>
               ))
@@ -707,23 +729,21 @@ export default function Home() {
             <img src={logoImage} alt="EDAV Logo" style={{ height: '70px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
               <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 400, fontSize: '0.8rem', color: '#f59e0b', letterSpacing: '0.15em', lineHeight: 1.4 }}>MICROSOFT FLIGHT SIMULATOR</span>
+              <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 400, fontSize: '0.75rem', color: '#f59e0b', letterSpacing: '0.15em', lineHeight: 1.4 }}>MICROSOFT FLIGHT SIMULATOR</span>
             </div>
             <div style={{ display: 'flex', gap: '1rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-              <span style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '4px', transition: 'all 0.3s ease' }}><svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>
-              <span style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '4px', transition: 'all 0.3s ease' }}><YoutubeIcon size={18} /></span>
-              <span style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '4px', transition: 'all 0.3s ease' }}><DiscordIcon size={18} /></span>
+              <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '4px', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#f59e0b'; e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}><svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h4 style={{ color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Menu Rápido</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <a href="#pilotos" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronRight size={12} /> Pilotos</a>
-              <a href="#agenda" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronRight size={12} /> Agenda</a>
-              <a href="#aeronave" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronRight size={12} /> Aeronave</a>
-              <a href="#noticias" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronRight size={12} /> Artigos</a>
-              <a href="#sobre" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ChevronRight size={12} /> Sobre Nós</a>
+              <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><ChevronRight size={12} /> Pilotos</span>
+              <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><ChevronRight size={12} /> Agenda</span>
+              <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><ChevronRight size={12} /> Aeronave</span>
+              <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><ChevronRight size={12} /> Artigos</span>
+              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem', transition: 'color 0.3s ease', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><ChevronRight size={12} /> Sobre Nós</span>
             </div>
           </div>
 
@@ -731,10 +751,10 @@ export default function Home() {
             <h4 style={{ color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Utilitários & Downloads</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {dbMods.length > 0 ? dbMods.map((mod, idx) => (
-                <a key={idx} href={mod.link} target="_blank" rel="noreferrer" style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s' }}>
+                <span key={idx} onClick={() => window.open(mod.link, '_blank')} style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(245,158,11,0.1)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}>
                   {mod.isMarketplace ? <ShoppingCart size={14} /> : <Download size={14} />} 
                   <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mod.titulo}</span>
-                </a>
+                </span>
               )) : <span style={{ color: '#64748b', fontSize: '0.85rem', fontFamily: 'Arial, sans-serif' }}>Em breve...</span>}
             </div>
           </div>
@@ -744,11 +764,11 @@ export default function Home() {
           <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', color: '#64748b', fontSize: '0.75rem', fontFamily: 'Arial, sans-serif' }}>
-              <span onClick={() => openLegalModal('termos')} style={{ cursor: 'pointer', transition: 'color 0.3s' }}>Termos de Uso</span>
+              <span onClick={() => openLegalModal('termos')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Termos de Uso</span>
               <span>|</span>
-              <span onClick={() => openLegalModal('privacidade')} style={{ cursor: 'pointer', transition: 'color 0.3s' }}>Política de Privacidade</span>
+              <span onClick={() => openLegalModal('privacidade')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Política de Privacidade</span>
               <span>|</span>
-              <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s' }}>Política de Cookies</span>
+              <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Política de Cookies</span>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
@@ -761,7 +781,7 @@ export default function Home() {
                 <p style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 300, margin: 0, fontFamily: '"NormalFont", sans-serif' }}>
                   &copy; {new Date().getFullYear()} EDAV MSFS
                 </p>
-                <span style={{ color: '#94a3b8', opacity: 0.1, transition: 'opacity 0.3s ease', cursor: 'pointer' }}><Lock size={12} /></span>
+                <span onClick={() => window.location.href = '/login'} style={{ cursor: 'pointer', color: '#94a3b8', opacity: 0.1, transition: 'opacity 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.1'}><Lock size={12} /></span>
               </div>
             </div>
           </div>
@@ -777,10 +797,10 @@ export default function Home() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }}>
+            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }}>
+            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
               ENTENDI E ACEITO
             </button>
           </div>
@@ -808,7 +828,7 @@ export default function Home() {
               <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.35rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>{legalContent[activeLegalTab].title}</h2>
               <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem', fontFamily: 'Arial, sans-serif' }}>{legalContent[activeLegalTab].subtitle}</p>
             </div>
-            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }}>
+            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
               <X size={20} />
             </button>
           </div>
