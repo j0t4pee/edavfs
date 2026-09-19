@@ -8,18 +8,30 @@ import { auth, googleProvider, db } from '../firebase';
 import { Plane, AlertTriangle, Loader2 } from 'lucide-react';
 import logoImage from '../images/logo.png';
 import headerImage from '../images/header.jpg';
+import faviconImage from '../images/favicon.png'; // Importação do favicon adicionada
 
 export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Se já estiver logado, redireciona para o Workspace
   useEffect(() => {
-    document.title = "Login | EDAV Workspace";
+    document.title = "Login | EDA FS";
+    
+    let linkFavicon = document.querySelector('link[rel="icon"]');
+    if (!linkFavicon) {
+      linkFavicon = document.createElement('link');
+      linkFavicon.setAttribute('rel', 'icon');
+      document.head.appendChild(linkFavicon);
+    }
+    linkFavicon.setAttribute('href', faviconImage);
+    linkFavicon.setAttribute('type', 'image/png');
+    linkFavicon.setAttribute('sizes', '32x32');
+
+    // 3. Listener de sessão
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        navigate('/workspace');
+        navigate('/intranet');
       }
     });
     return () => unsubscribe();
@@ -57,7 +69,8 @@ export default function Login() {
         });
       }
 
-      // Login efetuado com sucesso, o AuthStateObserver (useEffect) fará o redirecionamento
+      navigate('/intranet');
+
     } catch (err: any) {
       console.error(err);
       setError('Falha ao iniciar sessão com o Google. Tente novamente.');

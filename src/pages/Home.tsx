@@ -1,5 +1,8 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable */
+import React from 'react';
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -94,7 +97,7 @@ export default function Home() {
   const [whatsapp, setWhatsapp] = useState('');
 
   useEffect(() => {
-    document.title = "MSFS - Esquadrilha da Fumaça";
+    document.title = "MSFS | Fumaça Virtual";
     document.documentElement.setAttribute('data-theme', 'dark');
 
     let metaDesc = document.querySelector('meta[name="description"]');
