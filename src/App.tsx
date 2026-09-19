@@ -1,10 +1,11 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 
 import Home from './pages/Home';
-import Intranet from './pages/Intranet';
+import Intranet from './pages/Workspace';
 import Login from './pages/Login'; 
 
 const RotaProtegida = ({ children }: { children: React.ReactNode }) => {

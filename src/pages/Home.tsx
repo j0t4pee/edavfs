@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { 
   Plane, ChevronRight, Map as MapIcon, 
-  ShoppingCart, CheckCircle2, CalendarX2, Newspaper, 
+  ShoppingCart, CheckCircle2, CalendarCheck2, Newspaper, 
   ChevronUp, Quote, Lock, Download, Menu, X, ShieldCheck, FileText
 } from 'lucide-react';
 
@@ -34,7 +34,7 @@ const getMarkerIcon = (status: string) => {
   });
 };
 
-interface Piloto { id?: string; posicao: string; nome: string; callsign: string; cidade?: string; }
+interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; tipo: string; }
 interface Mod { id?: string; titulo: string; desc: string; icon: React.ReactNode; isMarketplace: boolean; buttonText: string; buttonIcon: React.ReactNode; link: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
@@ -53,7 +53,7 @@ const YoutubeIcon = ({ size = 24, className = "" }) => (
 );
 
 const A29Stat = ({ label, value }: { label: string, value: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem', background: 'rgba(3, 7, 18, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem', background: 'rgba(3, 7, 18, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
     <span style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>{label}</span>
     <span style={{ color: '#f59e0b', fontFamily: 'Arial, sans-serif', fontSize: '1.1rem', fontWeight: 700 }}>{value}</span>
   </div>
@@ -81,6 +81,7 @@ export default function Home() {
   const [dbMods, setDbMods] = useState<Mod[]>([]);
   const [dbNoticias, setDbNoticias] = useState<Noticia[]>([]);
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
+  const [customHeader, setCustomHeader] = useState<string | null>(null);
   
   const [simulador, setSimulador] = useState('MSFS 2020');
   const [modalAlistamento, setModalAlistamento] = useState(false);
@@ -93,8 +94,8 @@ export default function Home() {
   const [whatsapp, setWhatsapp] = useState('');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
     document.title = "MSFS - Esquadrilha da Fumaça";
+    document.documentElement.setAttribute('data-theme', 'dark');
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -153,7 +154,11 @@ export default function Home() {
 
     const unsubConfig = onSnapshot(doc(db, 'config', 'geral'), (docSnap) => {
       if (docSnap.exists()) {
-        setAlistamentoAberto(docSnap.data().alistamentoAberto || false);
+        const d = docSnap.data();
+        setAlistamentoAberto(d.alistamentoAberto || false);
+        if (d.headerImageUrl) {
+          setCustomHeader(d.headerImageUrl);
+        }
       }
     });
 
@@ -259,6 +264,10 @@ export default function Home() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   const mapCenter: [number, number] = [-15.8658, -47.9292];
+  const southAmericaBounds = L.latLngBounds(
+    L.latLng(-60.0, -90.0), 
+    L.latLng(15.0, -30.0)   
+  );
 
   const legalContent = {
     privacidade: {
@@ -316,24 +325,48 @@ export default function Home() {
         body, html { background-color: #030712 !important; font-family: Arial, sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #030712; }
-        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #d97706; }
+        
         .glass-panel, .btn-primary, .btn-outline, .btn-market, 
-        .form-control, .map-box, .modal-content, .nav-btn-highlight, .news-card { border-radius: 4px !important; }
+        .form-control, .map-box, .modal-content, .nav-btn-highlight, .news-card, .agenda-card { 
+          border-radius: 8px !important; 
+        }
+        
+        .card-piloto { border-radius: 6px !important; border: none !important; } 
+        
         .form-control::placeholder { color: #94a3b8 !important; opacity: 0.7 !important; }
         .btn-primary:hover, .nav-btn-highlight:hover { filter: none !important; transform: none !important; box-shadow: none !important; background-color: #f59e0b !important; opacity: 1 !important; color: #000 !important; }
         .section-container { padding: 6rem 2rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 10; }
-        .leaflet-popup-content-wrapper { background-color: #0f172a; color: #f8fafc; border: 1px solid #1e293b; border-radius: 6px; }
+        .leaflet-popup-content-wrapper { background-color: #0f172a; color: #f8fafc; border: 1px solid #1e293b; border-radius: 8px; }
         .leaflet-popup-tip { background-color: #0f172a; }
         
+        .leaflet-bar {
+          border: none !important;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+          border-radius: 8px !important;
+          overflow: hidden;
+        }
+        .leaflet-touch .leaflet-bar a, .leaflet-bar a {
+          background-color: rgba(15, 23, 42, 0.9) !important;
+          color: #f59e0b !important;
+          border: 1px solid rgba(255,255,255,0.05) !important;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s ease !important;
+        }
+        .leaflet-touch .leaflet-bar a:hover, .leaflet-bar a:hover {
+          background-color: #f59e0b !important;
+          color: #000 !important;
+        }
+
         .desktop-nav { display: flex; align-items: center; gap: 1.5rem; }
         
         .nav-link {
           position: relative;
           color: #94a3b8;
           text-decoration: none;
-          font-weight: 600;
-          font-size: 1rem;
+          font-weight: 400; 
+          font-size: 0.95rem; 
           text-transform: uppercase;
           font-family: "NormalFont", sans-serif;
           transition: color 0.3s ease;
@@ -345,7 +378,7 @@ export default function Home() {
           content: '';
           position: absolute;
           width: 0;
-          height: 2px;
+          height: 1px; 
           bottom: 0;
           left: 0;
           background-color: #f59e0b;
@@ -357,7 +390,7 @@ export default function Home() {
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(3, 7, 18, 0.98); backdrop-filter: blur(10px); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; transform: translateY(-100%); transition: transform 0.3s ease; }
         .mobile-menu.open { transform: translateY(0); }
-        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.4rem; text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; transition: color 0.3s ease; cursor: pointer; }
+        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.25rem; text-decoration: none; font-weight: 400; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; transition: color 0.3s ease; cursor: pointer; }
         .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #f59e0b; }
         
         .legal-tab { background: transparent; border: 1px solid #1e293b; color: #94a3b8; padding: 0.6rem 1.25rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-family: "NormalFont", sans-serif; transition: all 0.3s ease; font-size: 0.85rem; text-transform: uppercase; }
@@ -365,7 +398,7 @@ export default function Home() {
         .legal-tab.active { background: rgba(30, 41, 59, 0.8); color: #f8fafc; border-color: #334155; }
         .modal-body-scroll::-webkit-scrollbar { width: 5px; }
         .modal-body-scroll::-webkit-scrollbar-track { background: #0b1121; }
-        .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; }
         .modal-body-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
 
         @media (max-width: 900px) {
@@ -378,8 +411,7 @@ export default function Home() {
           .footer-content div { align-items: center !important; justify-content: center !important; }
           .responsive-grid { grid-template-columns: 1fr !important; }
           
-          /* Ajustes Mobile do Cartão Piloto */
-          .card-piloto { min-height: 180px !important; padding: 1.2rem !important; }
+          .card-piloto { min-height: 165px !important; }
           .piloto-nome { font-size: 1.15rem !important; }
           .piloto-posicao { font-size: 3rem !important; }
         }
@@ -390,8 +422,12 @@ export default function Home() {
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '65px', width: 'auto', display: 'block' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center' }}>
-              <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 400, fontSize: '0.8rem', color: '#f59e0b', letterSpacing: '0.15em', lineHeight: 1.1 }}>MICROSOFT FLIGHT SIMULATOR</span>
+              <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
+                ESQUADRILHA DA FUMAÇA VIRTUAL
+              </span>
+              <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 600, fontSize: '0.65rem', background: '#38bdf8', color: '#030712', fontStyle: 'italic', padding: '2px 8px', alignSelf: 'flex-start', letterSpacing: '0.15em', lineHeight: 1.1, transform: 'skewX(-12deg)', display: 'inline-block', marginLeft: '4px' }}>
+                MICROSOFT FLIGHT SIMULATOR
+              </span>
             </div>
           </div>
           
@@ -402,7 +438,7 @@ export default function Home() {
             <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
             <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>Sobre</span>
             {alistamentoAberto && (
-              <span onClick={() => scrollToSection('alistamento')} className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ cursor: 'pointer', backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', borderRadius: '3px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Alistamento</span>
+              <span onClick={() => scrollToSection('alistamento')} className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ cursor: 'pointer', backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', borderRadius: '5px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Alistamento</span>
             )}
           </div>
 
@@ -424,7 +460,7 @@ export default function Home() {
       </div>
 
       <section className="hero" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.9 }} />
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.9 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(11, 17, 33, 0.1) 0%, rgba(11, 17, 33, 0.6) 60%, #0b1121 100%)', zIndex: 1 }} />
       </section>
 
@@ -450,24 +486,22 @@ export default function Home() {
                 return (
                   <div key={index} className="card-piloto" style={{ 
                     background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(3, 7, 18, 0.9) 100%)', 
-                    border: '0px solid rgba(255,255,255,0.05)', 
-                    borderRadius: '12px', 
                     position: 'relative', 
                     overflow: 'hidden', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     justifyContent: 'space-between', 
                     alignItems: 'flex-end',
-                    padding: '1.5rem',
-                    minHeight: '170px'
+                    padding: '1.25rem 1.25rem 1rem 1.25rem',
+                    minHeight: '165px'
                   }}>
                     
                     <img src={pilotoImage} alt="Piloto" style={{ 
                       position: 'absolute', 
                       left: '-10%', 
-                      top: '-2%', 
+                      top: '0', 
                       width: '60%', 
-                      height: '150%', 
+                      height: '120%', 
                       objectFit: 'cover', 
                       objectPosition: 'left top',
                       WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%)', 
@@ -483,14 +517,16 @@ export default function Home() {
                       flexDirection: 'column', 
                       alignItems: 'flex-end', 
                       textAlign: 'right',
-                      maxWidth: '65%',
-                      marginTop: '10px'
+                      maxWidth: '65%'
                     }}>
                       <h3 className="piloto-nome" style={{ fontSize: '1.25rem', fontWeight: 600, color: '#f8fafc', margin: '0', fontFamily: '"NormalFont", sans-serif', letterSpacing: '0.02em', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                         {piloto.nome}
                       </h3>
-                    
-                        
+                      {(piloto.cidade || piloto.uf) && (
+                        <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.25rem', fontWeight: 600, fontFamily: 'Arial, sans-serif', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                          {piloto.cidade}{piloto.cidade && piloto.uf ? ' - ' : ''}{piloto.uf}
+                        </div>
+                      )}
                     </div>
                     
                     <div style={{ 
@@ -528,13 +564,13 @@ export default function Home() {
                   dbDemonstracoes.map((dem, idx) => (
                     <div key={idx} className="agenda-card" style={{ 
                       padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.05)', 
-                      borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'all 0.3s ease', cursor: 'default'
+                      display: 'flex', flexDirection: 'column', gap: '1rem', transition: 'all 0.3s ease', cursor: 'default'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <h4 style={{ fontSize: '1.25rem', color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', marginBottom: '0.35rem' }}>{dem.cidade}</h4>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', fontFamily: 'Arial, sans-serif' }}>
-                            <CalendarX2 size={14} color="#f59e0b" /> {dem.dataHora}
+                            <CalendarCheck2 size={14} color="#f59e0b" /> {dem.dataHora}
                           </div>
                         </div>
                         <span style={{ 
@@ -546,16 +582,24 @@ export default function Home() {
                     </div>
                   ))
                 ) : (
-                  <div className="empty-state glass-panel" style={{ padding: '4rem 2rem', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(11, 17, 33, 0.4)', textAlign: 'center', borderRadius: '16px' }}>
-                    <CalendarX2 size={36} color="#f59e0b" style={{ margin: '0 auto 1.5rem', opacity: 0.4 }} />
+                  <div className="empty-state glass-panel" style={{ padding: '4rem 2rem', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(11, 17, 33, 0.4)', textAlign: 'center' }}>
+                    <CalendarCheck2 size={36} color="#f59e0b" style={{ margin: '0 auto 1.5rem', opacity: 0.4 }} />
                     <p style={{ fontWeight: 300, letterSpacing: '0.05em', lineHeight: '1.8', color: '#94a3b8', fontFamily: 'Arial, sans-serif' }}>O calendário de demonstrações será atualizado em breve.</p>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="map-box glass-panel" style={{ border: '1px solid rgba(255,255,255,0.05)', height: '550px', overflow: 'hidden', borderRadius: '16px' }}>
-              <MapContainer center={mapCenter} zoom={4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1, background: 'transparent' }}>
+            <div className="map-box glass-panel" style={{ border: '1px solid rgba(255,255,255,0.05)', height: '550px', overflow: 'hidden' }}>
+              <MapContainer 
+                center={mapCenter} 
+                zoom={4} 
+                minZoom={3}
+                maxBounds={southAmericaBounds}
+                maxBoundsViscosity={1.0}
+                scrollWheelZoom={false} 
+                style={{ height: '100%', width: '100%', zIndex: 1, background: 'transparent' }}
+              >
                 <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 {dbDemonstracoes.map((dem) => {
                   if (!dem.lat || !dem.lng) return null;
@@ -701,7 +745,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <button type="submit" disabled={isSubmitting} className="btn-primary font-title" style={{ width: '100%', marginTop: '2.5rem', letterSpacing: '0.2em', padding: '1rem', background: '#f59e0b', color: '#000', fontWeight: 700, borderRadius: '3px', fontFamily: '"NormalFont", sans-serif', cursor: isSubmitting ? 'wait' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
+                <button type="submit" disabled={isSubmitting} className="btn-primary font-title" style={{ width: '100%', marginTop: '2.5rem', letterSpacing: '0.2em', padding: '1rem', background: '#f59e0b', color: '#000', fontWeight: 700, borderRadius: '8px', fontFamily: '"NormalFont", sans-serif', cursor: isSubmitting ? 'wait' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
                   {isSubmitting ? 'ENVIANDO...' : 'ENVIAR APLICAÇÃO'}
                 </button>
               </form>
@@ -729,10 +773,12 @@ export default function Home() {
             <img src={logoImage} alt="EDAV Logo" style={{ height: '70px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
               <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 400, fontSize: '0.75rem', color: '#f59e0b', letterSpacing: '0.15em', lineHeight: 1.4 }}>MICROSOFT FLIGHT SIMULATOR</span>
+              <span style={{ display: 'inline-block', fontFamily: '"NormalFont", sans-serif', fontWeight: 600, fontSize: '0.65rem', background: '#38bdf8', color: '#030712', fontStyle: 'italic', padding: '2px 8px', alignSelf: 'flex-start', letterSpacing: '0.15em', lineHeight: 1.1, transform: 'skewX(-12deg)', marginLeft: '4px', marginTop: '4px' }}>
+                MICROSOFT FLIGHT SIMULATOR
+              </span>
             </div>
             <div style={{ display: 'flex', gap: '1rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-              <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '4px', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#f59e0b'; e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}><svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>
+              <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.6rem', borderRadius: '8px', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#f59e0b'; e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}><svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>
             </div>
           </div>
 
@@ -749,9 +795,9 @@ export default function Home() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h4 style={{ color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', fontSize: '1rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Utilitários & Downloads</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '320px' }}>
               {dbMods.length > 0 ? dbMods.map((mod, idx) => (
-                <span key={idx} onClick={() => window.open(mod.link, '_blank')} style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', textDecoration: 'none', fontSize: '0.8rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(245,158,11,0.1)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}>
+                <span key={idx} onClick={() => window.open(mod.link, '_blank')} style={{ width: '100%', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '0.6rem 1rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', textDecoration: 'none', fontSize: '0.8rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(245,158,11,0.1)'; e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}>
                   {mod.isMarketplace ? <ShoppingCart size={14} /> : <Download size={14} />} 
                   <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mod.titulo}</span>
                 </span>
@@ -764,11 +810,17 @@ export default function Home() {
           <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', color: '#64748b', fontSize: '0.75rem', fontFamily: 'Arial, sans-serif' }}>
-              <span onClick={() => openLegalModal('termos')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Termos de Uso</span>
+              <span onClick={() => openLegalModal('termos')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
+                <FileText size={14} /> Termos de Uso
+              </span>
               <span>|</span>
-              <span onClick={() => openLegalModal('privacidade')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Política de Privacidade</span>
+              <span onClick={() => openLegalModal('privacidade')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
+                <ShieldCheck size={14} /> Política de Privacidade
+              </span>
               <span>|</span>
-              <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>Política de Cookies</span>
+              <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg> Política de Cookies
+              </span>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
@@ -797,26 +849,26 @@ export default function Home() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
+            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 600, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
+            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: 700, fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
               ENTENDI E ACEITO
             </button>
           </div>
         </div>
       )}
 
-      <button onClick={scrollToTop} style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 999, background: '#f59e0b', color: '#000', border: 'none', borderRadius: '50%', width: '3rem', height: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: showTopBtn ? 1 : 0, pointerEvents: showTopBtn ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}>
-        <ChevronUp size={24} strokeWidth={2.5} />
+      <button onClick={scrollToTop} style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 999, background: 'transparent', color: '#f59e0b', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: showTopBtn ? 1 : 0, pointerEvents: showTopBtn ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}>
+        <ChevronUp size={28} strokeWidth={3} />
       </button>
 
       <div className={`modal-overlay ${modalAlistamento ? 'active' : ''}`}>
-        <div className="modal-content glass-panel" style={{ padding: '4rem 3rem', background: '#0b1121', border: '1px solid #f59e0b' }}>
+        <div className="modal-content glass-panel" style={{ padding: '4rem 3rem', background: '#0b1121', border: '1px solid #f59e0b', borderRadius: '8px' }}>
           <CheckCircle2 size={56} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
           <h3 className="font-title" style={{ color: '#f8fafc', fontSize: '1.75rem', margin: '1.5rem 0 1rem', fontWeight: 400, fontFamily: '"NormalFont", sans-serif' }}>Aplicação Enviada!</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.8', fontWeight: 300, fontSize: '0.95rem', fontFamily: 'Arial, sans-serif' }}>Recebemos seus dados com sucesso. Nossa equipe entrará em contato em breve.</p>
-          <button type="button" className="btn-primary font-title" style={{ letterSpacing: '0.2em', padding: '1.25rem 2.5rem', width: '100%', borderRadius: '3px', fontFamily: '"NormalFont", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
+          <button type="button" className="btn-primary font-title" style={{ letterSpacing: '0.2em', padding: '1.25rem 2.5rem', width: '100%', borderRadius: '8px', fontFamily: '"NormalFont", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
         </div>
       </div>
 
@@ -825,10 +877,10 @@ export default function Home() {
           
           <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.35rem', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>{legalContent[activeLegalTab].title}</h2>
+              <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.35rem', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', textTransform: 'uppercase' }}>{legalContent[activeLegalTab].title}</h2>
               <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem', fontFamily: 'Arial, sans-serif' }}>{legalContent[activeLegalTab].subtitle}</p>
             </div>
-            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
+            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
               <X size={20} />
             </button>
           </div>
@@ -838,13 +890,13 @@ export default function Home() {
           </div>
 
           <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid #1e293b', background: '#030712', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button onClick={() => setActiveLegalTab('cookies')} className={`legal-tab ${activeLegalTab === 'cookies' ? 'active' : ''}`}>
+            <button onClick={() => setActiveLegalTab('cookies')} className={`legal-tab ${activeLegalTab === 'cookies' ? 'active' : ''}`} style={{ fontFamily: 'Arial, sans-serif' }}>
               <ShieldCheck size={16} /> LGPD / Cookies
             </button>
-            <button onClick={() => setActiveLegalTab('privacidade')} className={`legal-tab ${activeLegalTab === 'privacidade' ? 'active' : ''}`}>
+            <button onClick={() => setActiveLegalTab('privacidade')} className={`legal-tab ${activeLegalTab === 'privacidade' ? 'active' : ''}`} style={{ fontFamily: 'Arial, sans-serif' }}>
               <FileText size={16} /> Política de Privacidade
             </button>
-            <button onClick={() => setActiveLegalTab('termos')} className={`legal-tab ${activeLegalTab === 'termos' ? 'active' : ''}`}>
+            <button onClick={() => setActiveLegalTab('termos')} className={`legal-tab ${activeLegalTab === 'termos' ? 'active' : ''}`} style={{ fontFamily: 'Arial, sans-serif' }}>
               <FileText size={16} /> Termos de Uso
             </button>
           </div>
