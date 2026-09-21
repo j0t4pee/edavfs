@@ -12,7 +12,7 @@ import L from 'leaflet';
 import { 
   Plane, ChevronRight, Map as MapIcon, 
   ShoppingCart, CheckCircle2, CalendarCheck2, Newspaper, 
-  ChevronUp, Quote, Lock, Download, Menu, X, ShieldCheck, FileText
+  ChevronUp, Quote, Lock, Download, Menu, X, ShieldCheck, FileText, AlertTriangle
 } from 'lucide-react';
 
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -76,7 +76,7 @@ export default function Home() {
   const [showCookieBanner, setShowCookieBanner] = useState(false);
   
   const [legalModalOpen, setLegalModalOpen] = useState(false);
-  const [activeLegalTab, setActiveLegalTab] = useState<'privacidade' | 'termos' | 'cookies'>('privacidade');
+  const [activeLegalTab, setActiveLegalTab] = useState<'privacidade' | 'termos' | 'cookies' | 'disclaimer'>('privacidade');
 
   const [dbPilotos, setDbPilotos] = useState<Piloto[]>([]);
   const [dbDemonstracoes, setDbDemonstracoes] = useState<Demonstracao[]>([]);
@@ -209,7 +209,7 @@ export default function Home() {
     setShowCookieBanner(false);
   };
 
-  const openLegalModal = (tab: 'privacidade' | 'termos' | 'cookies') => {
+  const openLegalModal = (tab: 'privacidade' | 'termos' | 'cookies' | 'disclaimer') => {
     setActiveLegalTab(tab);
     setLegalModalOpen(true);
   };
@@ -316,6 +316,21 @@ export default function Home() {
           <p>Usamos apenas cookies estritamente necessários para o funcionamento da plataforma (ex: lembrar que você aceitou os termos) e não realizamos rastreamento para fins de publicidade direcionada.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>SEUS DIREITOS</h4>
           <p>Você pode recusar o uso de cookies não essenciais através do banner exibido na página inicial ou configurando diretamente o seu navegador.</p>
+        </>
+      )
+    },
+    disclaimer: {
+      title: "Aviso Legal & Disclaimer",
+      subtitle: "Direitos autorais e afiliações.",
+      body: (
+        <>
+          <p>O EDAV MSFS é uma organização virtual sem fins lucrativos criada por entusiastas da aviação.</p>
+          <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>1. IMAGENS E DIREITOS AUTORAIS</h4>
+          <p>Algumas das imagens e recursos utilizados neste portal foram retirados da internet e podem pertencer a terceiros, sendo utilizados exclusivamente em caráter ilustrativo e não-comercial. Caso você seja o criador ou proprietário de algum recurso gráfico aqui exibido e deseje os devidos créditos ou a remoção do mesmo, por favor entre em contato conosco e atenderemos prontamente.</p>
+          <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>2. NÃO ASSOCIAÇÕES E SEM VINCULOS</h4>
+          <p><strong>Deixamos claro que não possuímos qualquer filiação, vínculo oficial ou associação com o Esquadrão de Demonstração Aérea Virtual (EDAV Oficial).</strong> Recomendamos e convidamos todos os entusiastas a conhecerem e visitarem o belíssimo projeto oficial em <a href="https://www.edav.com.br/" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 'bold' }}>www.edav.com.br</a>.</p>
+          <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>3. RESPEITO À IDENTIDADE</h4>
+          <p>Temos o mais profundo e sincero respeito pela imagem, pela história e pela identidade da Esquadrilha da Fumaça real e do esquadrão virtual original. O nosso objetivo primordial é apenas homenagear a aviação de alta performance, simulando as manobras no Microsoft Flight Simulator em um ambiente de simulação sadio e respeitosa.</p>
         </>
       )
     }
@@ -678,12 +693,13 @@ export default function Home() {
             {dbNoticias.length > 0 ? (
               dbNoticias.map((noticia, idx) => (
                 <div key={idx} className="news-card glass-panel" style={{ background: 'rgba(11, 17, 33, 0.6)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }}>
-                  <div style={{ height: '180px', backgroundImage: `url(${noticia.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}></div>
+                  {noticia.imagem && (
+                    <div style={{ height: '180px', backgroundImage: `url(${noticia.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}></div>
+                  )}
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                     <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: 'Arial, sans-serif' }}>{noticia.data}</span>
                     <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
-                    <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 300, flexGrow: 1, marginBottom: '1.5rem', fontFamily: 'Arial, sans-serif' }}>{noticia.resumo}</p>
-                    <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#f8fafc', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Arial, sans-serif' }}>Ler Matéria Completa <ChevronRight size={14} color="#f59e0b" /></span>
+                    <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 300, flexGrow: 1, margin: 0, fontFamily: 'Arial, sans-serif' }}>{noticia.resumo}</p>
                   </div>
                 </div>
               ))
@@ -823,6 +839,10 @@ export default function Home() {
               <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg> Política de Cookies
               </span>
+              <span>|</span>
+              <span onClick={() => openLegalModal('disclaimer')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
+                <FileText size={14} /> Avisos Legais
+              </span>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
@@ -832,9 +852,6 @@ export default function Home() {
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap' }}>
-                <p style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 300, margin: 0, fontFamily: '"NormalFont", sans-serif' }}>
-                  &copy; {new Date().getFullYear()} EDAV MSFS
-                </p>
                 <span onClick={() => window.location.href = '/login'} style={{ cursor: 'pointer', color: '#94a3b8', opacity: 0.1, transition: 'opacity 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.1'}><Lock size={12} /></span>
               </div>
             </div>
@@ -900,6 +917,9 @@ export default function Home() {
             </button>
             <button onClick={() => setActiveLegalTab('termos')} className={`legal-tab ${activeLegalTab === 'termos' ? 'active' : ''}`} style={{ fontFamily: 'Arial, sans-serif' }}>
               <FileText size={16} /> Termos de Uso
+            </button>
+            <button onClick={() => setActiveLegalTab('disclaimer')} className={`legal-tab ${activeLegalTab === 'disclaimer' ? 'active' : ''}`} style={{ fontFamily: 'Arial, sans-serif' }}>
+              <AlertTriangle size={16} /> Disclaimer
             </button>
           </div>
 

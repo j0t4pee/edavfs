@@ -132,7 +132,7 @@ export default function Login() {
             onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} 
             onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
           >
-            <Plane size={14} /> Voltar ao site
+             Voltar ao site
           </button>
           
         </div>

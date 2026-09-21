@@ -3,22 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle
+  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle, Scale, BellRing, AlertOctagon, Info, Loader2, Headphones, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase
 } from 'lucide-react';
 
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase'; 
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db, auth, storage } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 import logoImage from '../images/logo.png';
 import faviconImage from '../images/favicon.png';
 import headerImage from '../images/header.jpg';
 
-interface Piloto { id?: string; posicao: string; nome: string; cidade: string; uf: string; }
+interface Piloto { id?: string; posicao: string; nome: string; cidade: string; uf: string; oculto?: boolean; justificativa?: string; }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; buttonText: string; link: string; }
 interface Voo { id?: string; pilotoNome: string; aeronave: string; tipoMissao: string; origem: string; destino: string; dataHora: string; status: string; }
+interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
 interface Usuario { 
   id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
   permissoes?: { logbook?: boolean; agenda?: boolean; mods?: boolean; header?: boolean; alistamento?: boolean; };
@@ -56,7 +58,6 @@ const missoesOpcoes = [
   { value: 'Voo de Avaliação', label: 'Voo de Avaliação' }
 ];
 
-// Componente Toggle para as Permissões
 const PermissionToggle = ({ label, active, onChange }: { label: string, active: boolean, onChange: () => void }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid #1e293b' }}>
     <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
@@ -113,17 +114,14 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
 
 const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
   const parseDate = (val: string) => {
     if (!val) return new Date();
     const parts = val.split('/');
     if (parts.length === 3) return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
     return new Date();
   };
-  
   const [viewDate, setViewDate] = useState(parseDate(value));
   const [selDate, setSelDate] = useState<Date | null>(value ? parseDate(value) : null);
-
   const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -241,7 +239,6 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
       </div>
       {isOpen && (
         <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'rgba(11, 17, 33, 0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 50, padding: '1.25rem', boxShadow: '0 10px 30px rgba(0,0,0,0.7)', display: 'flex', gap: '1.5rem', width: '380px', maxWidth: '90vw' }}>
-          
           <div style={{ flex: 2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <button type="button" onClick={prevMonth} style={{ background:'transparent', border:'none', color:'#94a3b8', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>&lt;</button>
@@ -259,7 +256,6 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
               <button type="button" onClick={() => { const n = new Date(); setViewDate(n); setSelDate(n); }} style={{ background:'transparent', border:'none', color:'#38bdf8', fontSize:'0.8rem', cursor:'pointer', fontWeight: 500 }}>Hoje</button>
             </div>
           </div>
-          
           <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '1rem', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', gap: '0.5rem', flex: 1, marginBottom: '0.5rem' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '220px', overflowY: 'auto', gap: '2px', paddingRight: '2px' }} className="time-scroll">
@@ -284,9 +280,10 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
 };
 
 export default function Workspace() {
-  const [activeTab, setActiveTab] = useState('logbook');
+  const [activeTab, setActiveTab] = useState('notam');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [gerenciaisAberto, setGerenciaisAberto] = useState(true);
   const navigate = useNavigate();
 
   const [agora, setAgora] = useState(new Date());
@@ -296,6 +293,7 @@ export default function Workspace() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
   const [voos, setVoos] = useState<Voo[]>([]);
+  const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
   
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
@@ -305,12 +303,20 @@ export default function Workspace() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingGeocode, setLoadingGeocode] = useState(false); 
   const [currentUserInfo, setCurrentUserInfo] = useState<Usuario | null>(null); 
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  // Estados Form
+  // Estados METAR
+  const [metarIcao, setMetarIcao] = useState('');
+  const [metarData, setMetarData] = useState<any>(null);
+  const [metarLoading, setMetarLoading] = useState(false);
+
+  // Estados Form Piloto
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
   const [novaUf, setNovaUf] = useState('');
+  const [novoOculto, setNovoOculto] = useState(false);
+  const [novoJustificativa, setNovoJustificativa] = useState('');
 
   const [agCidade, setAgCidade] = useState('');
   const [agDataHoraIso, setAgDataHoraIso] = useState('');
@@ -334,6 +340,10 @@ export default function Workspace() {
   const [vooData, setVooData] = useState('');
   const [vooStatus, setVooStatus] = useState('Planeado');
 
+  const [notamTitulo, setNotamTitulo] = useState('');
+  const [notamMensagem, setNotamMensagem] = useState('');
+  const [notamData, setNotamData] = useState('');
+
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
 
@@ -353,6 +363,15 @@ export default function Workspace() {
   useEffect(() => {
     document.title = "Workspace | EDAV";
     document.documentElement.setAttribute('data-theme', 'dark');
+
+    // Injeção dinâmica do Favicon
+    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = faviconImage;
 
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -385,6 +404,15 @@ export default function Workspace() {
         arr.reverse(); 
         setVoos(arr);
       }),
+      onSnapshot(collection(db, 'notams'), snap => {
+        const arr: Notam[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Notam));
+        arr.sort((a, b) => {
+          const dateA = a.data.split('/').reverse().join('-');
+          const dateB = b.data.split('/').reverse().join('-');
+          return new Date(dateB).getTime() - new Date(dateA).getTime();
+        });
+        setNotams(arr);
+      }),
       onSnapshot(collection(db, 'usuarios'), snap => {
         const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
         setUsuarios(arr);
@@ -400,10 +428,9 @@ export default function Workspace() {
     return () => unsubs.forEach(u => u()); 
   }, [navigate]);
 
-  // Função Verificadora de Permissões
   const checkPermission = (action: string) => {
     if (currentUserInfo?.role === 'admin') return true;
-    if (action === 'manual') return true; // Todos podem ver o manual
+    if (['regulamento', 'notam', 'manual', 'meteorologia'].includes(action)) return true; 
     if (['pilotos', 'noticias', 'parametros'].includes(action)) return false; 
     return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
   };
@@ -421,25 +448,110 @@ export default function Workspace() {
 
   const fecharFormulario = () => {
     setShowForm(false); setEditingId(null);
-    setNovoPosicao('1'); setNovoNome(''); setNovaCidade(''); setNovaUf('');
+    setUploadProgress(null);
+    setNovoPosicao('1'); setNovoNome(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa('');
     setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento');
     setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
     setModTitulo(''); setModDesc(''); setModLink(''); setModMarketplace(false);
     setVooPiloto(''); setVooAeronave('A-29 Super Tucano'); setVooMissao('Treino de Formatura'); setVooOrigem(''); setVooDestino(''); setVooData(''); setVooStatus('Planeado');
+    setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!checkPermission('noticias')) return showToast("Acesso Negado.", "error");
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setNotImagem(reader.result as string);
-      reader.readAsDataURL(file);
+  const handleBuscarMetar = async (e?: React.FormEvent) => {
+    if(e) e.preventDefault();
+    if(!metarIcao || metarIcao.length < 4) return showToast("Digite um código ICAO válido.", "error");
+    setMetarLoading(true);
+    setMetarData(null);
+    try {
+      const response = await fetch(`https://metar.vatsim.net/metar.php?id=${metarIcao.toUpperCase()}`);
+      if (!response.ok) throw new Error("Erro de rede");
+      
+      const rawMetar = await response.text();
+
+      if (!rawMetar || rawMetar.trim() === '') {
+        setMetarData({ error: 'Nenhum METAR atual encontrado para este ICAO (pode não possuir estação).' });
+        return;
+      }
+
+      let temp = "N/A";
+      let wdir = "N/A";
+      let wspd = "N/A";
+      let altim = "N/A";
+
+      const windMatch = rawMetar.match(/(\d{3}|VRB)(\d{2,3})(?:G\d{2,3})?(KT|MPS)/);
+      if (windMatch) {
+        wdir = windMatch[1];
+        wspd = windMatch[2];
+      }
+
+      const tempMatch = rawMetar.match(/\s(M?\d{2})\/(M?\d{2})?(?:\s|$)/);
+      if (tempMatch) {
+        temp = tempMatch[1].replace('M', '-'); 
+      }
+
+      const qnhMatch = rawMetar.match(/Q(\d{4})/);
+      const altMatch = rawMetar.match(/A(\d{4})/);
+      if (qnhMatch) {
+        altim = qnhMatch[1] + " hPa";
+      } else if (altMatch) {
+        altim = altMatch[1].slice(0,2) + "." + altMatch[1].slice(2) + " inHg";
+      }
+
+      setMetarData({
+        icaoId: metarIcao.toUpperCase(),
+        rawOb: rawMetar,
+        receiptTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        temp: temp !== "N/A" ? parseInt(temp) : null,
+        wdir: wdir !== "N/A" ? wdir : null,
+        wspd: wspd !== "N/A" ? parseInt(wspd) : null,
+        altim: altim !== "N/A" ? altim : null,
+      });
+
+    } catch (err) {
+      setMetarData({ error: 'Falha ao conectar com o serviço meteorológico. Tente novamente mais tarde.' });
+    } finally {
+      setMetarLoading(false);
     }
   };
 
+  const handleImageUploadNoticias = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkPermission('noticias')) return showToast("Acesso Negado.", "error");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const storageRef = ref(storage, `noticias/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100), 
+      () => { showToast("Erro ao enviar a imagem", "error"); setUploadProgress(null); }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        setNotImagem(downloadURL); setUploadProgress(null); showToast("Imagem processada!", "success");
+      }
+    );
+  };
+
+  const handleImageUploadHeader = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkPermission('header')) return showToast("Acesso Negado.", "error");
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const storageRef = ref(storage, `header/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100), 
+      () => { showToast("Erro ao enviar a imagem", "error"); setUploadProgress(null); }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        await setDoc(doc(db, 'config', 'geral'), { headerImageUrl: downloadURL }, { merge: true });
+        setUploadProgress(null); showToast("Fundo atualizado!", "success");
+      }
+    );
+  };
+
   const handleDeletarItem = (id: string | undefined, colecao: string, nomeItem: string, tabReq: string) => {
-    if (!checkPermission(tabReq)) return showToast("Acesso Negado.", "error");
     if (!id) return;
     showConfirmModal("Remover Item", `Tem certeza que deseja remover ${nomeItem}?`, async () => {
       try { await deleteDoc(doc(db, colecao, id)); closeConfirmModal(); showToast("Item removido", "success"); } 
@@ -455,12 +567,8 @@ export default function Workspace() {
 
   const handlePermissao = async (userId: string, campo: string, valor: boolean) => {
     if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins podem alterar permissões.", "error");
-    try {
-      await updateDoc(doc(db, 'usuarios', userId), { [`permissoes.${campo}`]: valor });
-      showToast("Permissão atualizada!", "success");
-    } catch {
-      showToast("Falha ao atualizar.", "error");
-    }
+    try { await updateDoc(doc(db, 'usuarios', userId), { [`permissoes.${campo}`]: valor }); showToast("Permissão atualizada!", "success"); } 
+    catch { showToast("Falha ao atualizar.", "error"); }
   };
 
   const handleMudarCargo = async (userId: string, newRole: string) => {
@@ -471,8 +579,9 @@ export default function Workspace() {
 
   const handleEditarPiloto = (p: Piloto) => {
     if (!checkPermission('pilotos')) return showToast("Acesso Negado.", "error");
-    setEditingId(p.id || null); setNovoPosicao(p.posicao); setNovoNome(p.nome);
-    setNovaCidade(p.cidade || ''); setNovaUf(p.uf || ''); setShowForm(true);
+    setEditingId(p.id || null); setNovoPosicao(p.posicao); setNovoNome(p.nome); setNovaCidade(p.cidade || ''); setNovaUf(p.uf || ''); 
+    setNovoOculto(p.oculto || false); setNovoJustificativa(p.justificativa || '');
+    setShowForm(true);
   };
 
   const handleEditarAgenda = (a: Demonstracao) => {
@@ -487,31 +596,32 @@ export default function Workspace() {
 
   const handleEditarNoticia = (n: Noticia) => {
     if (!checkPermission('noticias')) return showToast("Acesso Negado.", "error");
-    setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo);
-    setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true);
+    setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo); setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true);
   };
 
   const handleEditarMod = (m: Mod) => {
     if (!checkPermission('mods')) return showToast("Acesso Negado.", "error");
-    setEditingId(m.id || null); setModTitulo(m.titulo); setModDesc(m.desc);
-    setModLink(m.link); setModMarketplace(m.isMarketplace); setShowForm(true);
+    setEditingId(m.id || null); setModTitulo(m.titulo); setModDesc(m.desc); setModLink(m.link); setModMarketplace(m.isMarketplace); setShowForm(true);
   };
 
   const handleEditarVoo = (v: Voo) => {
     if (!checkPermission('logbook')) return showToast("Acesso Negado.", "error");
     setEditingId(v.id || null); setVooPiloto(v.pilotoNome); setVooAeronave(v.aeronave); setVooMissao(v.tipoMissao);
-    setVooOrigem(v.origem); setVooDestino(v.destino); setVooData(v.dataHora); setVooStatus(v.status);
-    setShowForm(true);
+    setVooOrigem(v.origem); setVooDestino(v.destino); setVooData(v.dataHora); setVooStatus(v.status); setShowForm(true);
   };
 
-  // Funções Salvar
+  const handleEditarNotam = (n: Notam) => {
+    if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
+    setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true);
+  };
+
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); if (!checkPermission('pilotos')) return showToast("Acesso Negado", "error");
     try {
-      const data = { posicao: novoPosicao, nome: novoNome, cidade: novaCidade, uf: novaUf };
+      const data = { posicao: novoPosicao, nome: novoNome, cidade: novaCidade, uf: novaUf, oculto: novoOculto, justificativa: novoOculto ? novoJustificativa : '' };
       if (editingId) await updateDoc(doc(db, 'pilotos', editingId), data); else await addDoc(collection(db, 'pilotos'), data);
-      fecharFormulario(); showToast("Dados salvos com sucesso");
-    } catch { showToast("Falha ao salvar", "error"); }
+      fecharFormulario(); showToast("Dados salvos");
+    } catch { showToast("Falha", "error"); }
   };
 
   const handleSalvarAgenda = async (e: React.FormEvent) => {
@@ -529,7 +639,7 @@ export default function Workspace() {
       const data = { cidade: agCidade, dataHora: `${dPart.split('-').reverse().join('/')} às ${tPart}`, lat, lng, status: agStatus, cssClass: agStatus === 'Confirmado' ? 'status-ok' : 'status-warn', coordsText: lat !== 0 ? `${lat.toFixed(3)}, ${lng.toFixed(3)}` : 'S/ Coordenadas', tipo: 'M-PREC' };
       if (editingId) await updateDoc(doc(db, 'agenda', editingId), data); else await addDoc(collection(db, 'agenda'), data);
       fecharFormulario(); showToast("Evento salvo!");
-    } catch { showToast("Falha ao salvar", "error"); } finally { setLoadingGeocode(false); }
+    } catch { showToast("Falha", "error"); } finally { setLoadingGeocode(false); }
   };
 
   const handleSalvarNoticia = async (e: React.FormEvent) => {
@@ -559,6 +669,16 @@ export default function Workspace() {
       const data = { pilotoNome: vooPiloto, aeronave: vooAeronave, tipoMissao: vooMissao, origem: vooOrigem.toUpperCase(), destino: vooDestino.toUpperCase(), dataHora: `${dPart.split('-').reverse().join('/')} às ${tPart}`, status: vooStatus };
       if (editingId) await updateDoc(doc(db, 'voos', editingId), data); else await addDoc(collection(db, 'voos'), data);
       fecharFormulario(); showToast("Plano de voo registado");
+    } catch { showToast("Falha", "error"); }
+  };
+
+  const handleSalvarNotam = async (e: React.FormEvent) => {
+    e.preventDefault(); if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins podem publicar.", "error");
+    if (!notamData || !notamTitulo) return showToast("Campos inválidos", "error");
+    try {
+      const data = { data: notamData, titulo: notamTitulo.toUpperCase(), mensagem: notamMensagem, autor: currentUserInfo?.nome || 'Admin' };
+      if (editingId) await updateDoc(doc(db, 'notams', editingId), data); else await addDoc(collection(db, 'notams'), data);
+      fecharFormulario(); showToast("NOTAM Publicado");
     } catch { showToast("Falha", "error"); }
   };
 
@@ -611,7 +731,7 @@ export default function Workspace() {
           display: flex; alignItems: center; gap: 0.75rem; padding: 0.75rem 1rem;
           color: #94a3b8; border: none; background: transparent; border-radius: 6px;
           cursor: pointer; text-align: left; font-weight: 500; font-size: 0.95rem;
-          transition: all 0.2s ease; border-left: 3px solid transparent;
+          transition: all 0.2s ease; border-left: 3px solid transparent; width: 100%; box-sizing: border-box;
         }
         .nav-item:hover { color: #f8fafc; background: rgba(255,255,255,0.02); }
         .nav-item.active {
@@ -630,27 +750,15 @@ export default function Workspace() {
         .desktop-header { display: flex; }
 
         .form-input {
-          padding: 0.75rem 1rem;
-          background: rgba(0, 0, 0, 0.4);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #f8fafc;
-          border-radius: 6px;
-          outline: none;
-          font-size: 0.95rem;
-          font-family: ${appleFontStack};
-          width: 100%;
-          box-sizing: border-box;
-          text-transform: inherit;
+          padding: 0.75rem 1rem; background: rgba(0, 0, 0, 0.4);
+          border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;
+          border-radius: 6px; outline: none; font-size: 0.95rem;
+          font-family: ${appleFontStack}; width: 100%; box-sizing: border-box; text-transform: inherit;
         }
         
         .form-label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: #94a3b8;
-          margin-bottom: 0.5rem;
-          text-transform: uppercase;
-          font-family: Arial, sans-serif;
-          letter-spacing: 0.05em;
+          font-size: 0.75rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.5rem;
+          text-transform: uppercase; font-family: Arial, sans-serif; letter-spacing: 0.05em;
         }
 
         .toggle-switch {
@@ -724,27 +832,71 @@ export default function Workspace() {
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flexGrow: 1 }}>
-          <button className={`nav-item ${activeTab === 'manual' ? 'active' : ''}`} onClick={() => handleMenuClick('manual')}><HelpCircle size={18} color={activeTab === 'manual' ? '#f59e0b' : '#94a3b8'} /> Manual de Uso</button>
+          <button className={`nav-item ${activeTab === 'notam' ? 'active' : ''}`} onClick={() => handleMenuClick('notam')} style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <BellRing size={18} color={activeTab === 'notam' ? '#f59e0b' : '#94a3b8'} /> NOTAM
+            </div>
+            {notams.length > 0 && (
+              <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '1px 7px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '16px' }}>{notams.length}</span>
+            )}
+          </button>
+          
           <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0.5rem' }} />
+          
+          <button className={`nav-item ${activeTab === 'regulamento' ? 'active' : ''}`} onClick={() => handleMenuClick('regulamento')}><Scale size={18} color={activeTab === 'regulamento' ? '#f59e0b' : '#94a3b8'} /> Regulamento</button>
           <button className={`nav-item ${activeTab === 'logbook' ? 'active' : ''}`} onClick={() => handleMenuClick('logbook')}><BookOpen size={18} color={activeTab === 'logbook' ? '#f59e0b' : '#94a3b8'} /> Logbook</button>
-          <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')}><Users size={18} color={activeTab === 'pilotos' ? '#f59e0b' : '#94a3b8'} /> Pilotos</button>
-          <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')}><CalendarCheck2 size={18} color={activeTab === 'agenda' ? '#f59e0b' : '#94a3b8'} /> Agenda</button>
-          <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')}><Newspaper size={18} color={activeTab === 'noticias' ? '#f59e0b' : '#94a3b8'} /> Notícias</button>
-          <button className={`nav-item ${activeTab === 'mods' ? 'active' : ''}`} onClick={() => handleMenuClick('mods')}><Link2 size={18} color={activeTab === 'mods' ? '#f59e0b' : '#94a3b8'} /> Utilitários</button>
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0.5rem' }} />
-          <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')}><Settings size={18} color={activeTab === 'config' ? '#f59e0b' : '#94a3b8'} /> Ajustes do Site</button>
+          <button className={`nav-item ${activeTab === 'meteorologia' ? 'active' : ''}`} onClick={() => handleMenuClick('meteorologia')}><Cloud size={18} color={activeTab === 'meteorologia' ? '#f59e0b' : '#94a3b8'} /> Meteorologia (METAR)</button>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+            <button className="nav-item" onClick={() => setGerenciaisAberto(!gerenciaisAberto)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#f8fafc', background: gerenciaisAberto ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Briefcase size={18} color="#f59e0b" /> Gerenciais
+              </div>
+              <ChevronDown size={16} style={{ transform: gerenciaisAberto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+            </button>
+            
+            <div style={{ 
+              display: 'flex', flexDirection: 'column', gap: '0.25rem', 
+              paddingLeft: '1rem', borderLeft: '1px solid rgba(245, 158, 11, 0.2)', 
+              marginLeft: '1.25rem', marginTop: '0.25rem',
+              overflow: 'hidden',
+              maxHeight: gerenciaisAberto ? '500px' : '0px',
+              opacity: gerenciaisAberto ? 1 : 0,
+              transition: 'all 0.3s ease-in-out'
+            }}>
+              <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={16} color={activeTab === 'pilotos' ? '#f59e0b' : '#94a3b8'} /> Pilotos</button>
+              <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={16} color={activeTab === 'agenda' ? '#f59e0b' : '#94a3b8'} /> Agenda</button>
+              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={16} color={activeTab === 'noticias' ? '#f59e0b' : '#94a3b8'} /> Notícias</button>
+              <button className={`nav-item ${activeTab === 'mods' ? 'active' : ''}`} onClick={() => handleMenuClick('mods')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Link2 size={16} color={activeTab === 'mods' ? '#f59e0b' : '#94a3b8'} /> Utilitários</button>
+            </div>
+          </div>
+
+          <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')} style={{ marginTop: '0.5rem' }}><Settings size={18} color={activeTab === 'config' ? '#f59e0b' : '#94a3b8'} /> Ajustes do Site</button>
           
           {currentUserInfo?.role === 'admin' && (
-            <button className={`nav-item ${activeTab === 'parametros' ? 'active' : ''}`} onClick={() => handleMenuClick('parametros')}><Shield size={18} color={activeTab === 'parametros' ? '#f59e0b' : '#94a3b8'} /> Parâmetros de Acesso</button>
+            <button className={`nav-item ${activeTab === 'parametros' ? 'active' : ''}`} onClick={() => handleMenuClick('parametros')}><Shield size={18} color={activeTab === 'parametros' ? '#f59e0b' : '#94a3b8'} /> Parâmetros</button>
           )}
+
+          {/* Divisor "empurrador" que encosta os próximos botões ao rodapé do ecrã */}
+          <div style={{ flexGrow: 1 }} />
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0.5rem' }} />
+
+          <button className={`nav-item ${activeTab === 'manual' ? 'active' : ''}`} onClick={() => handleMenuClick('manual')}><HelpCircle size={18} color={activeTab === 'manual' ? '#f59e0b' : '#94a3b8'} /> Manual do Sistema</button>
+
+          <button className="nav-item" onClick={() => window.open('https://discord.gg/qmd7UQ3GN', '_blank')} style={{ marginTop: '0.5rem', background: 'rgba(88, 101, 242, 0.15)', border: '1px solid rgba(88, 101, 242, 0.3)', color: '#c7d0f8' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(88, 101, 242, 0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(88, 101, 242, 0.15)'}>
+            <Headphones size={18} color="#5865F2" /> Salas de Briefing
+          </button>
         </nav>
 
-        <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
-            <Clock size={16} />
-            <span style={{ fontSize: '1.1rem', color: '#f8fafc', fontWeight: 600 }}>{horaFormatada}</span>
+        <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Clock size={16} color="#38bdf8" />
+            <span style={{ fontSize: '1.05rem', color: '#38bdf8', fontWeight: 600 }}>{horaFormatada}</span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'capitalize' }}>{dataFormatada}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Calendar size={16} color="#10b981" />
+            <span style={{ fontSize: '0.8rem', color: '#10b981', textTransform: 'capitalize', fontWeight: 500 }}>{dataFormatada}</span>
+          </div>
         </div>
       </aside>
 
@@ -753,7 +905,7 @@ export default function Workspace() {
         <div className="mobile-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '24px' }} />
-            <h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600 }}>Workspace</h1>
+            <h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600 }}>WORKSPACE</h1>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ position: 'relative' }}>
@@ -809,21 +961,227 @@ export default function Workspace() {
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Arial, sans-serif' }}>
+              {activeTab === 'regulamento' && 'REGULAMENTO OFICIAL DO EDAV'}
+              {activeTab === 'notam' && 'NOTAM - AVISOS AOS AERONAVEGANTES'}
               {activeTab === 'manual' && 'MANUAL DO SISTEMA'}
+              {activeTab === 'meteorologia' && 'METEOROLOGIA OPERACIONAL (METAR)'}
               {activeTab === 'logbook' && 'MEU DIÁRIO DE VOO'}
-              {activeTab === 'pilotos' && 'PILOTOS DA ESQUADRILHA'}
+              {activeTab === 'pilotos' && 'GERIR PILOTOS'}
               {activeTab === 'agenda' && 'AGENDA DE DEMONSTRAÇÕES'}
               {activeTab === 'noticias' && 'GERIR NOTÍCIAS'}
               {activeTab === 'mods' && 'UTILITÁRIOS E DOWNLOADS'}
               {activeTab === 'config' && 'AJUSTES GLOBAIS'}
               {activeTab === 'parametros' && 'PARÂMETROS DE ACESSO'}
             </h2>
-            {activeTab !== 'config' && activeTab !== 'parametros' && activeTab !== 'manual' && checkPermission(activeTab) && (
+            
+            {activeTab !== 'config' && activeTab !== 'parametros' && activeTab !== 'manual' && activeTab !== 'regulamento' && activeTab !== 'notam' && activeTab !== 'meteorologia' && checkPermission(activeTab) && (
               <button onClick={() => setShowForm(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
                 <Plus size={16} /> Adicionar Novo
               </button>
             )}
+
+            {activeTab === 'notam' && currentUserInfo?.role === 'admin' && (
+              <button onClick={() => setShowForm(true)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
+                <AlertOctagon size={16} /> Publicar NOTAM
+              </button>
+            )}
           </div>
+
+          {activeTab === 'meteorologia' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '800px' }}>
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
+                <p style={{ color: '#94a3b8', margin: '0 0 1.5rem 0', fontSize: '0.95rem' }}>Digite o código ICAO de qualquer aeródromo para obter o METAR atualizado em tempo real direto da rede da VATSIM.</p>
+                
+                <form onSubmit={handleBuscarMetar} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                  <div style={{ position: 'relative', flexGrow: 1 }}>
+                    <Search size={20} color="#64748b" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                      type="text" 
+                      maxLength={4}
+                      value={metarIcao} 
+                      onChange={e => setMetarIcao(e.target.value)} 
+                      placeholder="ICAO (ex: SBBR, SBRJ...)" 
+                      style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '6px', fontSize: '1rem', textTransform: 'uppercase', outline: 'none', fontFamily: appleFontStack, boxSizing: 'border-box' }} 
+                    />
+                  </div>
+                  <button type="submit" disabled={metarLoading} style={{ background: '#38bdf8', color: '#000', border: 'none', padding: '0 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: metarLoading ? 'wait' : 'pointer', transition: 'background 0.2s', opacity: metarLoading ? 0.7 : 1 }}>
+                    {metarLoading ? 'Buscando...' : 'Pesquisar'}
+                  </button>
+                </form>
+
+                {metarData && metarData.error && (
+                  <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <AlertTriangle size={20} />
+                    {metarData.error}
+                  </div>
+                )}
+
+                {metarData && !metarData.error && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    
+                    <div style={{ background: '#020617', border: '1px solid #1e293b', padding: '1.5rem', borderRadius: '8px' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>METAR Oficial ({metarData.icaoId})</h4>
+                      <p style={{ margin: 0, color: '#38bdf8', fontFamily: 'monospace', fontSize: '1.15rem', lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                        {metarData.rawOb}
+                      </p>
+                      <span style={{ display: 'block', marginTop: '1rem', color: '#64748b', fontSize: '0.75rem' }}>Decodificado às: {metarData.receiptTime}</span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Thermometer size={28} color="#ef4444" style={{ marginBottom: '0.5rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Temperatura</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>{metarData.temp !== null ? `${metarData.temp} °C` : 'N/A'}</span>
+                      </div>
+
+                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Wind size={28} color="#38bdf8" style={{ marginBottom: '0.5rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Ventos</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>
+                          {metarData.wdir !== null ? (metarData.wdir === 'VRB' ? 'VRB' : `${metarData.wdir}°`) : 'N/A'} a {metarData.wspd !== null ? `${metarData.wspd} KT` : 'N/A'}
+                        </span>
+                      </div>
+
+                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Gauge size={28} color="#10b981" style={{ marginBottom: '0.5rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Pressão (QNH)</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>{metarData.altim !== null ? metarData.altim : 'N/A'}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'regulamento' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '1000px' }}>
+              <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '3rem', fontFamily: 'Arial, sans-serif' }}>
+                <h3 style={{ marginTop: 0, color: '#f8fafc', fontSize: '1.5rem', textTransform: 'uppercase', borderBottom: '2px solid rgba(245, 158, 11, 0.5)', paddingBottom: '1rem', marginBottom: '2rem' }}>Doutrina e Normas de Conduta</h3>
+                
+                <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '1rem', marginBottom: '2.5rem' }}>
+                  A Esquadrilha da Fumaça Virtual (EDAV) opera baseada em rigorosos padrões de profissionalismo, honra e segurança, fundamentados na doutrina da Força Aérea Brasileira. A leitura e o cumprimento deste regulamento são estritamente obrigatórios para todo o corpo de voo ativo e na reserva.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  
+                  <div>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>1. DIRETRIZES GERAIS E CONDUTA</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                      1.1. O piloto representa a imagem do esquadrão dentro e fora dos servidores virtuais. Exige-se conduta ilibada, decoro e máximo respeito nos canais de comunicação.<br/>
+                      1.2. A hierarquia e as diretrizes estipuladas pelo Comando devem ser respeitadas. Ordens operacionais em ambiente de voo não são passíveis de debate até ao momento do *debriefing*.<br/>
+                      1.3. É vedado o uso do emblema oficial ou o indicativo de chamada do esquadrão em operações que desrespeitem as normas internacionais de tráfego virtual (VATSIM/IVAO).
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>2. SEGURANÇA DE VOO E DOUTRINA OPERACIONAL</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                      2.1. O ciclo da missão constitui-se obrigatoriamente de Estudo, Briefing, Voo e Debriefing. O desconhecimento dos manuais de operação não é aceite como desculpa para incidentes operacionais.<br/>
+                      2.2. A segurança da esquadrilha sobrepõe-se a qualquer exibição. A quebra de separação visual ou descida abaixo dos mínimos operacionais por indisciplina configura quebra de doutrina.<br/>
+                      2.3. A comunicação em rádio deve ser clara, concisa e aderente à fonética padronizada, minimizando ocupação desnecessária de frequência.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>3. FREQUÊNCIA, INATIVIDADE E RESERVA</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                      3.1. Espera-se do piloto ativo a presença constante nos treinos regulares acordados pela escala de voo.<br/>
+                      3.2. Pilotos que apresentem ausência recorrente ou inatividade prolongada, <strong>sem a devida justificação prévia ao Comando</strong>, serão compulsivamente movidos para o quadro da Reserva.<br/>
+                      3.3. Membros na Reserva terão os seus perfis ocultados na página pública do esquadrão, mantendo acesso apenas restrito até que seja formalizado o pedido de reativação e reavaliação operacional.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>4. REGIME DISCIPLINAR E PUNIÇÕES</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                      4.1. O não cumprimento das regras aqui firmadas sujeita o infrator às seguintes sanções, aplicadas a critério do Comando de acordo com a gravidade da infração:<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;a) Advertência Verbal no Debriefing;<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;b) Suspensão temporária da escala de voo;<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;c) Despromoção compulsiva à condição de Ala/Pendente ou ida para a Reserva;<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp;d) Exclusão definitiva dos quadros da EDAV em caso de falta grave ou reincidência contínua de insubordinação.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'notam' && (
+            <div>
+              {showForm && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
+                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AlertOctagon size={20} color="#ef4444" /> {editingId ? 'Editar NOTAM' : 'Publicar NOTAM'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                    </div>
+                    <form onSubmit={handleSalvarNotam} style={{ padding: '2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <label className="form-label">Data da Publicação</label>
+                          <CustomDatePicker value={notamData} onChange={(val) => setNotamData(val)} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <label className="form-label">Assunto / Código (Ex: MUDANÇA FREQ, ALERTA SERVER)</label>
+                          <input required type="text" value={notamTitulo} onChange={e => setNotamTitulo(e.target.value)} className="form-input" style={{ textTransform: 'uppercase', color: '#f87171', fontWeight: 600 }} placeholder="TITULO DO AVISO..." />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <label className="form-label">Mensagem do NOTAM</label>
+                          <textarea required value={notamMensagem} onChange={e => setNotamMensagem(e.target.value)} rows={5} className="form-input" style={{ resize: 'none' }} placeholder="Descreva o aviso oficial aos pilotos..." />
+                        </div>
+                      </div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#ef4444', color: '#fff', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Emitir NOTAM</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '1000px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '6px', marginBottom: '1rem' }}>
+                  <Info size={20} color="#f87171" />
+                  <span style={{ color: '#fca5a5', fontSize: '0.9rem', lineHeight: 1.4 }}><strong>Atenção:</strong> Os NOTAMs (Notice to Airmen) são avisos oficiais do Comando. A leitura é obrigatória para todos os membros antes de qualquer operação de voo.</span>
+                </div>
+
+                {notams.length === 0 ? (
+                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}>
+                    <BellRing size={48} color="#475569" style={{ margin: '0 auto 1rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum aviso emitido no momento.</p>
+                  </div>
+                ) : (
+                  notams.map((n) => (
+                    <div key={n.id} style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(239, 68, 68, 0.4)', borderLeft: '6px solid #ef4444', borderRadius: '6px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div>
+                          <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>NOTAM OFICIAL</span>
+                          <h4 style={{ margin: '0.25rem 0 0 0', color: '#f8fafc', fontSize: '1.15rem', textTransform: 'uppercase' }}>{n.titulo}</h4>
+                        </div>
+                        <span style={{ background: 'rgba(0,0,0,0.5)', padding: '0.3rem 0.6rem', borderRadius: '4px', color: '#cbd5e1', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}>{n.data}</span>
+                      </div>
+                      
+                      <p style={{ color: '#e2e8f0', margin: '0 0 1.5rem 0', lineHeight: 1.6, fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Emitido por: {n.autor}</span>
+                        
+                        {currentUserInfo?.role === 'admin' && (
+                          <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button onClick={() => handleEditarNotam(n)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={14} /> Editar</button>
+                            <button onClick={() => handleDeletarItem(n.id, 'notams', 'este NOTAM', 'notam')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={14} /> Revogar</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
           {activeTab === 'manual' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '1000px' }}>
@@ -831,26 +1189,17 @@ export default function Workspace() {
                 <h3 style={{ marginTop: 0, color: '#f59e0b', fontSize: '1.2rem', textTransform: 'uppercase' }}>Bem-vindo ao Workspace do EDAV</h3>
                 <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '0.95rem' }}>Este é o painel de comando do seu esquadrão. Aqui você pode gerir toda a informação que alimenta o site público, além de controlar os acessos internos e registrar as atividades dos pilotos. O Workspace é modular e as permissões de edição são atribuídas individualmente pelo Administrador.</p>
                 
+                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Scale size={18} color="#f59e0b" /> Regulamento E NOTAM</h4>
+                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>A leitura do Regulamento dita a doutrina do voo. O módulo de NOTAM (Notice to Airmen) permite ao comando emitir alertas vermelhos imediatos aos pilotos.</p>
+
+                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Cloud size={18} color="#f59e0b" /> Meteorologia Operacional</h4>
+                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Permite a consulta imediata do METAR de qualquer aeroporto do mundo (via rede da VATSIM). Utilize esta ferramenta no briefing antes de qualquer descolagem.</p>
+
                 <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={18} color="#f59e0b" /> Meu Diário de Voo (Logbook)</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Área dedicada ao registro operacional. Os pilotos com permissão podem lançar seus voos de treinamento, traslado ou demonstração. Selecione a aeronave utilizada, insira os códigos ICAO dos aeroportos de partida e chegada, defina o horário Zulu e altere o status para "Concluído" assim que o voo terminar.</p>
+                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Área dedicada ao registo operacional. Os pilotos com permissão podem lançar os seus voos de treino, traslado ou demonstração e alterar o status para "Concluído" assim que o voo terminar.</p>
 
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={18} color="#f59e0b" /> Pilotos da Esquadrilha</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Módulo de escalação oficial. Aqui você cadastra os pilotos ativos que serão exibidos no site público. Ao cadastrar, a escolha da "Posição na Esquadrilha" (Líder, Alas, Ferrolho) é crucial, pois ditará a ordem e o design em que o piloto aparecerá para o público.</p>
-
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CalendarCheck2 size={18} color="#f59e0b" /> Agenda de Demonstrações</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Planejamento de shows aéreos. Basta inserir o nome da cidade e a Data Zulu. Ao salvar, <strong>o sistema busca automaticamente as coordenadas geográficas via satélite</strong> e marca o ponto no mapa 3D do site. Fique à vontade para alternar o status do evento entre "Planejamento (M-PREC)", "Confirmado" ou "Cancelado".</p>
-
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Newspaper size={18} color="#f59e0b" /> Gerir Notícias</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>O blog do esquadrão. Você pode redigir comunicados, relatórios pós-voo ou avisos de recrutamento. <strong>Dica importante:</strong> Para poupar o armazenamento do banco de dados, tente fazer o upload de imagens de capa leves (recomendado abaixo de 1MB).</p>
-
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Link2 size={18} color="#f59e0b" /> Utilitários e Downloads</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Biblioteca do esquadrão. Adicione links para download de texturas oficiais, mods essenciais, manuais ou pacotes de cenários. Marque a opção "Marketplace" se o item tiver que ser adquirido diretamente dentro do simulador MSFS.</p>
-
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Settings size={18} color="#f59e0b" /> Ajustes Globais</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Nesta tela, com um simples clique você pode habilitar ou desabilitar o recebimento de formulários de recrutamento no site público. Também é aqui que se altera a grande imagem de fundo (Header) exibida tanto na página inicial quanto no fundo escurecido deste painel.</p>
-
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={18} color="#f59e0b" /> Parâmetros de Acesso (Exclusivo Admin)</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>O coração da segurança. O Comandante (Administrador) tem acesso a esta aba onde pode ver todos os usuários que entraram usando a conta Google. A partir daqui, é possível mudar cargos gerais ou liberar chaves de acesso granulares (por exemplo: permitir que o usuário X possa adicionar itens na Agenda, mas não nas Notícias).</p>
+                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={18} color="#f59e0b" /> Menu Gerenciais</h4>
+                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Módulo de escalação oficial. Agrupa os acessos para gerir os Pilotos da esquadrilha (podendo mandá-los para a reserva), publicações da secção de Notícias, links da área de Utilitários e a Agenda de Demonstrações com busca automática de coordenadas.</p>
               </div>
             </div>
           )}
@@ -999,6 +1348,22 @@ export default function Workspace() {
                             ]}
                           />
                         </div>
+
+                        {/* Sistema de Ocultar / Reserva */}
+                        <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '6px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
+                            <div className={`toggle-switch ${novoOculto ? 'active' : ''}`} onClick={() => setNovoOculto(!novoOculto)} style={{ background: novoOculto ? '#ef4444' : '#334155' }} />
+                            <EyeOff size={18} /> Enviar para a Reserva (Ocultar do site público)
+                          </label>
+                          
+                          {novoOculto && (
+                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem' }}>
+                              <label className="form-label" style={{ color: '#f87171' }}>Justificativa / Motivo da Inatividade</label>
+                              <input required type="text" value={novoJustificativa} onChange={e => setNovoJustificativa(e.target.value)} className="form-input" placeholder="Ex: Punido (Regra 3.2) / Afastamento Médico" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }} />
+                            </div>
+                          )}
+                        </div>
+
                       </div>
                       <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
                         <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
@@ -1024,14 +1389,19 @@ export default function Workspace() {
                   </div>
                 ) : (
                   pilotos.map((p) => (
-                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') ? '1.5fr 2fr 2fr 1fr' : '1.5fr 2fr 2fr') : '1fr' }}>
+                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') ? '1.5fr 2fr 2fr 1fr' : '1.5fr 2fr 2fr') : '1fr', opacity: p.oculto ? 0.6 : 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontSize: '1.25rem', fontFamily: '"PosicaoFont", sans-serif', lineHeight: 1 }}>{p.posicao}</span>
                         <span style={{ color: '#f8fafc', fontSize: '0.9rem', fontWeight: 500 }}>{getPosicaoNome(p.posicao)}</span>
                       </div>
-                      <div style={{ fontWeight: 400, color: '#e2e8f0', fontSize: '0.9rem' }}>
-                        {p.nome}
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 400, color: '#e2e8f0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {p.nome} {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>RESERVA</span>}
+                        </div>
+                        {p.oculto && p.justificativa && <span style={{ fontSize: '0.75rem', color: '#f87171', marginTop: '2px' }}>{p.justificativa}</span>}
                       </div>
+
                       <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
                         {p.cidade || 'City'} {p.uf ? `- ${p.uf}` : '- UF'}
                       </div>
@@ -1159,14 +1529,24 @@ export default function Workspace() {
                           <CustomDatePicker value={notData} onChange={(val) => setNotData(val)} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Imagem de Capa</label>
-                          <label style={{ padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '6px', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                            <ImagePlus size={18} color="#f59e0b"/> {notImagem ? 'Trocar Imagem' : 'Selecionar Imagem (Até 1MB)...'}
-                            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                          <label className="form-label">Imagem de Capa (Upload Automático)</label>
+                          <label style={{ padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '6px', fontSize: '0.95rem', cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                            {uploadProgress !== null ? (
+                              <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} color="#f59e0b" /> A enviar... {Math.round(uploadProgress)}%</>
+                            ) : (
+                              <><ImagePlus size={18} color="#f59e0b"/> {notImagem ? 'Trocar Imagem' : 'Selecionar e Enviar Imagem'}</>
+                            )}
+                            <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
                           </label>
+                          
+                          {uploadProgress !== null && (
+                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '0.5rem' }}>
+                              <div style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.2s ease' }} />
+                            </div>
+                          )}
                         </div>
                         
-                        {notImagem && (
+                        {notImagem && uploadProgress === null && (
                           <div style={{ width: '100%', height: '140px', borderRadius: '6px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(255,255,255,0.1)' }} />
                         )}
 
@@ -1177,7 +1557,7 @@ export default function Workspace() {
                       </div>
                       <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
                         <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Publicar</button>
+                        <button type="submit" disabled={uploadProgress !== null} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: uploadProgress !== null ? 'wait' : 'pointer', opacity: uploadProgress !== null ? 0.7 : 1, fontFamily: appleFontStack }}>Publicar</button>
                       </div>
                     </form>
                   </div>
@@ -1306,16 +1686,26 @@ export default function Workspace() {
 
               <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Imagem de Fundo</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Altere a imagem de cabeçalho do site (Recomendado imagens até 1MB).</p>
+                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Altere a imagem de cabeçalho do site (Upload via Firebase Storage).</p>
                 
                 {customHeader && (
                   <div style={{ height: '100px', backgroundImage: `url(${customHeader})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.1)' }} />
                 )}
+                
+                {uploadProgress !== null && activeTab === 'config' && (
+                  <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                    <div style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.2s ease' }} />
+                  </div>
+                )}
 
                 {checkPermission('header') ? (
-                  <label style={{ padding: '0.85rem 1rem', background: '#f59e0b', color: '#000', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
-                    <ImagePlus size={18} /> Atualizar Imagem
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                  <label style={{ padding: '0.85rem 1rem', background: '#f59e0b', color: '#000', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 600, cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', transition: 'background 0.2s', opacity: uploadProgress !== null ? 0.7 : 1 }} onMouseEnter={e => { if(uploadProgress === null) e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { if(uploadProgress === null) e.currentTarget.style.background = '#f59e0b'; }}>
+                    {uploadProgress !== null ? (
+                      <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Enviando Imagem...</>
+                    ) : (
+                      <><ImagePlus size={18} /> Atualizar Imagem</>
+                    )}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUploadHeader} disabled={uploadProgress !== null} />
                   </label>
                 ) : (
                   <div style={{ padding: '0.85rem 1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed' }}>
