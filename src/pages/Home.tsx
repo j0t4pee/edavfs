@@ -12,7 +12,7 @@ import L from 'leaflet';
 import { 
   Plane, ChevronRight, Map as MapIcon, 
   ShoppingCart, CheckCircle2, CalendarCheck2, Newspaper, 
-  ChevronUp, Quote, Lock, Download, Menu, X, ShieldCheck, FileText, AlertTriangle
+  ChevronUp, Quote, Download, Menu, X, ShieldCheck, FileText, AlertTriangle, User, Calendar as CalendarIcon, Phone, Gamepad2
 } from 'lucide-react';
 
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -41,8 +41,9 @@ interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: n
 interface Mod { id?: string; titulo: string; desc: string; icon: React.ReactNode; isMarketplace: boolean; buttonText: string; buttonIcon: React.ReactNode; link: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 
-const DiscordIcon = ({ size = 24, className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 127.14 96.36" fill="currentColor" className={className}>
+// Definição do Ícone do Discord
+const DiscordIcon = ({ size = 24, className = "", color = "currentColor" }: { size?: number, className?: string, color?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 127.14 96.36" fill={color} className={className}>
     <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a67.55,67.55,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
   </svg>
 );
@@ -55,9 +56,9 @@ const YoutubeIcon = ({ size = 24, className = "" }) => (
 );
 
 const A29Stat = ({ label, value }: { label: string, value: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem', background: 'rgba(3, 7, 18, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-    <span style={{ color: '#94a3b8', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>{label}</span>
-    <span style={{ color: '#f59e0b', fontFamily: 'Arial, sans-serif', fontSize: '1.1rem', fontWeight: 700 }}>{value}</span>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.25rem', padding: '1.25rem', background: 'rgba(3, 7, 18, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', backdropFilter: 'blur(8px)', transition: 'transform 0.2s', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+    <span style={{ color: '#94a3b8', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>{label}</span>
+    <span style={{ color: '#f59e0b', fontFamily: 'Arial, sans-serif', fontSize: '1.15rem', fontWeight: 700 }}>{value}</span>
   </div>
 );
 
@@ -85,7 +86,7 @@ export default function Home() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
   
-  const [plataforma, setPlataforma] = useState('PC');
+  const [plataforma, setPlataforma] = useState('');
   const [modalAlistamento, setModalAlistamento] = useState(false);
   const [modalIdadeOpen, setModalIdadeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
@@ -100,8 +101,34 @@ export default function Home() {
   const [nascimentoMes, setNascimentoMes] = useState('');
   const [nascimentoAno, setNascimentoAno] = useState('');
 
+  // Parallax Effect
+  const [offsetY, setOffsetY] = useState(0);
+  const handleScroll = () => {
+    setOffsetY(window.pageYOffset);
+    setScrolled(window.scrollY > 50);
+    setShowTopBtn(window.scrollY > 400); 
+
+    const sections = ['pilotos', 'agenda', 'aeronave', 'noticias', 'sobre', 'alistamento'];
+    let current = '';
+    
+    for (const section of sections) {
+      const el = document.getElementById(section);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= window.innerHeight / 3) {
+          current = section;
+        }
+      }
+    }
+    
+    if (window.scrollY < 100) {
+      current = '';
+    }
+
+    setActiveSection(current);
+  };
+
   useEffect(() => {
-    // Aba do navegador
     document.title = "MSFS | Esquadrilha da Fumaça";
     document.documentElement.setAttribute('data-theme', 'dark');
 
@@ -170,37 +197,11 @@ export default function Home() {
       }
     });
 
+    window.addEventListener('scroll', handleScroll);
     return () => {
       unsubPilotos(); unsubAgenda(); unsubMods(); unsubNoticias(); unsubConfig();
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-      setShowTopBtn(window.scrollY > 400); 
-
-      const sections = ['pilotos', 'agenda', 'aeronave', 'noticias', 'sobre', 'alistamento'];
-      let current = '';
-      
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 3) {
-            current = section;
-          }
-        }
-      }
-      
-      if (window.scrollY < 100) {
-        current = '';
-      }
-
-      setActiveSection(current);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -243,7 +244,7 @@ export default function Home() {
     }
 
     if (age < 17) {
-      setModalIdadeOpen(true); 
+      setModalIdadeOpen(true); // Abre o modal de aviso +17
       return;
     }
     
@@ -269,7 +270,7 @@ export default function Home() {
       });
 
       setModalAlistamento(true);
-      setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setWhatsapp('');
+      setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setWhatsapp(''); setPlataforma('');
       setNascimentoDia(''); setNascimentoMes(''); setNascimentoAno('');
     } catch (error) {
       alert("Houve um erro ao enviar sua aplicação. Verifique sua conexão e tente novamente.");
@@ -362,13 +363,33 @@ export default function Home() {
         ::-webkit-scrollbar-thumb:hover { background: #d97706; }
         
         .glass-panel, .btn-primary, .btn-outline, .btn-market, 
-        .form-control, .map-box, .modal-content, .nav-btn-highlight, .news-card, .agenda-card { 
+        .map-box, .modal-content, .nav-btn-highlight, .news-card, .agenda-card { 
           border-radius: 8px !important; 
         }
         
         .card-piloto { border-radius: 6px !important; border: none !important; } 
         
-        .form-control::placeholder { color: #94a3b8 !important; opacity: 0.7 !important; }
+        /* Estilos modernos do formulário simplificado */
+        .modern-input {
+          width: 100%;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 0.85rem 1rem;
+          color: #f8fafc;
+          border-radius: 8px;
+          font-family: Arial, sans-serif;
+          font-size: 0.95rem;
+          outline: none;
+          transition: all 0.3s ease;
+          box-sizing: border-box;
+        }
+        .modern-input:focus {
+          border-color: rgba(245, 158, 11, 0.5);
+          background: rgba(15, 23, 42, 0.8);
+          box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        .modern-input::placeholder { color: #64748b !important; opacity: 0.7 !important; }
+
         .btn-primary:hover, .nav-btn-highlight:hover { filter: none !important; transform: none !important; box-shadow: none !important; background-color: #f59e0b !important; opacity: 1 !important; color: #000 !important; }
         .section-container { padding: 6rem 2rem; max-width: 1400px; margin: 0 auto; position: relative; z-index: 10; }
         .leaflet-popup-content-wrapper { background-color: #0f172a; color: #f8fafc; border: 1px solid #1e293b; border-radius: 8px; }
@@ -423,23 +444,25 @@ export default function Home() {
         .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; }
         .modal-body-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        /* Estilos dos seletores de data de nascimento */
+        /* Estilos dos seletores de data de nascimento (Atualizados) */
         .select-wrapper { 
           position: relative; 
           flex: 1; 
-          background: rgba(0, 0, 0, 0.4); 
-          border-radius: 6px; 
-          border: 1px solid rgba(255,255,255,0.15); 
-          transition: border-color 0.3s ease;
+          background: rgba(15, 23, 42, 0.4); 
+          border-radius: 8px; 
+          border: 1px solid rgba(255,255,255,0.1); 
+          transition: all 0.3s ease;
         }
-        .select-wrapper:hover {
+        .select-wrapper:focus-within {
           border-color: rgba(245, 158, 11, 0.5);
+          background: rgba(15, 23, 42, 0.8);
+          box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
         }
         .form-select {
           width: 100%; 
           background: transparent; 
           border: none; 
-          padding: 0.8rem 1rem; 
+          padding: 0.85rem 1rem; 
           color: #f8fafc; 
           font-family: Arial, sans-serif; 
           font-size: 0.95rem;
@@ -457,6 +480,34 @@ export default function Home() {
           top: 50%;
           transform: translateY(-50%);
           pointer-events: none;
+        }
+
+        .platform-btn {
+          flex: 1;
+          padding: 1rem;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          color: #94a3b8;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          transition: all 0.3s ease;
+          font-family: Arial, sans-serif;
+          font-weight: 600;
+          font-size: 0.9rem;
+          letter-spacing: 0.05em;
+        }
+        .platform-btn.active {
+          background: rgba(245, 158, 11, 0.1);
+          border-color: rgba(245, 158, 11, 0.5);
+          color: #f59e0b;
+        }
+        .platform-btn:hover:not(.active) {
+          border-color: rgba(255,255,255,0.2);
+          color: #f8fafc;
         }
 
         @media (max-width: 900px) {
@@ -517,8 +568,8 @@ export default function Home() {
         )}
       </div>
 
-      <section className="hero" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.9 }} />
+      <section className="hero" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.9, transform: `translateY(${offsetY * 0.4}px)` }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(11, 17, 33, 0.1) 0%, rgba(11, 17, 33, 0.6) 60%, #0b1121 100%)', zIndex: 1 }} />
       </section>
 
@@ -682,20 +733,35 @@ export default function Home() {
         </section>
       </div>
 
+      {/* Secção do A-29 com Parallax Effect e Conteúdo Centralizado */}
       <div style={{ backgroundColor: '#0b1121', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${a29Image})`, backgroundSize: 'contain', backgroundPosition: 'center right', backgroundRepeat: 'no-repeat', opacity: 0.4, zIndex: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0b1121 20%, transparent 60%, #0b1121 95%)', zIndex: 0 }} />
-        <section id="aeronave" className="section-container" style={{ padding: '6rem 2rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          backgroundImage: `url(${a29Image})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center right', 
+          backgroundRepeat: 'no-repeat', 
+          opacity: 0.6, 
+          zIndex: 0,
+          transform: `translateY(${(offsetY - 2000) * 0.15}px)`
+        }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(3,7,18,0.95) 0%, rgba(3,7,18,0.7) 40%, transparent 100%)', zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #030712 0%, transparent 20%, transparent 80%, #030712 100%)', zIndex: 0 }} />
+        
+        <section id="aeronave" className="section-container" style={{ padding: '8rem 2rem', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <SectionHeader title="A-29 Super Tucano" />
-          <p style={{ fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', marginBottom: '3.5rem', textAlign: 'justify', maxWidth: '900px', margin: '0 auto 3.5rem auto', fontFamily: 'Arial, sans-serif', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+          <p style={{ fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', marginBottom: '4rem', textAlign: 'center', maxWidth: '800px', margin: '0 auto 4rem auto', fontFamily: 'Arial, sans-serif', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
             O Embraer EMB-314 Super Tucano, também designado como A-29, é uma aeronave turboélice de ataque leve e treinamento avançado. Reconhecido mundialmente por sua robustez, versatilidade e alta tecnologia, é o avião oficial utilizado pela Esquadrilha da Fumaça para realizar manobras de tirar o fôlego nos céus do Brasil e do mundo.
           </p>
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
-              <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <Plane size={20} color="#f59e0b" /> Geral
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', width: '100%' }}>
+                <Plane size={24} color="#f59e0b" />
+                <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Geral</h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%' }}>
                 <A29Stat label="Fabricante" value="Embraer" />
                 <A29Stat label="Tripulação" value="2 Pilotos" />
                 <A29Stat label="Motorização" value="PT6A-68C" />
@@ -703,11 +769,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
-              <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <Plane size={20} color="#f59e0b" /> Dimensões
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', width: '100%' }}>
+                <Plane size={24} color="#f59e0b" />
+                <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dimensões</h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%' }}>
                 <A29Stat label="Comprimento" value="11,38 m" />
                 <A29Stat label="Envergadura" value="11,14 m" />
                 <A29Stat label="Altura" value="3,97 m" />
@@ -715,11 +782,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
-              <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <Plane size={20} color="#f59e0b" /> Desempenho
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', width: '100%' }}>
+                <Plane size={24} color="#f59e0b" />
+                <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Desempenho</h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', width: '100%' }}>
                 <A29Stat label="Vel. Máxima" value="593 km/h" />
                 <A29Stat label="Razão Subida" value="1.440 m/min" />
                 <A29Stat label="Teto Serviço" value="10.670 m" />
@@ -780,66 +848,97 @@ export default function Home() {
         <div style={{ backgroundColor: '#030712' }}>
           <section id="alistamento" className="section-container" style={{ paddingBottom: '3rem' }}>
             <SectionHeader title="Alistamento" />
-            <div className="glass-panel alistamento-box responsive-grid" style={{ padding: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', background: 'rgba(11, 17, 33, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="glass-panel alistamento-box responsive-grid" style={{ padding: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '4rem', background: 'rgba(11, 17, 33, 0.4)', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+              
               <div>
-                <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Ingresso e Doutrina</h3>
-                <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.6', fontFamily: 'Arial, sans-serif', marginBottom: '1.5rem', textAlign: 'justify' }}>
+                <h3 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ingresso e Doutrina</h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontFamily: 'Arial, sans-serif', marginBottom: '2rem', textAlign: 'justify' }}>
                   O ingresso na Esquadrilha da Fumaça FS não é direto. Seguindo os passos da aviação real, nossos pilotos são forjados através de um processo rigoroso. Todos os candidatos ingressam primeiramente através da <strong>FAB FS</strong> e passam pelo treinamento na <strong>AFA FS (Academia da Força Aérea Virtual)</strong>. Somente os pilotos que demonstram excelência, disciplina, perícia em voo de formação e espírito de corpo são selecionados para integrar a Fumaça.
                 </p>
-                <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#f59e0b', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Requisitos Mínimos</h4>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Ter 17 anos de idade completos (+17).</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Possuir cópia original do Microsoft Flight Simulator 2020.</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Uso obrigatório de periféricos de voo (Joystick, Yoke ou HOTAS).</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Disponibilidade para treinamento e Discord ativo.</span></li>
-                </ul>
+                <div style={{ padding: '1.5rem', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h4 style={{ fontSize: '1.05rem', marginBottom: '1.25rem', color: '#f59e0b', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle2 size={18} /> Requisitos Mínimos</h4>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.9rem' }}><div style={{ marginTop: '2px', color: '#f59e0b' }}><ChevronRight size={16} /></div><span style={{ fontWeight: 400, lineHeight: '1.5', fontFamily: 'Arial, sans-serif' }}>Ter 17 anos de idade completos (+17).</span></li>
+                    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.9rem' }}><div style={{ marginTop: '2px', color: '#f59e0b' }}><ChevronRight size={16} /></div><span style={{ fontWeight: 400, lineHeight: '1.5', fontFamily: 'Arial, sans-serif' }}>Possuir cópia original do Microsoft Flight Simulator 2020.</span></li>
+                    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.9rem' }}><div style={{ marginTop: '2px', color: '#f59e0b' }}><ChevronRight size={16} /></div><span style={{ fontWeight: 400, lineHeight: '1.5', fontFamily: 'Arial, sans-serif' }}>Uso obrigatório de periféricos de voo (Joystick, Yoke ou HOTAS).</span></li>
+                    <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.9rem' }}><div style={{ marginTop: '2px', color: '#f59e0b' }}><ChevronRight size={16} /></div><span style={{ fontWeight: 400, lineHeight: '1.5', fontFamily: 'Arial, sans-serif' }}>Disponibilidade para treinamento regular e Discord ativo.</span></li>
+                  </ul>
+                </div>
               </div>
-              <form onSubmit={submitAlistamento} style={{ width: '100%' }}>
-                <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Nome Completo</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Seu nome real" value={nome} onChange={e => setNome(e.target.value)} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Nickname</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Como gosta de ser chamado" value={nickname} onChange={e => setNickname(e.target.value)} /></div>
+
+              <form onSubmit={submitAlistamento} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 600 ? '1fr 1fr' : '1fr', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>Nome Completo</label>
+                    <input required type="text" className="modern-input" placeholder="Seu nome real" value={nome} onChange={e => setNome(e.target.value)} />
+                  </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Data de Nascimento (+17)</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <div className="select-wrapper">
-                        <select required className="form-select" value={nascimentoDia} onChange={e => setNascimentoDia(e.target.value)}>
-                          <option value="" disabled>Dia</option>
-                          {Array.from({length: 31}, (_, i) => i + 1).map(d => <option key={d} value={d}>{String(d).padStart(2, '0')}</option>)}
-                        </select>
-                      </div>
-                      <div className="select-wrapper">
-                        <select required className="form-select" value={nascimentoMes} onChange={e => setNascimentoMes(e.target.value)}>
-                          <option value="" disabled>Mês</option>
-                          {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
-                        </select>
-                      </div>
-                      <div className="select-wrapper">
-                        <select required className="form-select" value={nascimentoAno} onChange={e => setNascimentoAno(e.target.value)}>
-                          <option value="" disabled>Ano</option>
-                          {Array.from({length: 60}, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', color: '#f87171', marginTop: '0.25rem', fontStyle: 'italic', fontFamily: 'Arial, sans-serif' }}>*Caso necessário, será exigido documento oficial para comprovação.</span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>WhatsApp</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="(00) 00000-0000" value={whatsapp} onChange={handlePhoneChange} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>ID no Discord</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="usuario#1234 ou @usuario" value={discord} onChange={e => setDiscord(e.target.value)} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Experiência de Voo / Aeronave</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Ex: 50h no Cessna 152, 10h no A-29" value={experiencia} onChange={e => setExperiencia(e.target.value)} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', gridColumn: '1 / -1', marginTop: '0.5rem' }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Sua Plataforma (MSFS 2020)</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                      {['PC', 'Console'].map(plat => (
-                        <div key={plat} onClick={() => setPlataforma(plat)} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: plataforma === plat ? '2px solid #f59e0b' : '2px solid transparent', color: plataforma === plat ? '#f8fafc' : '#94a3b8', fontWeight: plataforma === plat ? 600 : 400, transition: 'all 0.3s ease', fontSize: '0.85rem', marginBottom: '-1px', fontFamily: 'Arial, sans-serif' }}>{plat}</div>
-                      ))}
-                    </div>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>Nickname no Discord</label>
+                    <input required type="text" className="modern-input" placeholder="Como gosta de ser chamado" value={nickname} onChange={e => setNickname(e.target.value)} />
                   </div>
                 </div>
-                <button type="submit" disabled={isSubmitting} className="btn-primary font-title" style={{ width: '100%', marginTop: '2.5rem', letterSpacing: '0.2em', padding: '1rem', background: '#f59e0b', color: '#000', fontWeight: 700, borderRadius: '8px', fontFamily: '"NormalFont", sans-serif', cursor: isSubmitting ? 'wait' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
-                  {isSubmitting ? 'ENVIANDO...' : 'ENVIAR APLICAÇÃO'}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>Data de Nascimento (+17)</label>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div className="select-wrapper">
+                      <select required className="form-select" value={nascimentoDia} onChange={e => setNascimentoDia(e.target.value)}>
+                        <option value="" disabled>Dia</option>
+                        {Array.from({length: 31}, (_, i) => i + 1).map(d => <option key={d} value={d}>{String(d).padStart(2, '0')}</option>)}
+                      </select>
+                    </div>
+                    <div className="select-wrapper">
+                      <select required className="form-select" value={nascimentoMes} onChange={e => setNascimentoMes(e.target.value)}>
+                        <option value="" disabled>Mês</option>
+                        {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
+                      </select>
+                    </div>
+                    <div className="select-wrapper">
+                      <select required className="form-select" value={nascimentoAno} onChange={e => setNascimentoAno(e.target.value)}>
+                        <option value="" disabled>Ano</option>
+                        {Array.from({length: 60}, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem', fontStyle: 'italic', fontFamily: 'Arial, sans-serif' }}><span style={{color: '#f87171'}}>*</span> Caso necessário, será exigido documento oficial para comprovação.</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 600 ? '1fr 1fr' : '1fr', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>WhatsApp</label>
+                    <input required type="text" className="modern-input" placeholder="(00) 00000-0000" value={whatsapp} onChange={handlePhoneChange} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <DiscordIcon size={12} color="#94a3b8" /> ID no Discord
+                    </label>
+                    <input required type="text" className="modern-input" placeholder="usuario#1234 ou @usuario" value={discord} onChange={e => setDiscord(e.target.value)} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>Experiência de Voo / Aeronave</label>
+                  <input required type="text" className="modern-input"  value={experiencia} onChange={e => setExperiencia(e.target.value)} />
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Arial, sans-serif' }}>Sua Plataforma (MSFS 2020)</label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {['PC', 'Console'].map(plat => (
+                      <button key={plat} type="button" onClick={() => setPlataforma(plat)} className={`platform-btn ${plataforma === plat ? 'active' : ''}`}>
+                        {plat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className="btn-primary font-title" style={{ width: '100%', marginTop: '1rem', letterSpacing: '0.15em', padding: '1.25rem', background: '#f59e0b', color: '#000', fontWeight: 700, borderRadius: '8px', fontFamily: '"NormalFont", sans-serif', cursor: isSubmitting ? 'wait' : 'pointer', opacity: isSubmitting ? 0.7 : 1, fontSize: '1.05rem', boxShadow: '0 10px 20px -10px rgba(245, 158, 11, 0.5)' }}>
+                  {isSubmitting ? 'PROCESSANDO...' : 'ENVIAR APLICAÇÃO PARA A FAB FS'}
                 </button>
               </form>
+
             </div>
           </section>
         </div>
@@ -923,9 +1022,6 @@ export default function Home() {
                 <p style={{ color: '#64748b', fontSize: '0.65rem', lineHeight: 1.6, margin: 0, fontFamily: 'Arial, sans-serif', textAlign: 'justify' }}>
                   <strong>AVISO LEGAL:</strong> A Esquadrilha da Fumaça FS é uma organização civil e independente, voltada exclusivamente à simulação de voo e esporte eletrônico (e-sports) no software Microsoft Flight Simulator. <strong>Não possuímos nenhum tipo de vínculo institucional, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB)</strong> ou com o Esquadrão de Demonstração Aérea (EDA) oficial. Logotipos e insígnias inspirados são utilizados estritamente em ambiente de simulação e lazer, visando homenagear a aviação brasileira.
                 </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap' }}>
-                <span onClick={() => window.location.href = '/login'} style={{ cursor: 'pointer', color: '#94a3b8', opacity: 0.1, transition: 'opacity 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0.1'}><Lock size={12} /></span>
               </div>
             </div>
           </div>
