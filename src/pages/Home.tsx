@@ -36,7 +36,7 @@ const getMarkerIcon = (status: string) => {
   });
 };
 
-interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; }
+interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; oculto?: boolean; }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; tipo: string; }
 interface Mod { id?: string; titulo: string; desc: string; icon: React.ReactNode; isMarketplace: boolean; buttonText: string; buttonIcon: React.ReactNode; link: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
@@ -85,18 +85,24 @@ export default function Home() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
   
-  const [simulador, setSimulador] = useState('MSFS 2020');
+  const [plataforma, setPlataforma] = useState('PC');
   const [modalAlistamento, setModalAlistamento] = useState(false);
+  const [modalIdadeOpen, setModalIdadeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [nome, setNome] = useState('');
   const [nickname, setNickname] = useState('');
   const [discord, setDiscord] = useState('');
   const [experiencia, setExperiencia] = useState('');
-  const [idade, setIdade] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  
+  // Datas de Nascimento
+  const [nascimentoDia, setNascimentoDia] = useState('');
+  const [nascimentoMes, setNascimentoMes] = useState('');
+  const [nascimentoAno, setNascimentoAno] = useState('');
 
   useEffect(() => {
-    document.title = "MSFS | Fumaça Virtual";
+    // Aba do navegador
+    document.title = "MSFS | Esquadrilha da Fumaça";
     document.documentElement.setAttribute('data-theme', 'dark');
 
     let metaDesc = document.querySelector('meta[name="description"]');
@@ -214,12 +220,6 @@ export default function Home() {
     setLegalModalOpen(true);
   };
 
-  const handleIdadeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 2) val = val.slice(0, 2);
-    setIdade(val);
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, '');
     if (val.length > 11) val = val.slice(0, 11);
@@ -230,7 +230,22 @@ export default function Home() {
 
   const submitAlistamento = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!simulador) { alert("Por favor, selecione qual o seu simulador."); return; }
+    if(!plataforma) { alert("Por favor, selecione qual a sua plataforma."); return; }
+    if(!nascimentoDia || !nascimentoMes || !nascimentoAno) { alert("Por favor, preencha sua data de nascimento completa."); return; }
+    
+    // Validação da Idade Mínima (+17) a partir da data de nascimento
+    const birthDate = new Date(parseInt(nascimentoAno), parseInt(nascimentoMes) - 1, parseInt(nascimentoDia));
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 17) {
+      setModalIdadeOpen(true); 
+      return;
+    }
     
     setIsSubmitting(true);
 
@@ -245,16 +260,17 @@ export default function Home() {
           _subject: "Novo Alistamento Recebido - EDAV MSFS",
           Nome: nome,
           Nickname: nickname,
-          Idade: idade,
+          "Data de Nascimento": `${nascimentoDia.padStart(2, '0')}/${nascimentoMes.padStart(2, '0')}/${nascimentoAno}`,
           WhatsApp: whatsapp,
           Discord: discord,
           Experiencia: experiencia,
-          Simulador: simulador
+          Plataforma: plataforma
         })
       });
 
       setModalAlistamento(true);
-      setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setIdade(''); setWhatsapp('');
+      setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setWhatsapp('');
+      setNascimentoDia(''); setNascimentoMes(''); setNascimentoAno('');
     } catch (error) {
       alert("Houve um erro ao enviar sua aplicação. Verifique sua conexão e tente novamente.");
       console.error(error);
@@ -277,15 +293,15 @@ export default function Home() {
       subtitle: "Como tratamos seus dados e protegemos sua navegação.",
       body: (
         <>
-          <p>Esta Política descreve como coletamos, usamos e protegemos os dados no portal do Esquadrão de Demonstração Aérea Virtual (EDAV MSFS). Ao utilizar este portal, você concorda com estas práticas.</p>
+          <p>Esta Política descreve como coletamos, usamos e protegemos os dados no portal da Esquadrilha da Fumaça FS. Ao utilizar este portal, você concorda com estas práticas.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>1. BASE LEGAL</h4>
           <p>O tratamento de dados pessoais segue a Lei 13.709/2018 (LGPD), a Lei 12.965/2014 (Marco Civil da Internet) e demais normas aplicáveis.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>2. DADOS COLETADOS</h4>
-          <p>Podemos coletar dados fornecidos voluntariamente por você (como nome, nickname, idade e contatos via formulário de alistamento) e dados técnicos de navegação (como endereço IP e cookies não identificáveis) para viabilizar os serviços, segurança e contato interno.</p>
+          <p>Podemos coletar dados fornecidos voluntariamente por você (como nome, nickname, data de nascimento e contatos via formulário de alistamento) e dados técnicos de navegação (como endereço IP e cookies não identificáveis) para viabilizar os serviços, segurança e contato interno.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>3. FINALIDADES</h4>
           <p>Utilizamos os dados para avaliação de novos membros (alistamento), comunicação institucional, moderação e melhoria da experiência do portal.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>4. COMPARTILHAMENTO</h4>
-          <p>Dados jamais serão vendidos ou compartilhados com terceiros. O acesso é restrito exclusivamente ao Comando do EDAV MSFS para fins operacionais da simulação.</p>
+          <p>Dados jamais serão vendidos ou compartilhados com terceiros. O acesso é restrito exclusivamente ao Comando para fins operacionais da simulação.</p>
         </>
       )
     },
@@ -294,13 +310,13 @@ export default function Home() {
       subtitle: "Regras de utilização do portal e serviços.",
       body: (
         <>
-          <p>Bem-vindo ao EDAV MSFS. Este é um projeto de simulação sem fins lucrativos.</p>
+          <p>Bem-vindo à Esquadrilha da Fumaça FS. Este é um projeto de simulação sem fins lucrativos.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>1. ACEITAÇÃO</h4>
           <p>Ao acessar o portal ou enviar um formulário de alistamento, você concorda em cumprir estes termos e as diretrizes da comunidade.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>2. REGRAS DE CONDUTA</h4>
-          <p>O EDAV exige respeito mútuo, profissionalismo virtual e dedicação. Não toleramos comportamentos tóxicos, ofensas ou uso de cheats/hacks nos simuladores.</p>
+          <p>Exigimos respeito mútuo, profissionalismo virtual e dedicação. Não toleramos comportamentos tóxicos, ofensas ou uso de cheats/hacks nos simuladores.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>3. RESPONSABILIDADES E VÍNCULOS</h4>
-          <p>O EDAV MSFS não possui qualquer vínculo, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB) ou qualquer entidade militar real. Somos um grupo de entusiastas utilizando softwares de entretenimento.</p>
+          <p>Este esquadrão não possui qualquer vínculo, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB) ou qualquer entidade militar real. Somos um grupo de entusiastas utilizando softwares de entretenimento.</p>
         </>
       )
     },
@@ -324,13 +340,13 @@ export default function Home() {
       subtitle: "Direitos autorais e afiliações.",
       body: (
         <>
-          <p>O EDAV MSFS é uma organização virtual sem fins lucrativos criada por entusiastas da aviação.</p>
+          <p>Somos uma organização virtual sem fins lucrativos criada por entusiastas da aviação militar virtual.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>1. IMAGENS E DIREITOS AUTORAIS</h4>
           <p>Algumas das imagens e recursos utilizados neste portal foram retirados da internet e podem pertencer a terceiros, sendo utilizados exclusivamente em caráter ilustrativo e não-comercial. Caso você seja o criador ou proprietário de algum recurso gráfico aqui exibido e deseje os devidos créditos ou a remoção do mesmo, por favor entre em contato conosco e atenderemos prontamente.</p>
-          <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>2. NÃO ASSOCIAÇÕES E SEM VINCULOS</h4>
-          <p><strong>Deixamos claro que não possuímos qualquer filiação, vínculo oficial ou associação com o Esquadrão de Demonstração Aérea Virtual (EDAV Oficial).</strong> Recomendamos e convidamos todos os entusiastas a conhecerem e visitarem o belíssimo projeto oficial em <a href="https://www.edav.com.br/" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 'bold' }}>www.edav.com.br</a>.</p>
+          <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>2. AFILIAÇÃO INSTITUCIONAL</h4>
+          <p><strong>Deixamos claro que não possuímos qualquer filiação, vínculo oficial ou associação com a FAB, nem com a Esquadrilha da Fumaça Virtual (EDAV Oficial - pioneiros no Brasil).</strong> Recomendamos e convidamos todos os entusiastas a conhecerem e visitarem o belíssimo projeto oficial em <a href="https://www.edav.com.br/" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 'bold' }}>www.edav.com.br</a>.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem' }}>3. RESPEITO À IDENTIDADE</h4>
-          <p>Temos o mais profundo e sincero respeito pela imagem, pela história e pela identidade da Esquadrilha da Fumaça real e do esquadrão virtual original. O nosso objetivo primordial é apenas homenagear a aviação de alta performance, simulando as manobras no Microsoft Flight Simulator em um ambiente de simulação sadio e respeitosa.</p>
+          <p>Temos o mais profundo e sincero respeito pela imagem, pela história e pela identidade da Esquadrilha da Fumaça real e de nossos "irmãos mais velhos" da aviação virtual. O nosso objetivo primordial é apenas homenagear a aviação de alta performance, simulando manobras no Microsoft Flight Simulator em um ambiente de diversão sadia e respeitosa.</p>
         </>
       )
     }
@@ -378,36 +394,25 @@ export default function Home() {
 
         .desktop-nav { display: flex; align-items: center; gap: 1.5rem; }
         
+        /* Modificação no menu (Itálico e sem traço animado) */
         .nav-link {
-          position: relative;
           color: #94a3b8;
           text-decoration: none;
           font-weight: 400; 
           font-size: 0.95rem; 
           text-transform: uppercase;
           font-family: "NormalFont", sans-serif;
+          font-style: italic;
           transition: color 0.3s ease;
-          padding-bottom: 4px;
           cursor: pointer;
         }
         .nav-link:hover { color: #f8fafc; }
-        .nav-link::after {
-          content: '';
-          position: absolute;
-          width: 0;
-          height: 1px; 
-          bottom: 0;
-          left: 0;
-          background-color: #f59e0b;
-          transition: width 0.3s ease;
-        }
-        .nav-link:hover::after, .nav-link.active::after { width: 100%; }
         .nav-link.active { color: #f59e0b; }
 
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(3, 7, 18, 0.98); backdrop-filter: blur(10px); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; transform: translateY(-100%); transition: transform 0.3s ease; }
         .mobile-menu.open { transform: translateY(0); }
-        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.25rem; text-decoration: none; font-weight: 400; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; transition: color 0.3s ease; cursor: pointer; }
+        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.25rem; text-decoration: none; font-weight: 400; text-transform: uppercase; letter-spacing: 0.1em; font-family: "NormalFont", sans-serif; font-style: italic; transition: color 0.3s ease; cursor: pointer; }
         .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #f59e0b; }
         
         .legal-tab { background: transparent; border: 1px solid #1e293b; color: #94a3b8; padding: 0.6rem 1.25rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-family: "NormalFont", sans-serif; transition: all 0.3s ease; font-size: 0.85rem; text-transform: uppercase; }
@@ -417,6 +422,42 @@ export default function Home() {
         .modal-body-scroll::-webkit-scrollbar-track { background: #0b1121; }
         .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; }
         .modal-body-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Estilos dos seletores de data de nascimento */
+        .select-wrapper { 
+          position: relative; 
+          flex: 1; 
+          background: rgba(0, 0, 0, 0.4); 
+          border-radius: 6px; 
+          border: 1px solid rgba(255,255,255,0.15); 
+          transition: border-color 0.3s ease;
+        }
+        .select-wrapper:hover {
+          border-color: rgba(245, 158, 11, 0.5);
+        }
+        .form-select {
+          width: 100%; 
+          background: transparent; 
+          border: none; 
+          padding: 0.8rem 1rem; 
+          color: #f8fafc; 
+          font-family: Arial, sans-serif; 
+          font-size: 0.95rem;
+          outline: none;
+          cursor: pointer;
+          appearance: none;
+        }
+        .form-select option { background: #0f172a; color: #f8fafc; }
+        .select-wrapper::after {
+          content: '▼';
+          font-size: 0.7rem;
+          color: #f59e0b;
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+        }
 
         @media (max-width: 900px) {
           .desktop-nav { display: none !important; }
@@ -440,7 +481,7 @@ export default function Home() {
             <img src={logoImage} alt="EDAV Logo" style={{ height: '65px', width: 'auto', display: 'block' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center' }}>
               <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
-                ESQUADRILHA DA FUMAÇA VIRTUAL
+                ESQUADRILHA DA FUMAÇA FS
               </span>
               <span style={{ fontFamily: '"NormalFont", sans-serif', fontWeight: 600, fontSize: '0.65rem', background: '#38bdf8', color: '#030712', fontStyle: 'italic', padding: '2px 8px', alignSelf: 'flex-start', letterSpacing: '0.15em', lineHeight: 1.1, transform: 'skewX(-12deg)', display: 'inline-block', marginLeft: '4px' }}>
                 MICROSOFT FLIGHT SIMULATOR
@@ -455,7 +496,7 @@ export default function Home() {
             <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
             <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>Sobre</span>
             {alistamentoAberto && (
-              <span onClick={() => scrollToSection('alistamento')} className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ cursor: 'pointer', backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', borderRadius: '5px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Alistamento</span>
+              <span onClick={() => scrollToSection('alistamento')} className={`nav-btn-highlight ${activeSection === 'alistamento' ? 'active' : ''}`} style={{ cursor: 'pointer', backgroundColor: '#f59e0b', color: '#000', padding: '0.5rem 1.5rem', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', borderRadius: '5px', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase', fontStyle: 'italic' }}>Alistamento</span>
             )}
           </div>
 
@@ -500,6 +541,9 @@ export default function Home() {
                   case '7': role = 'ISOLADO'; break;
                   default: role = `ALA ${piloto.posicao}`;
                 }
+                
+                if (piloto.oculto) return null; // Não exibe pilotos na reserva
+                
                 return (
                   <div key={index} className="card-piloto" style={{ 
                     background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(3, 7, 18, 0.9) 100%)', 
@@ -639,15 +683,15 @@ export default function Home() {
       </div>
 
       <div style={{ backgroundColor: '#0b1121', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${a29Image})`, backgroundSize: 'contain', backgroundPosition: 'center right', backgroundRepeat: 'no-repeat', opacity: 0.15, zIndex: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0b1121 10%, transparent 50%, #0b1121 90%)', zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${a29Image})`, backgroundSize: 'contain', backgroundPosition: 'center right', backgroundRepeat: 'no-repeat', opacity: 0.4, zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0b1121 20%, transparent 60%, #0b1121 95%)', zIndex: 0 }} />
         <section id="aeronave" className="section-container" style={{ padding: '6rem 2rem', position: 'relative', zIndex: 1 }}>
           <SectionHeader title="A-29 Super Tucano" />
-          <p style={{ fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', marginBottom: '3.5rem', textAlign: 'justify', maxWidth: '900px', margin: '0 auto 3.5rem auto', fontFamily: 'Arial, sans-serif' }}>
+          <p style={{ fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', marginBottom: '3.5rem', textAlign: 'justify', maxWidth: '900px', margin: '0 auto 3.5rem auto', fontFamily: 'Arial, sans-serif', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
             O Embraer EMB-314 Super Tucano, também designado como A-29, é uma aeronave turboélice de ataque leve e treinamento avançado. Reconhecido mundialmente por sua robustez, versatilidade e alta tecnologia, é o avião oficial utilizado pela Esquadrilha da Fumaça para realizar manobras de tirar o fôlego nos céus do Brasil e do mundo.
           </p>
           <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            <div className="glass-panel" style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
               <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <Plane size={20} color="#f59e0b" /> Geral
               </h4>
@@ -659,7 +703,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="glass-panel" style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
               <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <Plane size={20} color="#f59e0b" /> Dimensões
               </h4>
@@ -671,7 +715,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="glass-panel" style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+            <div className="glass-panel" style={{ background: 'rgba(11, 17, 33, 0.7)', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}>
               <h4 style={{ fontFamily: '"NormalFont", sans-serif', color: '#f8fafc', fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <Plane size={20} color="#f59e0b" /> Desempenho
               </h4>
@@ -719,7 +763,7 @@ export default function Home() {
           <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
             <div style={{ padding: '0 1rem', textAlign: 'justify' }}>
               <p style={{ fontWeight: 300, fontSize: '1.15rem', letterSpacing: '0.03em', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: 'Arial, sans-serif' }}>
-                O <strong style={{ color: '#f59e0b', fontWeight: 500 }}>EDAV MSFS</strong> (Esquadrão de Demonstração Aérea Virtual) nasce da paixão pela aviação e pelo voo em formação. Utilizando o Microsoft Flight Simulator, buscamos representar com excelência, precisão e profissionalismo as manobras e a doutrina da Esquadrilha da Fumaça real. Nossa equipe é formada por entusiastas e pilotos virtuais dedicados ao treinamento contínuo, elevando a simulação a um novo patamar de imersão e realismo.
+                A <strong style={{ color: '#f59e0b', fontWeight: 500 }}>Esquadrilha da Fumaça FS</strong> nasce da paixão pela aviação e pelo voo em formação. Utilizando o Microsoft Flight Simulator, buscamos representar com excelência, precisão e profissionalismo as manobras e a doutrina da Esquadrilha da Fumaça real. Nossa equipe é formada por entusiastas e pilotos virtuais dedicados ao treinamento contínuo, elevando a simulação a um novo patamar de imersão e realismo.
               </p>
             </div>
             <div className="glass-panel" style={{ padding: '1.5rem 2.5rem', background: 'linear-gradient(to right, rgba(245, 158, 11, 0.05), transparent)', borderLeft: '4px solid #f59e0b', borderTop: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', maxWidth: '900px', margin: '0 auto' }}>
@@ -738,27 +782,56 @@ export default function Home() {
             <SectionHeader title="Alistamento" />
             <div className="glass-panel alistamento-box responsive-grid" style={{ padding: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', background: 'rgba(11, 17, 33, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div>
-                <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Requisitos Oficiais</h3>
+                <h3 style={{ fontSize: '1.4rem', marginBottom: '1.5rem', color: '#f8fafc', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Ingresso e Doutrina</h3>
+                <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.6', fontFamily: 'Arial, sans-serif', marginBottom: '1.5rem', textAlign: 'justify' }}>
+                  O ingresso na Esquadrilha da Fumaça FS não é direto. Seguindo os passos da aviação real, nossos pilotos são forjados através de um processo rigoroso. Todos os candidatos ingressam primeiramente através da <strong>FAB FS</strong> e passam pelo treinamento na <strong>AFA FS (Academia da Força Aérea Virtual)</strong>. Somente os pilotos que demonstram excelência, disciplina, perícia em voo de formação e espírito de corpo são selecionados para integrar a Fumaça.
+                </p>
+                <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#f59e0b', fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Requisitos Mínimos</h4>
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 2rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Possuir cópia original do Microsoft Flight Simulator.</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Uso obrigatório de periféricos adequados (Joystick ou HOTAS).</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Disponibilidade para treinamentos nas Terças e Quintas (20h - 22h).</span></li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Microfone de boa qualidade e conta ativa no Discord.</span></li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Ter 17 anos de idade completos (+17).</span></li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Possuir cópia original do Microsoft Flight Simulator 2020.</span></li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Uso obrigatório de periféricos de voo (Joystick, Yoke ou HOTAS).</span></li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#cbd5e1', fontSize: '0.85rem' }}><div style={{ opacity: 0.8, color: '#f59e0b' }}><ChevronRight size={14} /></div><span style={{ fontWeight: 300, lineHeight: '1.6', fontFamily: 'Arial, sans-serif' }}>Disponibilidade para treinamento e Discord ativo.</span></li>
                 </ul>
               </div>
               <form onSubmit={submitAlistamento} style={{ width: '100%' }}>
                 <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Nome Completo</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Seu nome real" value={nome} onChange={e => setNome(e.target.value)} /></div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Nickname</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Como gosta de ser chamado" value={nickname} onChange={e => setNickname(e.target.value)} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Idade</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Sua idade" value={idade} onChange={handleIdadeChange} /></div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Data de Nascimento (+17)</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className="select-wrapper">
+                        <select required className="form-select" value={nascimentoDia} onChange={e => setNascimentoDia(e.target.value)}>
+                          <option value="" disabled>Dia</option>
+                          {Array.from({length: 31}, (_, i) => i + 1).map(d => <option key={d} value={d}>{String(d).padStart(2, '0')}</option>)}
+                        </select>
+                      </div>
+                      <div className="select-wrapper">
+                        <select required className="form-select" value={nascimentoMes} onChange={e => setNascimentoMes(e.target.value)}>
+                          <option value="" disabled>Mês</option>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
+                        </select>
+                      </div>
+                      <div className="select-wrapper">
+                        <select required className="form-select" value={nascimentoAno} onChange={e => setNascimentoAno(e.target.value)}>
+                          <option value="" disabled>Ano</option>
+                          {Array.from({length: 60}, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.65rem', color: '#f87171', marginTop: '0.25rem', fontStyle: 'italic', fontFamily: 'Arial, sans-serif' }}>*Caso necessário, será exigido documento oficial para comprovação.</span>
+                  </div>
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>WhatsApp</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="(00) 00000-0000" value={whatsapp} onChange={handlePhoneChange} /></div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>ID no Discord</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="usuario#1234 ou @usuario" value={discord} onChange={e => setDiscord(e.target.value)} /></div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', gridColumn: '1 / -1' }}><label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Experiência de Voo / Aeronave</label><input required type="text" className="form-control" style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', padding: '0.4rem 0', color: '#f8fafc', fontFamily: 'Arial, sans-serif', fontSize: '0.9rem' }} placeholder="Ex: 50h no Cessna 152, 10h no A-29" value={experiencia} onChange={e => setExperiencia(e.target.value)} /></div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', gridColumn: '1 / -1', marginTop: '0.5rem' }}>
-                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Qual seu simulador?</label>
+                    <label style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, fontFamily: 'Arial, sans-serif' }}>Sua Plataforma (MSFS 2020)</label>
                     <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                      {['MSFS 2020', 'MSFS 2024'].map(sim => (
-                        <div key={sim} onClick={() => setSimulador(sim)} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: simulador === sim ? '2px solid #f59e0b' : '2px solid transparent', color: simulador === sim ? '#f8fafc' : '#94a3b8', fontWeight: simulador === sim ? 600 : 400, transition: 'all 0.3s ease', fontSize: '0.85rem', marginBottom: '-1px', fontFamily: 'Arial, sans-serif' }}>{sim}</div>
+                      {['PC', 'Console'].map(plat => (
+                        <div key={plat} onClick={() => setPlataforma(plat)} style={{ cursor: 'pointer', paddingBottom: '0.5rem', borderBottom: plataforma === plat ? '2px solid #f59e0b' : '2px solid transparent', color: plataforma === plat ? '#f8fafc' : '#94a3b8', fontWeight: plataforma === plat ? 600 : 400, transition: 'all 0.3s ease', fontSize: '0.85rem', marginBottom: '-1px', fontFamily: 'Arial, sans-serif' }}>{plat}</div>
                       ))}
                     </div>
                   </div>
@@ -790,7 +863,7 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '70px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
-              <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
+              <span style={{ display: 'block', fontFamily: '"NormalFont", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA FS</span>
               <span style={{ display: 'inline-block', fontFamily: '"NormalFont", sans-serif', fontWeight: 600, fontSize: '0.65rem', background: '#38bdf8', color: '#030712', fontStyle: 'italic', padding: '2px 8px', alignSelf: 'flex-start', letterSpacing: '0.15em', lineHeight: 1.1, transform: 'skewX(-12deg)', marginLeft: '4px', marginTop: '4px' }}>
                 MICROSOFT FLIGHT SIMULATOR
               </span>
@@ -841,14 +914,14 @@ export default function Home() {
               </span>
               <span>|</span>
               <span onClick={() => openLegalModal('disclaimer')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} onMouseLeave={e => e.currentTarget.style.color = '#64748b'}>
-                <FileText size={14} /> Avisos Legais
+                <FileText size={14} /> Aviso Legal & Disclaimer
               </span>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
               <div style={{ flex: 1, minWidth: '300px' }}>
                 <p style={{ color: '#64748b', fontSize: '0.65rem', lineHeight: 1.6, margin: 0, fontFamily: 'Arial, sans-serif', textAlign: 'justify' }}>
-                  <strong>AVISO LEGAL:</strong> A Esquadrilha da Fumaça Virtual (EDAV MSFS) é uma organização civil e independente, voltada exclusivamente à simulação de voo e esporte eletrônico (e-sports) no software Microsoft Flight Simulator. <strong>Não possuímos nenhum tipo de vínculo institucional, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB)</strong> ou com o Esquadrão de Demonstração Aérea (EDA) oficial. Logotipos e insígnias inspirados são utilizados estritamente em ambiente de simulação e lazer, visando homenagear a aviação brasileira.
+                  <strong>AVISO LEGAL:</strong> A Esquadrilha da Fumaça FS é uma organização civil e independente, voltada exclusivamente à simulação de voo e esporte eletrônico (e-sports) no software Microsoft Flight Simulator. <strong>Não possuímos nenhum tipo de vínculo institucional, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB)</strong> ou com o Esquadrão de Demonstração Aérea (EDA) oficial. Logotipos e insígnias inspirados são utilizados estritamente em ambiente de simulação e lazer, visando homenagear a aviação brasileira.
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', whiteSpace: 'nowrap' }}>
@@ -883,11 +956,23 @@ export default function Home() {
       </button>
 
       <div className={`modal-overlay ${modalAlistamento ? 'active' : ''}`}>
-        <div className="modal-content glass-panel" style={{ padding: '4rem 3rem', background: '#0b1121', border: '1px solid #f59e0b', borderRadius: '8px' }}>
+        <div className="modal-content glass-panel" style={{ padding: '4rem 3rem', background: '#0b1121', border: '1px solid #10b981', borderRadius: '8px', maxWidth: '500px', textAlign: 'center' }}>
           <CheckCircle2 size={56} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
           <h3 className="font-title" style={{ color: '#f8fafc', fontSize: '1.75rem', margin: '1.5rem 0 1rem', fontWeight: 400, fontFamily: '"NormalFont", sans-serif' }}>Aplicação Enviada!</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.8', fontWeight: 300, fontSize: '0.95rem', fontFamily: 'Arial, sans-serif' }}>Recebemos seus dados com sucesso. Nossa equipe entrará em contato em breve.</p>
           <button type="button" className="btn-primary font-title" style={{ letterSpacing: '0.2em', padding: '1.25rem 2.5rem', width: '100%', borderRadius: '8px', fontFamily: '"NormalFont", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
+        </div>
+      </div>
+
+      {/* Modal de Idade Insuficiente */}
+      <div className={`modal-overlay ${modalIdadeOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
+        <div className="modal-content glass-panel" style={{ padding: '4rem 3rem', background: '#0b1121', border: '1px solid #ef4444', borderRadius: '8px', maxWidth: '500px', textAlign: 'center' }}>
+          <AlertTriangle size={56} color="#ef4444" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} />
+          <h3 className="font-title" style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 700, fontFamily: '"NormalFont", sans-serif', textTransform: 'uppercase' }}>Idade Mínima Não Atingida</h3>
+          <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.8', fontWeight: 300, fontSize: '0.95rem', fontFamily: 'Arial, sans-serif' }}>
+            A doutrina da AFA FS exige a idade mínima de <strong>17 anos completos</strong> para ingresso no esquadrão. Agradecemos o seu interesse e esperamos contar consigo no futuro!
+          </p>
+          <button type="button" className="btn-outline" style={{ border: '1px solid #334155', background: 'transparent', color: '#cbd5e1', letterSpacing: '0.1em', padding: '1rem 2.5rem', width: '100%', borderRadius: '8px', fontFamily: '"NormalFont", sans-serif', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = '#334155'; }} onClick={() => setModalIdadeOpen(false)}>FECHAR</button>
         </div>
       </div>
 
