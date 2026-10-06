@@ -6,7 +6,7 @@ import { auth } from './firebase';
 
 import Home from './pages/Home';
 import Intranet from './pages/Workspace';
-import Login from './pages/Login'; 
+import Login from './pages/Login';
 
 const RotaProtegida = ({ children }: { children: React.ReactNode }) => {
   const [carregando, setCarregando] = useState(true);
@@ -40,6 +40,9 @@ const App: React.FC = () => {
             <Intranet />
           </RotaProtegida>
         } />
+
+      
+        
       </Routes>
     </Router>
   );
