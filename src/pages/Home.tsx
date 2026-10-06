@@ -813,11 +813,11 @@ export default function Home() {
           <div className="desktop-nav">
             <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>PILOTOS</span>
             <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>AGENDA</span>
-            <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>AERONA</span>
+            <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>AERONAVE</span>
             {dbNoticias.length > 0 && (
               <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>ARTIGOS</span>
             )}
-            <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>SOBRE O EDA FS</span>
+            <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>SOBRE NÓS</span>
             
             {alistamentoAberto && (
               <button className="tb-button" onClick={() => scrollToSection('sobre')} style={{ fontSize: '0.8rem', padding: '0.5rem 1.2rem', marginLeft: '0.5rem', fontFamily: '"Quantico", sans-serif' }}>
