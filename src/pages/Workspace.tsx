@@ -1,9 +1,13 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable */
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle, Scale, BellRing, AlertOctagon, Info, Loader2, Headphones, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase
+  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle, Scale, BellRing, AlertOctagon, Info, Loader2, Headphones, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Tv
 } from 'lucide-react';
 
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
@@ -299,18 +303,20 @@ export default function Workspace() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
   
+  const [ytUrl, setYtUrl] = useState('');
+  const [twUrl, setTwUrl] = useState('');
+  const [tkUrl, setTkUrl] = useState('');
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingGeocode, setLoadingGeocode] = useState(false); 
   const [currentUserInfo, setCurrentUserInfo] = useState<Usuario | null>(null); 
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  // Estados METAR
   const [metarIcao, setMetarIcao] = useState('');
   const [metarData, setMetarData] = useState<any>(null);
   const [metarLoading, setMetarLoading] = useState(false);
 
-  // Estados Form Piloto
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
@@ -364,7 +370,6 @@ export default function Workspace() {
     document.title = "Workspace | EDAV";
     document.documentElement.setAttribute('data-theme', 'dark');
 
-    // Injeção dinâmica do Favicon
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (!link) {
       link = document.createElement('link');
@@ -422,6 +427,9 @@ export default function Workspace() {
           const d = docSnap.data();
           setAlistamentoAberto(d.alistamentoAberto || false);
           if (d.headerImageUrl) setCustomHeader(d.headerImageUrl);
+          setYtUrl(d.liveYouTubeUrl || '');
+          setTwUrl(d.liveTwitchUrl || '');
+          setTkUrl(d.liveTikTokUrl || '');
         } 
       })
     ];
@@ -563,6 +571,21 @@ export default function Workspace() {
     if (!checkPermission('alistamento')) return showToast("Acesso Negado.", "error");
     try { await setDoc(doc(db, 'config', 'geral'), { alistamentoAberto: !alistamentoAberto }, { merge: true }); showToast(`Alistamento ${!alistamentoAberto ? 'Aberto' : 'Fechado'}`, "success"); } 
     catch { showToast("Erro", "error"); }
+  };
+
+  const handleSalvarMidias = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!checkPermission('header')) return showToast("Acesso Negado.", "error");
+    try {
+      await setDoc(doc(db, 'config', 'geral'), {
+        liveYouTubeUrl: ytUrl,
+        liveTwitchUrl: twUrl,
+        liveTikTokUrl: tkUrl
+      }, { merge: true });
+      showToast("Mídias atualizadas com sucesso!", "success");
+    } catch {
+      showToast("Erro ao salvar mídias", "error");
+    }
   };
 
   const handlePermissao = async (userId: string, campo: string, valor: boolean) => {
@@ -728,7 +751,7 @@ export default function Workspace() {
         }
         
         .nav-item {
-          display: flex; alignItems: center; gap: 0.75rem; padding: 0.75rem 1rem;
+          display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
           color: #94a3b8; border: none; background: transparent; border-radius: 6px;
           cursor: pointer; text-align: left; font-weight: 500; font-size: 0.95rem;
           transition: all 0.2s ease; border-left: 3px solid transparent; width: 100%; box-sizing: border-box;
@@ -871,7 +894,7 @@ export default function Workspace() {
             </div>
           </div>
 
-          <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')} style={{ marginTop: '0.5rem' }}><Settings size={18} color={activeTab === 'config' ? '#f59e0b' : '#94a3b8'} /> Ajustes do Site</button>
+          <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')} style={{ marginTop: '0.5rem' }}><Settings size={18} color={activeTab === 'config' ? '#f59e0b' : '#94a3b8'} /> Ajustes Globais</button>
           
           {currentUserInfo?.role === 'admin' && (
             <button className={`nav-item ${activeTab === 'parametros' ? 'active' : ''}`} onClick={() => handleMenuClick('parametros')}><Shield size={18} color={activeTab === 'parametros' ? '#f59e0b' : '#94a3b8'} /> Parâmetros</button>
@@ -1373,7 +1396,7 @@ export default function Workspace() {
                   </div>
                 </div>
               )}
-
+              
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1.5fr 2fr 2fr 1fr' : '1.5fr 2fr 2fr', padding: '0 1.5rem 0.5rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   <span>Posição</span>
@@ -1672,7 +1695,7 @@ export default function Workspace() {
               
               <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Alistamento</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Habilite para exibir o formulário de recrutamento na página principal.</p>
+                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Habilite para exibir o botão de recrutamento no site público.</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem', background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <span style={{ color: '#cbd5e1', fontWeight: 500, fontSize: '0.95rem' }}>{alistamentoAberto ? 'Inscrições Abertas' : 'Inscrições Fechadas'}</span>
                   
@@ -1685,8 +1708,40 @@ export default function Workspace() {
               </div>
 
               <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Mídias e Transmissões</h4>
+                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Coloque os links dos seus vídeos/lives. O sistema irá ajustá-los automaticamente. Deixe vazio para desativar.</p>
+                
+                <form onSubmit={handleSalvarMidias} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label className="form-label">Link YouTube</label>
+                    <input type="text" value={ytUrl} onChange={e => setYtUrl(e.target.value)} className="form-input" placeholder="Ex: https://www.youtube.com/watch?v=..." />
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label className="form-label">Link Twitch</label>
+                    <input type="text" value={twUrl} onChange={e => setTwUrl(e.target.value)} className="form-input" placeholder="Ex: https://twitch.tv/..." />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label className="form-label">Link TikTok</label>
+                    <input type="text" value={tkUrl} onChange={e => setTkUrl(e.target.value)} className="form-input" placeholder="Ex: https://www.tiktok.com/@..." />
+                  </div>
+
+                  {checkPermission('header') ? (
+                    <button type="submit" style={{ marginTop: '0.5rem', background: '#f59e0b', color: '#000', border: 'none', padding: '0.75rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s', fontFamily: appleFontStack }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
+                      Salvar Links de Mídia
+                    </button>
+                  ) : (
+                    <div style={{ padding: '0.85rem 1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed', marginTop: '0.5rem' }}>
+                      Sem permissão para alterar
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Imagem de Fundo</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Altere a imagem de cabeçalho do site (Upload via Firebase Storage).</p>
+                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Altere a imagem de cabeçalho do site principal (Upload direto).</p>
                 
                 {customHeader && (
                   <div style={{ height: '100px', backgroundImage: `url(${customHeader})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.1)' }} />
