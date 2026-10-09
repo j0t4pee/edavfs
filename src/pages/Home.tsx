@@ -64,7 +64,7 @@ interface Noticia { id?: string; data: string; titulo: string; resumo: string; i
 
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="section-header" style={{ marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
-    <h2 className="section-title" style={{ fontFamily: '"Quantico", sans-serif', fontWeight: 700, letterSpacing: '0.05em', color: '#f8fafc', fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', textTransform: 'uppercase', textAlign: 'center', margin: 0 }}>{title}</h2>
+    <h2 className="section-title" style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, letterSpacing: '0.05em', color: '#f8fafc', fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', textTransform: 'uppercase', textAlign: 'center', margin: 0 }}>{title}</h2>
     <div className="section-line" style={{ height: '2px', width: '80px', background: 'linear-gradient(to right, #f59e0b, transparent)', opacity: 0.8, marginTop: '0.75rem', borderRadius: '2px' }} />
   </div>
 );
@@ -542,7 +542,7 @@ export default function Home() {
   return (
     <div id="top">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600;700&family=Quantico:wght@400;700&display=swap');
+        
 
         body, html { 
           background-color: #030712 !important; 
@@ -552,6 +552,14 @@ export default function Home() {
           font-weight: 300; 
           color: #e2e8f0;
           -webkit-font-smoothing: antialiased;
+        }
+        
+        @font-face {
+           font-family: 'StratumNo2';
+          src: url('./fonts/stratumno2_regular.otf') format('opentype');
+          font-weight: normal;
+          font-style: normal;
+          font-display: swap; 
         }
         
         @font-face {
@@ -579,10 +587,10 @@ export default function Home() {
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
 
-        h1, h2, h3, h4, h5, h6 { font-family: "Quantico", sans-serif !important; color: #ffffff; }
+        h1, h2, h3, h4, h5, h6 { font-family: "Arial", sans-serif !important; color: #ffffff; }
 
         .section-title {
-          font-family: "Quantico", sans-serif !important;
+          font-family: "StratumNo2", sans-serif !important;
         }
 
         .glass-panel { 
@@ -671,10 +679,10 @@ export default function Home() {
         .nav-link {
           color: #ffffff;
           text-decoration: none;
-          font-weight: 400; 
+          font-weight: 600; 
           font-style: normal;
-          font-size: 0.85rem; 
-          font-family: "Quantico", sans-serif !important;
+          font-size: 0.90rem; 
+          font-family: "StratumNo2", sans-serif !important;
           letter-spacing: 0.05em;
           text-transform: uppercase;
           transition: color 0.3s ease;
@@ -686,7 +694,7 @@ export default function Home() {
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .mobile-menu.open { transform: translateY(0); }
-        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 400; font-family: "Quantico", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
+        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 400; font-family: "StratumNo2", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
         .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #f59e0b; }
 
         .legal-tab { background: transparent; border: none; color: #94a3b8; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-family: "Inter", sans-serif !important; transition: all 0.3s ease; font-size: 0.9rem; text-transform: uppercase; }
@@ -794,7 +802,7 @@ export default function Home() {
           position: relative;
           background: transparent;
           color: #f59e0b;
-          font-family: 'Quantico', sans-serif !important;
+          font-family: 'StratumNo2', sans-serif !important;
           font-weight: 700;
           font-size: 0.95rem;
           padding: 0.85rem 2rem;
@@ -940,11 +948,11 @@ export default function Home() {
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: scrolled ? '50px' : '64px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', justifyContent: 'center' }}>
-              <span style={{ fontFamily: '"Quantico", sans-serif', fontWeight: 400, fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.02em', lineHeight: 1.1 }}>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '1.20rem', color: '#f8fafc', letterSpacing: '0.02em', lineHeight: 1.1 }}>
                 ESQUADRILHA DA FUMAÇA VIRTUAL
               </span>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginTop: '2px' }}>
-                <span style={{ fontFamily: '"Quantico", sans-serif', fontWeight: 400, fontSize: '0.77rem', color: '#ffffff', padding: '1px 10px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-25deg)', display: 'inline-block', background: 'linear-gradient(135deg, #0ea5e9 0%, #0f89c6 100%)' }}>
+                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, fontSize: '0.85rem', color: '#ffffff', padding: '1px 10px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-25deg)', display: 'inline-block', background: 'linear-gradient(135deg, #0ea5e9 0%, #0f89c6 100%)' }}>
                   MICROSOFT FLIGHT SIMULATOR
                 </span>
               </div>
@@ -964,7 +972,7 @@ export default function Home() {
             <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>SOBRE NÓS</span>
             
             {alistamentoAberto && (
-              <button className="tb-button" onClick={() => setIsFormModalOpen(true)} style={{ fontSize: '0.8rem', padding: '0.5rem 1.2rem', marginLeft: '0.5rem', fontFamily: '"Quantico", sans-serif', background: '#f59e0b', color: '#030712' }}>
+              <button className="tb-button" onClick={() => setIsFormModalOpen(true)} style={{ fontSize: '0.8rem', padding: '0.5rem 1.2rem', marginLeft: '0.5rem', fontFamily: '"StratumNo2", sans-serif', background: '#f59e0b', color: '#030712' }}>
                 QUERO FAZER PARTE
               </button>
             )}
@@ -988,7 +996,7 @@ export default function Home() {
         )}
         <span className={activeSection === 'sobre' ? 'active' : ''} onClick={() => scrollToSection('sobre')}>SOBRE O EDA FS</span>
         {alistamentoAberto && (
-          <button className="tb-button" onClick={() => { setIsFormModalOpen(true); setMobileMenuOpen(false); }} style={{ marginTop: '1rem', fontSize: '1rem', fontFamily: '"Quantico", sans-serif', background: '#f59e0b', color: '#030712' }}>
+          <button className="tb-button" onClick={() => { setIsFormModalOpen(true); setMobileMenuOpen(false); }} style={{ marginTop: '1rem', fontSize: '1rem', fontFamily: '"StratumNo2", sans-serif', background: '#f59e0b', color: '#030712' }}>
             QUERO FAZER PARTE
           </button>
         )}
@@ -1200,9 +1208,9 @@ export default function Home() {
 
                   {totalAgendaPages > 1 && (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-                      <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer', fontFamily: '"Quantico", sans-serif' }}>&lt; ANTERIOR</button>
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontFamily: '"Quantico", sans-serif' }}>PÁG {agendaPage} / {totalAgendaPages}</span>
-                      <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer', fontFamily: '"Quantico", sans-serif' }}>PRÓXIMA &gt;</button>
+                      <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>&lt; ANTERIOR</button>
+                      <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif' }}>PÁG {agendaPage} / {totalAgendaPages}</span>
+                      <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>PRÓXIMA &gt;</button>
                     </div>
                   )}
                 </>
@@ -1226,7 +1234,7 @@ export default function Home() {
                     <Marker key={dem.id} position={[dem.lat, dem.lng]} icon={getMarkerIcon(dem.status)}>
                       <Popup>
                         <div>
-                          <strong style={{ fontSize: '1.1em', color: '#f59e0b', fontFamily: '"Quantico", sans-serif' }}>{dem.cidade}</strong><br />
+                          <strong style={{ fontSize: '1.1em', color: '#f59e0b', fontFamily: '"StratumNo2", sans-serif' }}>{dem.cidade}</strong><br />
                           <span style={{ color: '#030712', fontWeight: 400, fontSize: '0.8rem' }}>Status: {dem.status}</span><br />
                           <span style={{ color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>{dem.dataHora}</span>
                         </div>
@@ -1347,7 +1355,7 @@ export default function Home() {
             </p>
 
             <div className="glass-panel" style={{ padding: '1rem', borderRadius: '10px', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(1px)' }}>
-              <h3 style={{ fontFamily: '"Quantico", sans-serif', color: '#ffffff', fontSize: '1.1rem', marginBottom: '0.75rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, letterSpacing: '0.02em' }}>
+              <h3 style={{ fontFamily: '"StratumNo2", sans-serif', color: '#ffffff', fontSize: '1.1rem', marginBottom: '0.75rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, letterSpacing: '0.02em' }}>
                 <Quote size={30} color="#f59e0b" /> Palavra do Comandante
               </h3>
               <p style={{ fontStyle: 'italic', fontWeight: 300, fontSize: '0.95rem', lineHeight: '1.7', color: '#94a3b8', margin: 0 }}>
@@ -1375,8 +1383,8 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '60px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
-              <span style={{ display: 'block', fontFamily: '"Quantico", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ fontFamily: '"Quantico", sans-serif', fontWeight: 400, fontSize: '0.75rem', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
+              <span style={{ display: 'block', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, fontSize: '0.75rem', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
                 MICROSOFT FLIGHT SIMULATOR
               </span>
             </div>
@@ -1457,10 +1465,10 @@ export default function Home() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"Quantico", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
+            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"Quantico", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
+            <button onClick={() => handleCookie(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
               ENTENDI E ACEITO
             </button>
           </div>
@@ -1481,7 +1489,7 @@ export default function Home() {
           {alistamentoAberto ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '0 0 1rem 0', fontFamily: '"Quantico", sans-serif', textTransform: 'uppercase' }}>Alistamento Operacional</h3>
+                <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '0 0 1rem 0', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>Alistamento Operacional</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 1.25rem 0', fontWeight: 300 }}>
                   Para participar no processo seletivo, é <strong>obrigatório</strong> possuir todos os requisitos listados abaixo, além do preenchimento correto e sincero de todos os dados do formulário.
                 </p>
@@ -1599,7 +1607,7 @@ export default function Home() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-               <h3 style={{ color: '#94a3b8', fontFamily: '"Quantico", sans-serif', textTransform: 'uppercase', letterSpacing: '1px' }}>Alistamento Fechado</h3>
+               <h3 style={{ color: '#94a3b8', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '1px' }}>Alistamento Fechado</h3>
                <p style={{ color: '#64748b', fontWeight: 300 }}>Fique atento para futuras vagas.</p>
             </div>
           )}
@@ -1609,20 +1617,20 @@ export default function Home() {
       <div className={`modal-overlay ${modalAlistamento ? 'active' : ''}`}>
         <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #10b981', borderRadius: '4px', maxWidth: '400px', textAlign: 'center' }}>
           <CheckCircle2 size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
-          <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 400, fontFamily: '"Quantico", sans-serif' }}>Aplicação Enviada!</h3>
+          <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 400, fontFamily: '"StratumNo2", sans-serif' }}>Aplicação Enviada!</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 300, fontSize: '0.9rem' }}>Recebemos seus dados com sucesso. Nossa equipe entrará em contato em breve.</p>
-          <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"Quantico", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
+          <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"StratumNo2", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
         </div>
       </div>
 
       <div className={`modal-overlay ${modalIdadeOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
         <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #ef4444', borderRadius: '4px', maxWidth: '400px', textAlign: 'center' }}>
           <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} />
-          <h3 style={{ color: '#f8fafc', fontSize: '1.35rem', margin: '1.5rem 0 1rem', fontWeight: 700, fontFamily: '"Quantico", sans-serif', textTransform: 'uppercase' }}>Idade Não Atingida</h3>
+          <h3 style={{ color: '#f8fafc', fontSize: '1.35rem', margin: '1.5rem 0 1rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>Idade Não Atingida</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 300, fontSize: '0.9rem' }}>
             A doutrina da AFA FS exige a idade mínima de <strong>17 anos completos</strong> para ingresso. Agradecemos o interesse!
           </p>
-          <button type="button" style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', letterSpacing: '0.1em', padding: '0.8rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"Quantico", sans-serif', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = '#334155'; }} onClick={() => setModalIdadeOpen(false)}>FECHAR</button>
+          <button type="button" style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', letterSpacing: '0.1em', padding: '0.8rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = '#334155'; }} onClick={() => setModalIdadeOpen(false)}>FECHAR</button>
         </div>
       </div>
 
