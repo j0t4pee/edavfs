@@ -19,7 +19,7 @@ import {
 import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import headerImage from '../images/tucano2.jpg';
+import headerImage from '../images/tucano.jpg';
 import a29Image from '../images/a29.png'; 
 import logoImage from '../images/logo.png';
 import parceiroImage from '../images/parceiro.png';
@@ -506,7 +506,7 @@ export default function Home() {
           }} 
         />
         
-        <div style={{ 
+        <div className="slot-info" style={{ 
           position: 'absolute',
           [isLeft ? 'right' : 'left']: 'calc(50% + 75px)',
           display: 'flex',
@@ -610,6 +610,15 @@ export default function Home() {
 
         .tatic-number {
           color: #f59e0b !important;
+        }
+        
+        /* ADICIONADO PARA O EFEITO DE HOVER NO SLOT DE FORMAÇÃO */
+        .slot-info { 
+          opacity: 0; 
+          transition: opacity 0.3s ease; 
+        }
+        .tatic-slot:hover .slot-info { 
+          opacity: 1; 
         }
 
         .modern-input {
@@ -944,7 +953,9 @@ export default function Home() {
 
           <div className="desktop-nav">
             <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>PILOTOS</span>
-            <span onClick={() => scrollToSection('midias')} className={`nav-link ${activeSection === 'midias' ? 'active' : ''}`}>MÍDIAS</span>
+            {hasLive && (
+              <span onClick={() => scrollToSection('midias')} className={`nav-link ${activeSection === 'midias' ? 'active' : ''}`}>MÍDIAS</span>
+            )}
             <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>AGENDA</span>
             <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>AERONAVE</span>
             {dbNoticias.length > 0 && (
@@ -967,7 +978,9 @@ export default function Home() {
 
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
         <span className={activeSection === 'pilotos' ? 'active' : ''} onClick={() => scrollToSection('pilotos')}>PILOTOS</span>
-        <span className={activeSection === 'midias' ? 'active' : ''} onClick={() => scrollToSection('midias')}>MÍDIAS</span>
+        {hasLive && (
+          <span className={activeSection === 'midias' ? 'active' : ''} onClick={() => scrollToSection('midias')}>MÍDIAS</span>
+        )}
         <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')}>AGENDA</span>
         <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>O SUPER TUCANO</span>
         {dbNoticias.length > 0 && (
@@ -982,8 +995,8 @@ export default function Home() {
       </div>
 
       <section className="hero" style={{ height: '60vh', minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 2 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(3,7,18,0.2) 0%, rgba(3,7,18,0.5) 60%, #030712 100%)', zIndex: 1 }} />
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'cover', opacity: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(3,7,18,0.2) 0%, rgba(3,7,18,0.5) 86%, #030712 100%)', zIndex: 1 }} />
       </section>
 
       <div style={{ position: 'relative', backgroundColor: '#030712' }}>
@@ -1046,11 +1059,6 @@ export default function Home() {
                           <h3 className="piloto-nome" style={{ fontFamily: '"Montserrat", sans-serif', fontSize: '1.3rem', fontWeight: 500, color: '#f8fafc', margin: '0 0 0.2rem 0' }}>
                             {piloto.nome}
                           </h3>
-                          {(piloto.cidade || piloto.uf) && (
-                            <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 300 }}>
-                              {piloto.cidade}{piloto.cidade && piloto.uf ? ' - ' : ''}{piloto.uf}
-                            </div>
-                          )}
                           <div style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', color: '#f59e0b', textTransform: 'uppercase', marginTop: '0.5rem', fontFamily: '"Inter", sans-serif' }}>
                             {role}
                           </div>
@@ -1088,32 +1096,32 @@ export default function Home() {
         </section>
       </div>
 
-      <div style={{ position: 'relative', backgroundColor: '#0b1121' }}>
-        <section id="midias" className="section-container">
-          <SectionHeader title="MÍDIAS" />
-          
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-             <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', maxWidth: '700px', margin: '0 auto', fontFamily: '"Inter", sans-serif' }}>
-               Acompanhe as nossas apresentações em tempo real e reveja os melhores momentos das demonstrações da Esquadrilha da Fumaça Virtual nos nossos canais oficiais.
-             </p>
-          </div>
+      {hasLive && (
+        <div style={{ position: 'relative', backgroundColor: '#0b1121' }}>
+          <section id="midias" className="section-container">
+            <SectionHeader title="MÍDIAS" />
+            
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+               <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', maxWidth: '700px', margin: '0 auto', fontFamily: '"Inter", sans-serif' }}>
+                 Acompanhe as nossas apresentações em tempo real e reveja os melhores momentos das demonstrações da Esquadrilha da Fumaça Virtual nos nossos canais oficiais.
+               </p>
+            </div>
 
-          {isMidiasOpen && (
-            <div className="ao-vivo-content" style={{ animation: 'fadeIn 0.3s ease', marginBottom: '2rem' }}>
-              
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                <button disabled={!liveYT} onClick={() => setLivePlatform('youtube')} className={`view-toggle-btn ${livePlatform === 'youtube' && liveYT ? 'active-yt' : ''}`} style={{ textTransform: 'none' }}>
-                  <img src={ytLogo} alt="YouTube" style={{ width: 18, height: 18, filter: livePlatform === 'youtube' && liveYT ? 'brightness(0) invert(1)' : 'none' }} /> YouTube Gaming
-                </button>
-                <button disabled={!liveTwitch} onClick={() => setLivePlatform('twitch')} className={`view-toggle-btn ${livePlatform === 'twitch' && liveTwitch ? 'active-tw' : ''}`} style={{ textTransform: 'none' }}>
-                  <img src={twLogo} alt="Twitch" style={{ width: 18, height: 18, filter: livePlatform === 'twitch' && liveTwitch ? 'brightness(0) invert(1)' : 'none' }} /> Twitch
-                </button>
-                <button disabled={!liveTikTok} onClick={() => setLivePlatform('tiktok')} className={`view-toggle-btn ${livePlatform === 'tiktok' && liveTikTok ? 'active-tk' : ''}`} style={{ textTransform: 'none' }}>
-                  <img src={tkLogo} alt="TikTok" style={{ width: 18, height: 18, filter: livePlatform === 'tiktok' && liveTikTok ? 'brightness(0) invert(1)' : 'none' }} /> TikTok
-                </button>
-              </div>
+            {isMidiasOpen && (
+              <div className="ao-vivo-content" style={{ animation: 'fadeIn 0.3s ease', marginBottom: '2rem' }}>
+                
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                  <button disabled={!liveYT} onClick={() => setLivePlatform('youtube')} className={`view-toggle-btn ${livePlatform === 'youtube' && liveYT ? 'active-yt' : ''}`} style={{ textTransform: 'none' }}>
+                    <img src={ytLogo} alt="YouTube" style={{ width: 18, height: 18, filter: livePlatform === 'youtube' && liveYT ? 'brightness(0) invert(1)' : 'none' }} /> YouTube Gaming
+                  </button>
+                  <button disabled={!liveTwitch} onClick={() => setLivePlatform('twitch')} className={`view-toggle-btn ${livePlatform === 'twitch' && liveTwitch ? 'active-tw' : ''}`} style={{ textTransform: 'none' }}>
+                    <img src={twLogo} alt="Twitch" style={{ width: 18, height: 18, filter: livePlatform === 'twitch' && liveTwitch ? 'brightness(0) invert(1)' : 'none' }} /> Twitch
+                  </button>
+                  <button disabled={!liveTikTok} onClick={() => setLivePlatform('tiktok')} className={`view-toggle-btn ${livePlatform === 'tiktok' && liveTikTok ? 'active-tk' : ''}`} style={{ textTransform: 'none' }}>
+                    <img src={tkLogo} alt="TikTok" style={{ width: 18, height: 18, filter: livePlatform === 'tiktok' && liveTikTok ? 'brightness(0) invert(1)' : 'none' }} /> TikTok
+                  </button>
+                </div>
 
-              {hasLive ? (
                 <div className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', aspectRatio: '16/9', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {livePlatform === 'youtube' && liveYT && (
                     <iframe width="100%" height="100%" src={liveYT} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ position: 'absolute', inset: 0 }}></iframe>
@@ -1125,21 +1133,17 @@ export default function Home() {
                     <iframe src={liveTikTok} frameBorder="0" allowFullScreen scrolling="no" height="100%" width="100%" style={{ position: 'absolute', inset: 0 }}></iframe>
                   )}
                 </div>
-              ) : (
-                <div style={{ padding: '4rem 2rem', background: 'rgba(15, 23, 42, 0.4)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '8px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-                  <p style={{ fontWeight: 300, color: '#94a3b8', fontSize: '0.9rem', letterSpacing: '0.05em', margin: 0 }}>Nenhuma transmissão ou vídeo no momento.</p>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
-             <button onClick={() => setIsMidiasOpen(!isMidiasOpen)} className={`view-toggle-btn ${isMidiasOpen ? 'active' : ''}`} style={{ textTransform: 'none' }}>
-               {isMidiasOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />} {isMidiasOpen ? 'Recolher' : 'Expandir'}
-             </button>
-          </div>
-        </section>
-      </div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+               <button onClick={() => setIsMidiasOpen(!isMidiasOpen)} className={`view-toggle-btn ${isMidiasOpen ? 'active' : ''}`} style={{ textTransform: 'none' }}>
+                 {isMidiasOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />} {isMidiasOpen ? 'Recolher' : 'Expandir'}
+               </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#030712' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #030712 0%, transparent 20%, transparent 80%, #030712 100%)', zIndex: 0 }} />
@@ -1281,7 +1285,7 @@ export default function Home() {
               <div className="t27-box" style={{ flex: 1, minHeight: '300px' }}>
                 <div className="t27-img" style={{ backgroundImage: `url(${tucano5png})` }}></div>
               </div>
-             
+              
             </div>
           </div>
         </section>
@@ -1342,9 +1346,9 @@ export default function Home() {
               A <strong style={{ color: '#ffffff', fontWeight: 500 }}>Esquadrilha da Fumaça Virtual</strong> nasce da paixão pela aviação e pelo voo em formação. Utilizando o Microsoft Flight Simulator, procuramos representar com excelência, precisão e profissionalismo a doutrina da Esquadrilha da Fumaça real. Nossa equipe é formada por entusiastas e pilotos dedicados ao treinamento contínuo, elevando a simulação a um novo patamar de imersão.
             </p>
 
-            <div className="glass-panel" style={{ padding: '3rem', borderRadius: '80px', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(1px)' }}>
+            <div className="glass-panel" style={{ padding: '1rem', borderRadius: '10px', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(1px)' }}>
               <h3 style={{ fontFamily: '"Quantico", sans-serif', color: '#ffffff', fontSize: '1.1rem', marginBottom: '0.75rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, letterSpacing: '0.02em' }}>
-                <Quote size={40} color="#f59e0b" /> Palavra do Comandante
+                <Quote size={30} color="#f59e0b" /> Palavra do Comandante
               </h3>
               <p style={{ fontStyle: 'italic', fontWeight: 300, fontSize: '0.95rem', lineHeight: '1.7', color: '#94a3b8', margin: 0 }}>
                 "Desde a fundação deste esquadrão virtual, voamos diariamente para aperfeiçoar as nossas formaturas e acrobacias. O nosso objetivo é elevar a demonstração aérea no Microsoft Flight Simulator aos níveis mais altos de disciplina e beleza."
@@ -1387,13 +1391,15 @@ export default function Home() {
             <h4 style={{ color: '#ffffff', fontFamily: '"Inter", sans-serif', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Navegação</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Pilotos</span>
-              <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
+              {hasLive && (
+                <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
+              )}
               <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Agenda</span>
               <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Aeronave</span>
               {dbNoticias.length > 0 && (
                 <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Artigos</span>
               )}
-              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre & Alistamento</span>
+              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.95rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre</span>
             </div>
           </div>
 
