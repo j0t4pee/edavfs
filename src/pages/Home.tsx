@@ -1007,7 +1007,7 @@ export default function Home() {
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#38bdf8', fontSize: '1.2rem', letterSpacing: '0.1em' }}>CARREGANDO SISTEMAS</span>
+          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#38bdf8', fontSize: '1.2rem', letterSpacing: '0.1em' }}>AGUARDE...</span>
         </div>
       </div>
 
