@@ -1,19 +1,18 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable */
-
-"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle, Scale, BellRing, AlertOctagon, Info, Loader2, Headphones, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Tv
-} from 'lucide-react';
-
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+  collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc 
+} from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from '../firebase';
+import { auth, db, storage } from '../firebase';
 import { signOut } from 'firebase/auth';
+
+import { 
+  Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, BookOpen, PlaneTakeoff, Shield, Clock, ChevronRight, HelpCircle, Scale, BellRing, AlertOctagon, Info, Loader2, Headphones, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Plane, Activity
+} from 'lucide-react';
 
 import logoImage from '../images/logo.png';
 import faviconImage from '../images/favicon.png';
@@ -25,6 +24,7 @@ interface Noticia { id?: string; data: string; titulo: string; resumo: string; i
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; buttonText: string; link: string; }
 interface Voo { id?: string; pilotoNome: string; aeronave: string; tipoMissao: string; origem: string; destino: string; dataHora: string; status: string; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
+interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
 interface Usuario { 
   id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
   permissoes?: { logbook?: boolean; agenda?: boolean; mods?: boolean; header?: boolean; alistamento?: boolean; };
@@ -63,8 +63,8 @@ const missoesOpcoes = [
 ];
 
 const PermissionToggle = ({ label, active, onChange }: { label: string, active: boolean, onChange: () => void }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid #1e293b' }}>
-    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '0.85rem 1.25rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}>
+    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
     <div className={`toggle-switch ${active ? 'active' : ''}`} onClick={onChange} style={{ transform: 'scale(0.85)', margin: '-5px -5px -5px 0' }} />
   </div>
 );
@@ -81,7 +81,7 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
   return (
     <div style={{ position: 'relative', fontFamily: customFont }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
-      <div onClick={() => setIsOpen(true)} style={{ padding: inline ? '0.5rem' : '0.75rem 1rem', background: inline ? 'transparent' : 'rgba(0, 0, 0, 0.4)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.1)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '6px', fontSize: inline ? '0.85rem' : '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 41 }}>
+      <div onClick={() => setIsOpen(true)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1rem', background: inline ? 'transparent' : 'rgba(0, 0, 0, 0.5)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.1)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '8px', fontSize: inline ? '0.85rem' : '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 41, transition: 'all 0.2s' }}>
         
         {searchable && isOpen ? (
           <input 
@@ -96,19 +96,19 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
           <span>{selectedOption ? selectedOption.label : placeholder}</span>
         )}
         
-        <ChevronDown size={14} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0, marginLeft: '0.5rem' }} />
+        <ChevronDown size={16} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', flexShrink: 0, marginLeft: '0.5rem' }} />
       </div>
       
       {isOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}>
+        <div className="modal-modern" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 50, maxHeight: '220px', overflowY: 'auto', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.7)' }}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map(opt => (
-              <div key={opt.value} className="custom-select-option" onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: value === opt.value ? '#f8fafc' : '#94a3b8', background: value === opt.value ? 'rgba(255,255,255,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }}>
+              <div key={opt.value} className="custom-select-option" onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.85rem 1.25rem', color: value === opt.value ? '#f8fafc' : '#94a3b8', background: value === opt.value ? 'rgba(245,158,11,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s', borderLeft: value === opt.value ? '3px solid #f59e0b' : '3px solid transparent' }}>
                 {opt.label}
               </div>
             ))
           ) : (
-            <div style={{ padding: '0.75rem 1rem', color: '#64748b', fontSize: '0.9rem', textAlign: 'center' }}>Não encontrado</div>
+            <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.9rem', textAlign: 'center' }}>Não encontrado</div>
           )}
         </div>
       )}
@@ -150,7 +150,7 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
     const isSelected = selDate && selDate.getDate() === i && selDate.getMonth() === viewDate.getMonth() && selDate.getFullYear() === viewDate.getFullYear();
     days.push(
       <div key={i} onClick={() => handleConfirm(new Date(viewDate.getFullYear(), viewDate.getMonth(), i))}
-           style={{ padding: '6px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '4px', background: isSelected ? '#f59e0b' : 'transparent', color: isSelected ? '#000' : '#cbd5e1', fontWeight: isSelected ? 'bold' : 'normal', fontSize: '0.85rem' }}
+           style={{ padding: '8px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '6px', background: isSelected ? '#f59e0b' : 'transparent', color: isSelected ? '#000' : '#cbd5e1', fontWeight: isSelected ? 'bold' : 'normal', fontSize: '0.85rem', transition: 'all 0.2s' }}
            onMouseEnter={e => { if(!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
            onMouseLeave={e => { if(!isSelected) e.currentTarget.style.background = 'transparent'; }}>
         {i}
@@ -161,26 +161,26 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
-      <div onClick={() => setIsOpen(!isOpen)} style={{ padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.1)', color: value ? '#f8fafc' : '#64748b', borderRadius: '6px', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', width: '100%', boxSizing: 'border-box' }}>
+      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1rem', background: 'rgba(0, 0, 0, 0.5)', border: '1px solid rgba(255,255,255,0.1)', color: value ? '#f8fafc' : '#64748b', borderRadius: '8px', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', width: '100%', boxSizing: 'border-box', transition: 'all 0.2s' }}>
         {value || "DD/MM/AAAA"}
-        <Calendar size={16} color="#64748b" />
+        <Calendar size={18} color="#64748b" />
       </div>
       {isOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'rgba(11, 17, 33, 0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 50, padding: '1.25rem', boxShadow: '0 10px 30px rgba(0,0,0,0.7)', width: '280px', maxWidth: '90vw' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <button type="button" onClick={prevMonth} style={{ background:'transparent', border:'none', color:'#94a3b8', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>&lt;</button>
-            <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.9rem' }}>{meses[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-            <button type="button" onClick={nextMonth} style={{ background:'transparent', border:'none', color:'#94a3b8', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>&gt;</button>
+        <div className="modal-modern" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'rgba(11, 17, 33, 0.98)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', zIndex: 50, padding: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)', width: '300px', maxWidth: '90vw' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <button type="button" onClick={prevMonth} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#94a3b8', cursor:'pointer', padding: '0.4rem 0.6rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}>&lt;</button>
+            <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{meses[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+            <button type="button" onClick={nextMonth} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#94a3b8', cursor:'pointer', padding: '0.4rem 0.6rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}>&gt;</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '0.75rem' }}>
             {diasSemana.map((d,i) => <div key={i} style={{ textAlign: 'center', color: '#64748b', fontSize: '0.75rem', fontWeight: 'bold' }}>{d}</div>)}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
             {days}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <button type="button" onClick={() => { setSelDate(null); onChange(''); setIsOpen(false); }} style={{ background:'transparent', border:'none', color:'#ef4444', fontSize:'0.8rem', cursor:'pointer', fontWeight: 500 }}>Limpar</button>
-            <button type="button" onClick={() => { const n = new Date(); setViewDate(n); handleConfirm(n); }} style={{ background:'transparent', border:'none', color:'#38bdf8', fontSize:'0.8rem', cursor:'pointer', fontWeight: 500 }}>Hoje</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <button type="button" onClick={() => { setSelDate(null); onChange(''); setIsOpen(false); }} style={{ background:'transparent', border:'none', color:'#ef4444', fontSize:'0.85rem', cursor:'pointer', fontWeight: 600 }}>Limpar</button>
+            <button type="button" onClick={() => { const n = new Date(); setViewDate(n); handleConfirm(n); }} style={{ background:'rgba(56, 189, 248, 0.1)', border:'1px solid rgba(56, 189, 248, 0.3)', color:'#38bdf8', fontSize:'0.85rem', cursor:'pointer', fontWeight: 600, padding: '0.4rem 1rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}>Hoje</button>
           </div>
         </div>
       )}
@@ -226,7 +226,7 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
     const isSelected = selDate && selDate.getDate() === i && selDate.getMonth() === viewDate.getMonth() && selDate.getFullYear() === viewDate.getFullYear();
     days.push(
       <div key={i} onClick={() => setSelDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), i))}
-           style={{ padding: '6px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '4px', background: isSelected ? '#f59e0b' : 'transparent', color: isSelected ? '#000' : '#cbd5e1', fontWeight: isSelected ? 'bold' : 'normal', fontSize: '0.85rem' }}
+           style={{ padding: '8px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '6px', background: isSelected ? '#f59e0b' : 'transparent', color: isSelected ? '#000' : '#cbd5e1', fontWeight: isSelected ? 'bold' : 'normal', fontSize: '0.85rem', transition: 'all 0.2s' }}
            onMouseEnter={e => { if(!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
            onMouseLeave={e => { if(!isSelected) e.currentTarget.style.background = 'transparent'; }}>
         {i}
@@ -237,45 +237,45 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
-      <div onClick={() => setIsOpen(!isOpen)} style={{ padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.1)', color: value ? '#f8fafc' : '#64748b', borderRadius: '6px', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', width: '100%', boxSizing: 'border-box' }}>
+      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1rem', background: 'rgba(0, 0, 0, 0.5)', border: '1px solid rgba(255,255,255,0.1)', color: value ? '#f8fafc' : '#64748b', borderRadius: '8px', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', width: '100%', boxSizing: 'border-box', transition: 'all 0.2s' }}>
         {display}
-        <Calendar size={16} color="#64748b" />
+        <Calendar size={18} color="#64748b" />
       </div>
       {isOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'rgba(11, 17, 33, 0.98)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 50, padding: '1.25rem', boxShadow: '0 10px 30px rgba(0,0,0,0.7)', display: 'flex', gap: '1.5rem', width: '380px', maxWidth: '90vw' }}>
+        <div className="modal-modern" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'rgba(11, 17, 33, 0.98)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', zIndex: 50, padding: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)', display: 'flex', gap: '2rem', width: '420px', maxWidth: '90vw' }}>
           <div style={{ flex: 2 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <button type="button" onClick={prevMonth} style={{ background:'transparent', border:'none', color:'#94a3b8', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>&lt;</button>
-              <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.9rem' }}>{meses[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
-              <button type="button" onClick={nextMonth} style={{ background:'transparent', border:'none', color:'#94a3b8', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>&gt;</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <button type="button" onClick={prevMonth} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#94a3b8', cursor:'pointer', padding: '0.4rem 0.6rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}>&lt;</button>
+              <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{meses[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+              <button type="button" onClick={nextMonth} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#94a3b8', cursor:'pointer', padding: '0.4rem 0.6rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}>&gt;</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '0.75rem' }}>
               {diasSemana.map((d,i) => <div key={i} style={{ textAlign: 'center', color: '#64748b', fontSize: '0.75rem', fontWeight: 'bold' }}>{d}</div>)}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
               {days}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <button type="button" onClick={() => { setSelDate(null); onChange(''); setIsOpen(false); }} style={{ background:'transparent', border:'none', color:'#ef4444', fontSize:'0.8rem', cursor:'pointer', fontWeight: 500 }}>Limpar</button>
-              <button type="button" onClick={() => { const n = new Date(); setViewDate(n); setSelDate(n); }} style={{ background:'transparent', border:'none', color:'#38bdf8', fontSize:'0.8rem', cursor:'pointer', fontWeight: 500 }}>Hoje</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button type="button" onClick={() => { setSelDate(null); onChange(''); setIsOpen(false); }} style={{ background:'transparent', border:'none', color:'#ef4444', fontSize:'0.85rem', cursor:'pointer', fontWeight: 600 }}>Limpar</button>
+              <button type="button" onClick={() => { const n = new Date(); setViewDate(n); setSelDate(n); }} style={{ background:'rgba(56, 189, 248, 0.1)', border:'1px solid rgba(56, 189, 248, 0.3)', color:'#38bdf8', fontSize:'0.85rem', cursor:'pointer', fontWeight: 600, padding: '0.4rem 1rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}>Hoje</button>
             </div>
           </div>
-          <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '1rem', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', flex: 1, marginBottom: '0.5rem' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '220px', overflowY: 'auto', gap: '2px', paddingRight: '2px' }} className="time-scroll">
+          <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flex: 1, marginBottom: '1rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '240px', overflowY: 'auto', gap: '4px', paddingRight: '4px' }} className="time-scroll">
                 {Array.from({length: 24}).map((_, i) => {
                   const h = String(i).padStart(2, '0');
-                  return <div key={h} onClick={() => setHour(h)} style={{ padding: '6px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '4px', background: hour === h ? 'rgba(255,255,255,0.1)' : 'transparent', color: hour === h ? '#f59e0b' : '#94a3b8', fontSize: '0.85rem', fontWeight: hour === h ? 600 : 400 }}>{h}</div>
+                  return <div key={h} onClick={() => setHour(h)} style={{ padding: '8px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '6px', background: hour === h ? 'rgba(245,158,11,0.1)' : 'transparent', color: hour === h ? '#f59e0b' : '#94a3b8', fontSize: '0.9rem', fontWeight: hour === h ? 700 : 400, transition: 'all 0.2s' }}>{h}</div>
                 })}
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '220px', overflowY: 'auto', gap: '2px', paddingRight: '2px' }} className="time-scroll">
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '240px', overflowY: 'auto', gap: '4px', paddingRight: '4px' }} className="time-scroll">
                 {Array.from({length: 60}).map((_, i) => {
                   const m = String(i).padStart(2, '0');
-                  return <div key={m} onClick={() => setMinute(m)} style={{ padding: '6px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '4px', background: minute === m ? 'rgba(255,255,255,0.1)' : 'transparent', color: minute === m ? '#f59e0b' : '#94a3b8', fontSize: '0.85rem', fontWeight: minute === m ? 600 : 400 }}>{m}</div>
+                  return <div key={m} onClick={() => setMinute(m)} style={{ padding: '8px 0', textAlign: 'center', cursor: 'pointer', borderRadius: '6px', background: minute === m ? 'rgba(245,158,11,0.1)' : 'transparent', color: minute === m ? '#f59e0b' : '#94a3b8', fontSize: '0.9rem', fontWeight: minute === m ? 700 : 400, transition: 'all 0.2s' }}>{m}</div>
                 })}
               </div>
             </div>
-            <button type="button" onClick={handleConfirm} style={{ background: '#f59e0b', border: 'none', color: '#000', padding: '0.6rem', borderRadius: '4px', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', width: '100%', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>OK</button>
+            <button type="button" onClick={handleConfirm} style={{ background: '#f59e0b', border: 'none', color: '#000', padding: '0.75rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem', width: '100%', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>CONFIRMAR</button>
           </div>
         </div>
       )}
@@ -299,6 +299,7 @@ export default function Workspace() {
   const [voos, setVoos] = useState<Voo[]>([]);
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
+  const [estatisticas, setEstatisticas] = useState<Estatistica[]>([]); 
   
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
@@ -317,6 +318,7 @@ export default function Workspace() {
   const [metarData, setMetarData] = useState<any>(null);
   const [metarLoading, setMetarLoading] = useState(false);
 
+  // Form states
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
@@ -349,6 +351,11 @@ export default function Workspace() {
   const [notamTitulo, setNotamTitulo] = useState('');
   const [notamMensagem, setNotamMensagem] = useState('');
   const [notamData, setNotamData] = useState('');
+
+  const [statIcone, setStatIcone] = useState('');
+  const [statValor, setStatValor] = useState('');
+  const [statRotulo, setStatRotulo] = useState('');
+  const [statOrdem, setStatOrdem] = useState(1);
 
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
@@ -404,6 +411,10 @@ export default function Workspace() {
       onSnapshot(collection(db, 'mods'), snap => {
         const arr: Mod[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Mod)); setMods(arr);
       }),
+      onSnapshot(collection(db, 'estatisticas'), snap => {
+        const arr: Estatistica[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Estatistica));
+        arr.sort((a, b) => a.ordem - b.ordem); setEstatisticas(arr.slice(0, 5));
+      }),
       onSnapshot(collection(db, 'voos'), snap => {
         const arr: Voo[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Voo));
         arr.reverse(); 
@@ -439,7 +450,7 @@ export default function Workspace() {
   const checkPermission = (action: string) => {
     if (currentUserInfo?.role === 'admin') return true;
     if (['regulamento', 'notam', 'manual', 'meteorologia'].includes(action)) return true; 
-    if (['pilotos', 'noticias', 'parametros'].includes(action)) return false; 
+    if (['pilotos', 'noticias', 'parametros', 'estatisticas'].includes(action)) return false; 
     return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
   };
 
@@ -463,6 +474,7 @@ export default function Workspace() {
     setModTitulo(''); setModDesc(''); setModLink(''); setModMarketplace(false);
     setVooPiloto(''); setVooAeronave('A-29 Super Tucano'); setVooMissao('Treino de Formatura'); setVooOrigem(''); setVooDestino(''); setVooData(''); setVooStatus('Planeado');
     setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
+    setStatIcone(''); setStatValor(''); setStatRotulo(''); setStatOrdem(estatisticas.length + 1);
   };
 
   const handleBuscarMetar = async (e?: React.FormEvent) => {
@@ -638,6 +650,11 @@ export default function Workspace() {
     setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true);
   };
 
+  const handleEditarStat = (s: Estatistica) => {
+    if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
+    setEditingId(s.id || null); setStatIcone(s.icone); setStatValor(s.valor); setStatRotulo(s.rotulo); setStatOrdem(s.ordem); setShowForm(true);
+  };
+
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); if (!checkPermission('pilotos')) return showToast("Acesso Negado", "error");
     try {
@@ -705,6 +722,18 @@ export default function Workspace() {
     } catch { showToast("Falha", "error"); }
   };
 
+  const handleSalvarStat = async (e: React.FormEvent) => {
+    e.preventDefault(); 
+    if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
+    if (!editingId && estatisticas.length >= 5) return showToast("O limite máximo de estatísticas é 5.", "error");
+    
+    try {
+      const data = { icone: statIcone, valor: statValor, rotulo: statRotulo, ordem: statOrdem };
+      if (editingId) await updateDoc(doc(db, 'estatisticas', editingId), data); else await addDoc(collection(db, 'estatisticas'), data);
+      fecharFormulario(); showToast("Estatística salva");
+    } catch { showToast("Falha", "error"); }
+  };
+
   const handleMenuClick = (tabName: string) => {
     setActiveTab(tabName); fecharFormulario(); setMobileSidebarOpen(false);
   };
@@ -734,25 +763,32 @@ export default function Workspace() {
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
         .custom-select-option:hover { background: rgba(255,255,255,0.1) !important; color: #f8fafc !important; }
         
+        @font-face {
+          font-family: 'StratumNo2';
+          src: url('/fonts/stratumno2_regular.otf') format('opentype');
+          font-weight: normal;
+          font-style: normal;
+        }
+        
         .time-scroll::-webkit-scrollbar { width: 4px; }
         .time-scroll::-webkit-scrollbar-track { background: transparent; }
         .time-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
         .workspace-sidebar {
-          width: 260px;
-          background-color: rgba(15, 23, 42, 0.4);
+          width: 280px;
+          background-color: rgba(15, 23, 42, 0.6);
           backdrop-filter: blur(16px);
           border-right: 1px solid rgba(255,255,255,0.05);
           display: flex;
           flex-direction: column;
-          padding: 1.5rem 1rem;
+          padding: 1.5rem 1.25rem;
           transition: transform 0.3s ease;
           z-index: 40;
         }
         
         .nav-item {
-          display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
-          color: #94a3b8; border: none; background: transparent; border-radius: 6px;
+          display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem;
+          color: #94a3b8; border: none; background: transparent; border-radius: 8px;
           cursor: pointer; text-align: left; font-weight: 500; font-size: 0.95rem;
           transition: all 0.2s ease; border-left: 3px solid transparent; width: 100%; box-sizing: border-box;
         }
@@ -763,20 +799,30 @@ export default function Workspace() {
         }
 
         .list-row {
-          display: grid; align-items: center; padding: 1rem 1.5rem;
+          display: grid; align-items: center; padding: 1.25rem 1.5rem;
           background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 8px; margin-bottom: 0.5rem; transition: background 0.2s;
+          border-radius: 10px; margin-bottom: 0.75rem; transition: all 0.3s ease;
         }
-        .list-row:hover { background: rgba(30, 41, 59, 0.6); }
+        .list-row:hover { 
+          background: rgba(30, 41, 59, 0.7); 
+          transform: translateY(-2px);
+          box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5);
+          border-color: rgba(245,158,11,0.2);
+        }
 
         .mobile-header { display: none; }
         .desktop-header { display: flex; }
 
         .form-input {
-          padding: 0.75rem 1rem; background: rgba(0, 0, 0, 0.4);
+          padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.5);
           border: 1px solid rgba(255,255,255,0.1); color: #f8fafc;
-          border-radius: 6px; outline: none; font-size: 0.95rem;
+          border-radius: 8px; outline: none; font-size: 0.95rem;
           font-family: ${appleFontStack}; width: 100%; box-sizing: border-box; text-transform: inherit;
+          transition: all 0.3s ease;
+        }
+        .form-input:focus {
+          border-color: #f59e0b;
+          background: rgba(0, 0, 0, 0.7);
         }
         
         .form-label {
@@ -795,6 +841,14 @@ export default function Workspace() {
         }
         .toggle-switch.active::after { transform: translateX(22px); }
 
+        @keyframes modalEnter {
+          0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-modern {
+          animation: modalEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         @media (max-width: 900px) {
           .workspace-sidebar {
             position: fixed; top: 0; left: 0; bottom: 0;
@@ -809,7 +863,7 @@ export default function Workspace() {
           .desktop-header { display: none !important; }
           .main-content { padding: 1rem !important; }
           .list-row { grid-template-columns: 1fr !important; gap: 0.75rem; padding: 1rem; }
-          .form-modal-content { width: 95% !important; padding: 0 !important; }
+          .form-modal-content { width: 95% !important; padding: 0 !important; margin: auto !important; }
           .action-buttons { flex-direction: column; width: 100%; }
           .action-buttons button { width: 100%; justify-content: center; margin-top: 0.5rem; }
           .news-grid { grid-template-columns: 1fr !important; }
@@ -819,23 +873,25 @@ export default function Workspace() {
       `}</style>
 
       {toast.show && (
-        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`, padding: '1rem 1.5rem', borderRadius: '6px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '0.75rem', animation: 'slideIn 0.3s ease-out' }}>
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`, padding: '1rem 1.5rem', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '0.75rem', animation: 'slideIn 0.3s ease-out' }}>
           {toast.type === 'success' ? <CheckCircle2 color="#10b981" size={20}/> : <AlertTriangle color="#ef4444" size={20}/>}
           <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.95rem' }}>{toast.msg}</span>
         </div>
       )}
 
       {modal.isOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', padding: '2.5rem', width: '100%', maxWidth: '420px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <AlertTriangle size={26} color="#ef4444" />
-              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{modal.title}</h3>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="modal-modern" style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '2.5rem', width: '100%', maxWidth: '420px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '50%' }}>
+                <AlertTriangle size={26} color="#ef4444" />
+              </div>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{modal.title}</h3>
             </div>
             <p style={{ color: '#94a3b8', marginBottom: '2.5rem', lineHeight: '1.6', fontSize: '0.95rem' }}>{modal.message}</p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
-              <button onClick={closeConfirmModal} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 500, transition: 'all 0.2s', flexGrow: 1 }}>Cancelar</button>
-              <button onClick={() => { modal.onConfirm(); closeConfirmModal(); }} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, flexGrow: 1 }}>Confirmar</button>
+              <button onClick={closeConfirmModal} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.85rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', flexGrow: 1 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; }}>Cancelar</button>
+              <button onClick={() => { modal.onConfirm(); closeConfirmModal(); }} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, flexGrow: 1, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#dc2626'; }} onMouseLeave={e => { e.currentTarget.style.background = '#ef4444'; }}>Confirmar</button>
             </div>
           </div>
         </div>
@@ -848,8 +904,8 @@ export default function Workspace() {
       <aside className={`workspace-sidebar ${mobileSidebarOpen ? 'open' : ''}`}>
         <div style={{ padding: '0 0.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img src={logoImage} alt="EDAV Logo" style={{ height: '32px' }} />
-            <h2 style={{ fontFamily: '"Quantico", sans-serif', fontSize: '1.15rem', color: '#f8fafc', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase' }}>WORKSPACE</h2>
+            <img src={logoImage} alt="EDAV Logo" style={{ height: '36px' }} />
+            <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.25rem', color: '#f8fafc', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase' }}>WORKSPACE</h2>
           </div>
           <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{ display: window.innerWidth <= 900 ? 'block' : 'none', background: 'transparent', border: 'none', color: '#cbd5e1' }}><X size={24} /></button>
         </div>
@@ -860,11 +916,11 @@ export default function Workspace() {
               <BellRing size={18} color={activeTab === 'notam' ? '#f59e0b' : '#94a3b8'} /> NOTAM
             </div>
             {notams.length > 0 && (
-              <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '1px 7px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '16px' }}>{notams.length}</span>
+              <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '16px' }}>{notams.length}</span>
             )}
           </button>
           
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0.5rem' }} />
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1.25rem 0.5rem' }} />
           
           <button className={`nav-item ${activeTab === 'regulamento' ? 'active' : ''}`} onClick={() => handleMenuClick('regulamento')}><Scale size={18} color={activeTab === 'regulamento' ? '#f59e0b' : '#94a3b8'} /> Regulamento</button>
           <button className={`nav-item ${activeTab === 'logbook' ? 'active' : ''}`} onClick={() => handleMenuClick('logbook')}><BookOpen size={18} color={activeTab === 'logbook' ? '#f59e0b' : '#94a3b8'} /> Logbook</button>
@@ -875,22 +931,25 @@ export default function Workspace() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Briefcase size={18} color="#f59e0b" /> Gerenciais
               </div>
-              <ChevronDown size={16} style={{ transform: gerenciaisAberto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              <ChevronDown size={16} style={{ transform: gerenciaisAberto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }} />
             </button>
             
             <div style={{ 
               display: 'flex', flexDirection: 'column', gap: '0.25rem', 
-              paddingLeft: '1rem', borderLeft: '1px solid rgba(245, 158, 11, 0.2)', 
+              paddingLeft: '1rem', borderLeft: '2px solid rgba(245, 158, 11, 0.3)', 
               marginLeft: '1.25rem', marginTop: '0.25rem',
               overflow: 'hidden',
-              maxHeight: gerenciaisAberto ? '500px' : '0px',
+              maxHeight: gerenciaisAberto ? '600px' : '0px',
               opacity: gerenciaisAberto ? 1 : 0,
-              transition: 'all 0.3s ease-in-out'
+              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
             }}>
-              <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={16} color={activeTab === 'pilotos' ? '#f59e0b' : '#94a3b8'} /> Pilotos</button>
-              <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={16} color={activeTab === 'agenda' ? '#f59e0b' : '#94a3b8'} /> Agenda</button>
-              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={16} color={activeTab === 'noticias' ? '#f59e0b' : '#94a3b8'} /> Notícias</button>
-              <button className={`nav-item ${activeTab === 'mods' ? 'active' : ''}`} onClick={() => handleMenuClick('mods')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Link2 size={16} color={activeTab === 'mods' ? '#f59e0b' : '#94a3b8'} /> Utilitários</button>
+              {currentUserInfo?.role === 'admin' && (
+                <button className={`nav-item ${activeTab === 'estatisticas' ? 'active' : ''}`} onClick={() => handleMenuClick('estatisticas')} style={{ padding: '0.65rem 1rem', fontSize: '0.9rem' }}><Activity size={16} color={activeTab === 'estatisticas' ? '#f59e0b' : '#94a3b8'} /> Estatísticas</button>
+              )}
+              <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.65rem 1rem', fontSize: '0.9rem' }}><Users size={16} color={activeTab === 'pilotos' ? '#f59e0b' : '#94a3b8'} /> Pilotos</button>
+              <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.65rem 1rem', fontSize: '0.9rem' }}><CalendarCheck2 size={16} color={activeTab === 'agenda' ? '#f59e0b' : '#94a3b8'} /> Agenda</button>
+              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.65rem 1rem', fontSize: '0.9rem' }}><Newspaper size={16} color={activeTab === 'noticias' ? '#f59e0b' : '#94a3b8'} /> Notícias</button>
+              <button className={`nav-item ${activeTab === 'mods' ? 'active' : ''}`} onClick={() => handleMenuClick('mods')} style={{ padding: '0.65rem 1rem', fontSize: '0.9rem' }}><Link2 size={16} color={activeTab === 'mods' ? '#f59e0b' : '#94a3b8'} /> Utilitários</button>
             </div>
           </div>
 
@@ -900,7 +959,6 @@ export default function Workspace() {
             <button className={`nav-item ${activeTab === 'parametros' ? 'active' : ''}`} onClick={() => handleMenuClick('parametros')}><Shield size={18} color={activeTab === 'parametros' ? '#f59e0b' : '#94a3b8'} /> Parâmetros</button>
           )}
 
-          {/* Divisor "empurrador" que encosta os próximos botões ao rodapé do ecrã */}
           <div style={{ flexGrow: 1 }} />
           <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0.5rem' }} />
 
@@ -911,14 +969,14 @@ export default function Workspace() {
           </button>
         </nav>
 
-        <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Clock size={16} color="#38bdf8" />
-            <span style={{ fontSize: '1.05rem', color: '#38bdf8', fontWeight: 600 }}>{horaFormatada}</span>
+        <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Clock size={18} color="#38bdf8" />
+            <span style={{ fontSize: '1.1rem', color: '#38bdf8', fontWeight: 600 }}>{horaFormatada}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calendar size={16} color="#10b981" />
-            <span style={{ fontSize: '0.8rem', color: '#10b981', textTransform: 'capitalize', fontWeight: 500 }}>{dataFormatada}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <Calendar size={18} color="#10b981" />
+            <span style={{ fontSize: '0.85rem', color: '#10b981', textTransform: 'capitalize', fontWeight: 500 }}>{dataFormatada}</span>
           </div>
         </div>
       </aside>
@@ -927,53 +985,53 @@ export default function Workspace() {
         
         <div className="mobile-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img src={logoImage} alt="EDAV Logo" style={{ height: '24px' }} />
-            <h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600 }}>WORKSPACE</h1>
+            <img src={logoImage} alt="EDAV Logo" style={{ height: '28px' }} />
+            <h1 style={{ fontSize: '1.15rem', margin: 0, color: '#f8fafc', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>WORKSPACE</h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <div style={{ position: 'relative' }}>
               <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 {currentUserInfo?.foto ? (
-                  <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+                  <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
                 ) : (
-                  <UserCircle size={24} color="#f8fafc" />
+                  <UserCircle size={32} color="#f8fafc" />
                 )}
               </div>
               {userMenuOpen && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', background: '#0f172a', border: '1px solid #1e293b', borderRadius: '6px', width: '160px', zIndex: 50 }}>
-                  <button onClick={() => { window.open('/', '_blank'); setUserMenuOpen(false); }} style={{ width: '100%', padding: '0.75rem 1rem', background: 'transparent', border: 'none', borderBottom: '1px solid #1e293b', color: '#f8fafc', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><Globe size={14}/> Ver Site</button>
-                  <button onClick={handleLogout} style={{ width: '100%', padding: '0.75rem 1rem', background: 'transparent', border: 'none', color: '#ef4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><LogOut size={14}/> Sair</button>
+                <div className="modal-modern" style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '180px', zIndex: 50, overflow: 'hidden', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}>
+                  <button onClick={() => { window.open('/', '_blank'); setUserMenuOpen(false); }} style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#f8fafc', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Globe size={16}/> Ver Site</button>
+                  <button onClick={handleLogout} style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: 'none', color: '#ef4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><LogOut size={16}/> Sair</button>
                 </div>
               )}
             </div>
-            <button onClick={() => setMobileSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: '#f8fafc', padding: 0 }}>
-              <Menu size={24} />
+            <button onClick={() => setMobileSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: '#f8fafc', padding: 0, cursor: 'pointer' }}>
+              <Menu size={28} />
             </button>
           </div>
         </div>
 
-        <header className="desktop-header" style={{ padding: '1.25rem 3rem', background: 'transparent', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', position: 'sticky', top: 0, zIndex: 30 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <header className="desktop-header" style={{ padding: '1.5rem 3rem', background: 'transparent', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', position: 'sticky', top: 0, zIndex: 30 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
             <div style={{ position: 'relative' }}>
-              <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+              <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', background: 'rgba(0,0,0,0.4)', padding: '0.5rem 1.25rem 0.5rem 0.5rem', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}>
                 
                 {currentUserInfo?.foto ? (
-                  <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)' }} />
+                  <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 40, height: 40, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
                 ) : (
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', border: '1px solid rgba(255,255,255,0.1)' }}><UserCircle size={20}/></div>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', border: '1px solid rgba(255,255,255,0.1)' }}><UserCircle size={24}/></div>
                 )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc' }}>{saudacao}, {currentUserInfo ? currentUserInfo.nome.split(' ')[0] : 'Comandante'}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#10b981' }}>{currentUserInfo?.role === 'admin' ? 'Administrador' : 'Piloto'}</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#f8fafc' }}>{saudacao}, {currentUserInfo ? currentUserInfo.nome.split(' ')[0] : 'Comandante'}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 500 }}>{currentUserInfo?.role === 'admin' ? 'Administrador' : 'Piloto'}</span>
                 </div>
-                <ChevronDown size={14} color="#94a3b8" />
+                <ChevronDown size={16} color="#94a3b8" style={{ marginLeft: '0.5rem' }} />
               </div>
               
               {userMenuOpen && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', background: '#0f172a', border: '1px solid #1e293b', borderRadius: '6px', width: '160px', zIndex: 50, overflow: 'hidden', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}>
-                  <button onClick={() => { window.open('/', '_blank'); setUserMenuOpen(false); }} style={{ width: '100%', padding: '0.75rem 1rem', background: 'transparent', border: 'none', borderBottom: '1px solid #1e293b', color: '#f8fafc', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = '#1e293b'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Globe size={14}/> Ver Site</button>
-                  <button onClick={handleLogout} style={{ width: '100%', padding: '0.75rem 1rem', background: 'transparent', border: 'none', color: '#ef4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><LogOut size={14}/> Terminar Sessão</button>
+                <div className="modal-modern" style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '200px', zIndex: 50, overflow: 'hidden', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)' }}>
+                  <button onClick={() => { window.open('/', '_blank'); setUserMenuOpen(false); }} style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#f8fafc', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Globe size={16}/> Ir para o Site</button>
+                  <button onClick={handleLogout} style={{ width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: 'none', color: '#ef4444', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><LogOut size={16}/> Terminar Sessão</button>
                 </div>
               )}
             </div>
@@ -982,93 +1040,98 @@ export default function Workspace() {
 
         <div className="main-content" style={{ padding: '2rem 3rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1400px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Arial, sans-serif' }}>
-              {activeTab === 'regulamento' && 'REGULAMENTO OFICIAL DO EDAV'}
-              {activeTab === 'notam' && 'NOTAM - AVISOS AOS AERONAVEGANTES'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif' }}>
+              {activeTab === 'regulamento' && 'REGULAMENTO OFICIAL'}
+              {activeTab === 'notam' && 'AVISOS (NOTAM)'}
               {activeTab === 'manual' && 'MANUAL DO SISTEMA'}
-              {activeTab === 'meteorologia' && 'METEOROLOGIA OPERACIONAL (METAR)'}
+              {activeTab === 'meteorologia' && 'METEOROLOGIA OPERACIONAL'}
               {activeTab === 'logbook' && 'MEU DIÁRIO DE VOO'}
-              {activeTab === 'pilotos' && 'GERIR PILOTOS'}
+              {activeTab === 'estatisticas' && 'ESTATÍSTICAS PÚBLICAS'}
+              {activeTab === 'pilotos' && 'QUADRO DE PILOTOS'}
               {activeTab === 'agenda' && 'AGENDA DE DEMONSTRAÇÕES'}
-              {activeTab === 'noticias' && 'GERIR NOTÍCIAS'}
+              {activeTab === 'noticias' && 'GERIR ARTIGOS'}
               {activeTab === 'mods' && 'UTILITÁRIOS E DOWNLOADS'}
               {activeTab === 'config' && 'AJUSTES GLOBAIS'}
               {activeTab === 'parametros' && 'PARÂMETROS DE ACESSO'}
             </h2>
             
             {activeTab !== 'config' && activeTab !== 'parametros' && activeTab !== 'manual' && activeTab !== 'regulamento' && activeTab !== 'notam' && activeTab !== 'meteorologia' && checkPermission(activeTab) && (
-              <button onClick={() => setShowForm(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
-                <Plus size={16} /> Adicionar Novo
+              <button onClick={() => setShowForm(true)} style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.9rem', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
+                <Plus size={18} /> Adicionar Novo
               </button>
             )}
 
             {activeTab === 'notam' && currentUserInfo?.role === 'admin' && (
-              <button onClick={() => setShowForm(true)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
-                <AlertOctagon size={16} /> Publicar NOTAM
+              <button onClick={() => setShowForm(true)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.9rem', letterSpacing: '0.05em' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
+                <AlertOctagon size={18} /> Publicar NOTAM
               </button>
             )}
           </div>
 
           {activeTab === 'meteorologia' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '800px' }}>
-              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
-                <p style={{ color: '#94a3b8', margin: '0 0 1.5rem 0', fontSize: '0.95rem' }}>Digite o código ICAO de qualquer aeródromo para obter o METAR atualizado em tempo real direto da rede da VATSIM.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '850px' }}>
+              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2.5rem', backdropFilter: 'blur(12px)', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}>
+                <p style={{ color: '#94a3b8', margin: '0 0 1.5rem 0', fontSize: '1rem', lineHeight: 1.6 }}>Digite o código ICAO de qualquer aeródromo para obter o METAR atualizado em tempo real direto da rede da VATSIM.</p>
                 
-                <form onSubmit={handleBuscarMetar} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                <form onSubmit={handleBuscarMetar} style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem' }}>
                   <div style={{ position: 'relative', flexGrow: 1 }}>
-                    <Search size={20} color="#64748b" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                    <Search size={22} color="#94a3b8" style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)' }} />
                     <input 
                       type="text" 
                       maxLength={4}
                       value={metarIcao} 
                       onChange={e => setMetarIcao(e.target.value)} 
                       placeholder="ICAO (ex: SBBR, SBRJ...)" 
-                      style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 3rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '6px', fontSize: '1rem', textTransform: 'uppercase', outline: 'none', fontFamily: appleFontStack, boxSizing: 'border-box' }} 
+                      style={{ width: '100%', padding: '1rem 1rem 1rem 3.5rem', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '8px', fontSize: '1.1rem', textTransform: 'uppercase', outline: 'none', fontFamily: appleFontStack, boxSizing: 'border-box', transition: 'border-color 0.3s' }} 
+                      onFocus={e => e.currentTarget.style.borderColor = '#38bdf8'}
+                      onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
                     />
                   </div>
-                  <button type="submit" disabled={metarLoading} style={{ background: '#38bdf8', color: '#000', border: 'none', padding: '0 1.5rem', borderRadius: '6px', fontWeight: 600, cursor: metarLoading ? 'wait' : 'pointer', transition: 'background 0.2s', opacity: metarLoading ? 0.7 : 1 }}>
+                  <button type="submit" disabled={metarLoading} style={{ background: '#38bdf8', color: '#000', border: 'none', padding: '0 2rem', borderRadius: '8px', fontWeight: 700, cursor: metarLoading ? 'wait' : 'pointer', transition: 'background 0.2s', opacity: metarLoading ? 0.7 : 1, fontSize: '1rem' }} onMouseEnter={e => { if(!metarLoading) e.currentTarget.style.background = '#0ea5e9'; }} onMouseLeave={e => { if(!metarLoading) e.currentTarget.style.background = '#38bdf8'; }}>
                     {metarLoading ? 'Buscando...' : 'Pesquisar'}
                   </button>
                 </form>
 
                 {metarData && metarData.error && (
-                  <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <AlertTriangle size={20} />
+                  <div style={{ padding: '1.25rem 1.5rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1rem' }}>
+                    <AlertTriangle size={24} color="#ef4444" />
                     {metarData.error}
                   </div>
                 )}
 
                 {metarData && !metarData.error && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div className="modal-modern" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     
-                    <div style={{ background: '#020617', border: '1px solid #1e293b', padding: '1.5rem', borderRadius: '8px' }}>
-                      <h4 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>METAR Oficial ({metarData.icaoId})</h4>
-                      <p style={{ margin: 0, color: '#38bdf8', fontFamily: 'monospace', fontSize: '1.15rem', lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                    <div style={{ background: 'rgba(2, 6, 23, 0.8)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '2rem', borderRadius: '12px' }}>
+                      <h4 style={{ margin: '0 0 1rem 0', color: '#38bdf8', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Cloud size={18} /> METAR Oficial ({metarData.icaoId})
+                      </h4>
+                      <p style={{ margin: 0, color: '#f8fafc', fontFamily: 'monospace', fontSize: '1.2rem', lineHeight: 1.6, letterSpacing: '0.02em', background: 'rgba(0,0,0,0.5)', padding: '1.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                         {metarData.rawOb}
                       </p>
-                      <span style={{ display: 'block', marginTop: '1rem', color: '#64748b', fontSize: '0.75rem' }}>Decodificado às: {metarData.receiptTime}</span>
+                      <span style={{ display: 'block', marginTop: '1rem', color: '#64748b', fontSize: '0.8rem' }}>Decodificado às: {metarData.receiptTime} (Local)</span>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                        <Thermometer size={28} color="#ef4444" style={{ marginBottom: '0.5rem' }} />
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Temperatura</span>
-                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>{metarData.temp !== null ? `${metarData.temp} °C` : 'N/A'}</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
+                      <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Thermometer size={32} color="#ef4444" style={{ marginBottom: '1rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>Temperatura</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 700, marginTop: '0.25rem' }}>{metarData.temp !== null ? `${metarData.temp} °C` : 'N/A'}</span>
                       </div>
 
-                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                        <Wind size={28} color="#38bdf8" style={{ marginBottom: '0.5rem' }} />
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Ventos</span>
-                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>
+                      <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Wind size={32} color="#38bdf8" style={{ marginBottom: '1rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>Ventos</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 700, marginTop: '0.25rem' }}>
                           {metarData.wdir !== null ? (metarData.wdir === 'VRB' ? 'VRB' : `${metarData.wdir}°`) : 'N/A'} a {metarData.wspd !== null ? `${metarData.wspd} KT` : 'N/A'}
                         </span>
                       </div>
 
-                      <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                        <Gauge size={28} color="#10b981" style={{ marginBottom: '0.5rem' }} />
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600 }}>Pressão (QNH)</span>
-                        <span style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>{metarData.altim !== null ? metarData.altim : 'N/A'}</span>
+                      <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                        <Gauge size={32} color="#10b981" style={{ marginBottom: '1rem' }} />
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>Pressão (QNH)</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 700, marginTop: '0.25rem' }}>{metarData.altim !== null ? metarData.altim : 'N/A'}</span>
                       </div>
                     </div>
 
@@ -1078,20 +1141,98 @@ export default function Workspace() {
             </div>
           )}
 
+          {activeTab === 'estatisticas' && (
+            <div>
+              {showForm && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Estatística' : 'Nova Estatística'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
+                    </div>
+                    <form onSubmit={handleSalvarStat} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div>
+                          <label className="form-label">Classe do FontAwesome (Ícone)</label>
+                          <input required type="text" value={statIcone} onChange={e => setStatIcone(e.target.value)} className="form-input" placeholder="Ex: fa-solid fa-plane" />
+                          <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem', display: 'block' }}>
+                            Consulte os ícones gratuitos em <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>fontawesome.com</a>
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 600 ? '1fr 1fr' : '1fr', gap: '1.5rem' }}>
+                          <div>
+                            <label className="form-label">Valor (Ex: +150, 7, 2.5k)</label>
+                            <input required type="text" value={statValor} onChange={e => setStatValor(e.target.value)} className="form-input" />
+                          </div>
+                          <div>
+                            <label className="form-label">Ordem de Exibição (1 a 5)</label>
+                            <input required type="number" min="1" max="5" value={statOrdem} onChange={e => setStatOrdem(parseInt(e.target.value))} className="form-input" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="form-label">Rótulo / Descrição</label>
+                          <input required type="text" value={statRotulo} onChange={e => setStatRotulo(e.target.value)} className="form-input" placeholder="Ex: Demonstrações Realizadas" />
+                        </div>
+                      </div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { e.currentTarget.style.background = '#f59e0b'; }}>Salvar Dados</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '0 1.5rem 1rem', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Info size={18} color="#3b82f6" />
+                  Apenas 5 blocos serão exibidos na página inicial pública.
+                </div>
+
+                {estatisticas.length === 0 ? (
+                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <Activity size={48} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem', lineHeight: 1.6 }}>Nenhuma estatística personalizada adicionada.<br/>O site exibirá os 5 blocos originais como padrão.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                    {estatisticas.map(stat => (
+                      <div key={stat.id} className="list-row" style={{ gridTemplateColumns: '1fr', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', background: 'rgba(15, 23, 42, 0.6)' }}>
+                        <div style={{ position: 'absolute', top: '1.25rem', left: '1.25rem', color: '#64748b', fontSize: '0.8rem', fontWeight: 800, background: 'rgba(0,0,0,0.5)', padding: '0.25rem 0.75rem', borderRadius: '999px' }}>ORDEM {stat.ordem}</div>
+                        
+                        <div style={{ color: '#38bdf8', marginBottom: '1.25rem', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <i className={stat.icone || 'fa-solid fa-star'} style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.4))' }}></i>
+                        </div>
+                        
+                        <span style={{ fontSize: '3rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif', lineHeight: 1, marginBottom: '0.5rem', textShadow: '0 0 20px rgba(56, 189, 248, 0.2)' }}>{stat.valor}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 500 }}>{stat.rotulo}</span>
+                        
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', width: '100%', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem', justifyContent: 'center' }}>
+                          <button onClick={() => handleEditarStat(stat)} style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#3b82f6', cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}><Edit2 size={16} /> Editar</button>
+                          <button onClick={() => handleDeletarItem(stat.id!, 'estatisticas', stat.rotulo, 'estatisticas')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={16} /> Remover</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'regulamento' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '1000px' }}>
-              <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '3rem', fontFamily: 'Arial, sans-serif' }}>
-                <h3 style={{ marginTop: 0, color: '#f8fafc', fontSize: '1.5rem', textTransform: 'uppercase', borderBottom: '2px solid rgba(245, 158, 11, 0.5)', paddingBottom: '1rem', marginBottom: '2rem' }}>Doutrina e Normas de Conduta</h3>
+              <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '3.5rem', backdropFilter: 'blur(12px)', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}>
+                <h3 style={{ marginTop: 0, color: '#f8fafc', fontSize: '1.6rem', textTransform: 'uppercase', borderBottom: '2px solid rgba(245, 158, 11, 0.5)', paddingBottom: '1.25rem', marginBottom: '2.5rem', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>Doutrina e Normas de Conduta</h3>
                 
-                <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '1rem', marginBottom: '2.5rem' }}>
+                <p style={{ color: '#cbd5e1', lineHeight: 1.8, fontSize: '1.05rem', marginBottom: '3rem' }}>
                   A Esquadrilha da Fumaça Virtual (EDAV) opera baseada em rigorosos padrões de profissionalismo, honra e segurança, fundamentados na doutrina da Força Aérea Brasileira. A leitura e o cumprimento deste regulamento são estritamente obrigatórios para todo o corpo de voo ativo e na reserva.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                   
                   <div>
-                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>1. DIRETRIZES GERAIS E CONDUTA</h4>
-                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.15rem', margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>1. DIRETRIZES GERAIS E CONDUTA</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.7, fontSize: '0.95rem' }}>
                       1.1. O piloto representa a imagem do esquadrão dentro e fora dos servidores virtuais. Exige-se conduta ilibada, decoro e máximo respeito nos canais de comunicação.<br/>
                       1.2. A hierarquia e as diretrizes estipuladas pelo Comando devem ser respeitadas. Ordens operacionais em ambiente de voo não são passíveis de debate até ao momento do *debriefing*.<br/>
                       1.3. É vedado o uso do emblema oficial ou o indicativo de chamada do esquadrão em operações que desrespeitem as normas internacionais de tráfego virtual (VATSIM/IVAO).
@@ -1099,8 +1240,8 @@ export default function Workspace() {
                   </div>
 
                   <div>
-                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>2. SEGURANÇA DE VOO E DOUTRINA OPERACIONAL</h4>
-                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.15rem', margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>2. SEGURANÇA DE VOO E DOUTRINA OPERACIONAL</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.7, fontSize: '0.95rem' }}>
                       2.1. O ciclo da missão constitui-se obrigatoriamente de Estudo, Briefing, Voo e Debriefing. O desconhecimento dos manuais de operação não é aceite como desculpa para incidentes operacionais.<br/>
                       2.2. A segurança da esquadrilha sobrepõe-se a qualquer exibição. A quebra de separação visual ou descida abaixo dos mínimos operacionais por indisciplina configura quebra de doutrina.<br/>
                       2.3. A comunicação em rádio deve ser clara, concisa e aderente à fonética padronizada, minimizando ocupação desnecessária de frequência.
@@ -1108,8 +1249,8 @@ export default function Workspace() {
                   </div>
 
                   <div>
-                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>3. FREQUÊNCIA, INATIVIDADE E RESERVA</h4>
-                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.15rem', margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>3. FREQUÊNCIA, INATIVIDADE E RESERVA</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.7, fontSize: '0.95rem' }}>
                       3.1. Espera-se do piloto ativo a presença constante nos treinos regulares acordados pela escala de voo.<br/>
                       3.2. Pilotos que apresentem ausência recorrente ou inatividade prolongada, <strong>sem a devida justificação prévia ao Comando</strong>, serão compulsivamente movidos para o quadro da Reserva.<br/>
                       3.3. Membros na Reserva terão os seus perfis ocultados na página pública do esquadrão, mantendo acesso apenas restrito até que seja formalizado o pedido de reativação e reavaliação operacional.
@@ -1117,8 +1258,8 @@ export default function Workspace() {
                   </div>
 
                   <div>
-                    <h4 style={{ color: '#f59e0b', fontSize: '1.1rem', margin: '0 0 0.75rem 0', textTransform: 'uppercase' }}>4. REGIME DISCIPLINAR E PUNIÇÕES</h4>
-                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                    <h4 style={{ color: '#f59e0b', fontSize: '1.15rem', margin: '0 0 1rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>4. REGIME DISCIPLINAR E PUNIÇÕES</h4>
+                    <p style={{ color: '#94a3b8', margin: 0, lineHeight: 1.7, fontSize: '0.95rem' }}>
                       4.1. O não cumprimento das regras aqui firmadas sujeita o infrator às seguintes sanções, aplicadas a critério do Comando de acordo com a gravidade da infração:<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;a) Advertência Verbal no Debriefing;<br/>
                       &nbsp;&nbsp;&nbsp;&nbsp;b) Suspensão temporária da escala de voo;<br/>
@@ -1135,67 +1276,70 @@ export default function Workspace() {
           {activeTab === 'notam' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AlertOctagon size={20} color="#ef4444" /> {editingId ? 'Editar NOTAM' : 'Publicar NOTAM'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '50%', display: 'flex' }}><AlertOctagon size={22} color="#ef4444" /></div>
+                        {editingId ? 'Editar NOTAM' : 'Publicar NOTAM'}
+                      </h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarNotam} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <form onSubmit={handleSalvarNotam} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Data da Publicação</label>
                           <CustomDatePicker value={notamData} onChange={(val) => setNotamData(val)} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Assunto / Código (Ex: MUDANÇA FREQ, ALERTA SERVER)</label>
-                          <input required type="text" value={notamTitulo} onChange={e => setNotamTitulo(e.target.value)} className="form-input" style={{ textTransform: 'uppercase', color: '#f87171', fontWeight: 600 }} placeholder="TITULO DO AVISO..." />
+                          <input required type="text" value={notamTitulo} onChange={e => setNotamTitulo(e.target.value)} className="form-input" style={{ textTransform: 'uppercase', color: '#f87171', fontWeight: 700 }} placeholder="TITULO DO AVISO..." />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Mensagem do NOTAM</label>
                           <textarea required value={notamMensagem} onChange={e => setNotamMensagem(e.target.value)} rows={5} className="form-input" style={{ resize: 'none' }} placeholder="Descreva o aviso oficial aos pilotos..." />
                         </div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#ef4444', color: '#fff', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Emitir NOTAM</button>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#ef4444', color: '#fff', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#dc2626'; }} onMouseLeave={e => { e.currentTarget.style.background = '#ef4444'; }}>Emitir NOTAM</button>
                       </div>
                     </form>
                   </div>
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '1000px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '6px', marginBottom: '1rem' }}>
-                  <Info size={20} color="#f87171" />
-                  <span style={{ color: '#fca5a5', fontSize: '0.9rem', lineHeight: 1.4 }}><strong>Atenção:</strong> Os NOTAMs (Notice to Airmen) são avisos oficiais do Comando. A leitura é obrigatória para todos os membros antes de qualquer operação de voo.</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '1000px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1.25rem', borderRadius: '8px', marginBottom: '1rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                  <Info size={24} color="#f87171" style={{ flexShrink: 0 }} />
+                  <span style={{ color: '#fca5a5', fontSize: '0.95rem', lineHeight: 1.5 }}><strong>Atenção:</strong> Os NOTAMs (Notice to Airmen) são avisos oficiais do Comando. A leitura é obrigatória para todos os membros antes de qualquer operação de voo.</span>
                 </div>
 
                 {notams.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}>
-                    <BellRing size={48} color="#475569" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum aviso emitido no momento.</p>
+                  <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}>
+                    <BellRing size={56} color="#475569" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum aviso emitido no momento.</p>
                   </div>
                 ) : (
                   notams.map((n) => (
-                    <div key={n.id} style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(239, 68, 68, 0.4)', borderLeft: '6px solid #ef4444', borderRadius: '6px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                    <div key={n.id} style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(239, 68, 68, 0.4)', borderLeft: '6px solid #ef4444', borderRadius: '12px', padding: '2rem', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.2)', transition: 'transform 0.2s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                         <div>
-                          <span style={{ color: '#f87171', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>NOTAM OFICIAL</span>
-                          <h4 style={{ margin: '0.25rem 0 0 0', color: '#f8fafc', fontSize: '1.15rem', textTransform: 'uppercase' }}>{n.titulo}</h4>
+                          <span style={{ color: '#f87171', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em' }}>NOTAM OFICIAL</span>
+                          <h4 style={{ margin: '0.5rem 0 0 0', color: '#f8fafc', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '0.02em', fontFamily: '"StratumNo2", sans-serif' }}>{n.titulo}</h4>
                         </div>
-                        <span style={{ background: 'rgba(0,0,0,0.5)', padding: '0.3rem 0.6rem', borderRadius: '4px', color: '#cbd5e1', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}>{n.data}</span>
+                        <span style={{ background: 'rgba(0,0,0,0.5)', padding: '0.4rem 0.8rem', borderRadius: '6px', color: '#cbd5e1', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 500 }}>{n.data}</span>
                       </div>
                       
-                      <p style={{ color: '#e2e8f0', margin: '0 0 1.5rem 0', lineHeight: 1.6, fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
+                      <p style={{ color: '#e2e8f0', margin: '0 0 2rem 0', lineHeight: 1.7, fontSize: '1rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-                        <span style={{ color: '#64748b', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Emitido por: {n.autor}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><Shield size={16}/> Emitido por: {n.autor}</span>
                         
                         {currentUserInfo?.role === 'admin' && (
                           <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button onClick={() => handleEditarNotam(n)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={14} /> Editar</button>
-                            <button onClick={() => handleDeletarItem(n.id, 'notams', 'este NOTAM', 'notam')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={14} /> Revogar</button>
+                            <button onClick={() => handleEditarNotam(n)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={14} /> Editar</button>
+                            <button onClick={() => handleDeletarItem(n.id, 'notams', 'este NOTAM', 'notam')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={14} /> Revogar</button>
                           </div>
                         )}
                       </div>
@@ -1208,21 +1352,31 @@ export default function Workspace() {
 
           {activeTab === 'manual' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '1000px' }}>
-              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
-                <h3 style={{ marginTop: 0, color: '#f59e0b', fontSize: '1.2rem', textTransform: 'uppercase' }}>Bem-vindo ao Workspace do EDAV</h3>
-                <p style={{ color: '#cbd5e1', lineHeight: 1.6, fontSize: '0.95rem' }}>Este é o painel de comando do seu esquadrão. Aqui você pode gerir toda a informação que alimenta o site público, além de controlar os acessos internos e registrar as atividades dos pilotos. O Workspace é modular e as permissões de edição são atribuídas individualmente pelo Administrador.</p>
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '3rem', backdropFilter: 'blur(12px)' }}>
+                <h3 style={{ marginTop: 0, color: '#f59e0b', fontSize: '1.4rem', textTransform: 'uppercase', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em', marginBottom: '1.5rem' }}>Bem-vindo ao Workspace do EDAV</h3>
+                <p style={{ color: '#cbd5e1', lineHeight: 1.7, fontSize: '1rem', marginBottom: '3rem' }}>Este é o painel de comando do seu esquadrão. Aqui você pode gerir toda a informação que alimenta o site público, além de controlar os acessos internos e registrar as atividades dos pilotos. O Workspace é modular e as permissões de edição são atribuídas individualmente pelo Administrador.</p>
                 
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Scale size={18} color="#f59e0b" /> Regulamento E NOTAM</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>A leitura do Regulamento dita a doutrina do voo. O módulo de NOTAM (Notice to Airmen) permite ao comando emitir alertas vermelhos imediatos aos pilotos.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                  <div>
+                    <h4 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Scale size={20} color="#f59e0b" /> Regulamento E NOTAM</h4>
+                    <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.95rem', margin: 0 }}>A leitura do Regulamento dita a doutrina do voo. O módulo de NOTAM (Notice to Airmen) permite ao comando emitir alertas vermelhos imediatos aos pilotos.</p>
+                  </div>
 
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Cloud size={18} color="#f59e0b" /> Meteorologia Operacional</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Permite a consulta imediata do METAR de qualquer aeroporto do mundo (via rede da VATSIM). Utilize esta ferramenta no briefing antes de qualquer descolagem.</p>
+                  <div>
+                    <h4 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Cloud size={20} color="#f59e0b" /> Meteorologia Operacional</h4>
+                    <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.95rem', margin: 0 }}>Permite a consulta imediata do METAR de qualquer aeroporto do mundo (via rede da VATSIM). Utilize esta ferramenta no briefing antes de qualquer descolagem.</p>
+                  </div>
 
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><BookOpen size={18} color="#f59e0b" /> Meu Diário de Voo (Logbook)</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Área dedicada ao registo operacional. Os pilotos com permissão podem lançar os seus voos de treino, traslado ou demonstração e alterar o status para "Concluído" assim que o voo terminar.</p>
+                  <div>
+                    <h4 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><BookOpen size={20} color="#f59e0b" /> Meu Diário de Voo (Logbook)</h4>
+                    <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.95rem', margin: 0 }}>Área dedicada ao registo operacional. Os pilotos com permissão podem lançar os seus voos de treino, traslado ou demonstração e alterar o status para "Concluído" assim que o voo terminar.</p>
+                  </div>
 
-                <h4 style={{ color: '#f8fafc', fontSize: '1.05rem', marginTop: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={18} color="#f59e0b" /> Menu Gerenciais</h4>
-                <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.9rem' }}>Módulo de escalação oficial. Agrupa os acessos para gerir os Pilotos da esquadrilha (podendo mandá-los para a reserva), publicações da secção de Notícias, links da área de Utilitários e a Agenda de Demonstrações com busca automática de coordenadas.</p>
+                  <div>
+                    <h4 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Briefcase size={20} color="#f59e0b" /> Menu Gerenciais</h4>
+                    <p style={{ color: '#94a3b8', lineHeight: 1.6, fontSize: '0.95rem', margin: 0 }}>Módulo de escalação oficial. Agrupa os acessos para gerir os Pilotos da esquadrilha, Estatísticas (blocos de 5 números no site público), publicações da secção de Notícias, links da área de Utilitários e a Agenda de Demonstrações com busca automática de coordenadas.</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1230,21 +1384,21 @@ export default function Workspace() {
           {activeTab === 'logbook' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Plano de Voo' : 'Registar Novo Voo'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '750px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Plano de Voo' : 'Registar Novo Voo'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarVoo} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <form onSubmit={handleSalvarVoo} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Piloto</label>
                           <CustomSelect searchable value={vooPiloto} onChange={(val) => setVooPiloto(val)} options={pilotosOpcoes} placeholder="Selecione o piloto..." />
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.25rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.5rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <label className="form-label">Aeronave</label>
                             <CustomSelect value={vooAeronave} onChange={(val) => setVooAeronave(val)} options={aeronavesOpcoes} />
@@ -1255,7 +1409,7 @@ export default function Workspace() {
                           </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.25rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.5rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <label className="form-label">ICAO Origem</label>
                             <input required type="text" maxLength={4} value={vooOrigem} onChange={e => setVooOrigem(e.target.value)} className="form-input" placeholder="SBBR" style={{ textTransform: 'uppercase' }} />
@@ -1266,7 +1420,7 @@ export default function Workspace() {
                           </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.25rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '1.5rem' }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <label className="form-label">Data e Hora Zulu (Z)</label>
                             <CustomDateTimePicker value={vooData} onChange={(val) => setVooData(val)} />
@@ -1278,9 +1432,9 @@ export default function Workspace() {
                         </div>
 
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Salvar Voo</button>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { e.currentTarget.style.background = '#f59e0b'; }}>Salvar Voo</button>
                       </div>
                     </form>
                   </div>
@@ -1288,7 +1442,7 @@ export default function Workspace() {
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('logbook') ? '2fr 1fr 1fr 1fr 1fr' : '2fr 1fr 1fr 1fr', padding: '0 1.5rem 0.5rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('logbook') ? '2.5fr 1fr 1fr 1fr 1fr' : '2.5fr 1fr 1fr 1fr', padding: '0 1.5rem 0.75rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   <span>Piloto & Missão</span>
                   <span>Rota</span>
                   <span>Data/Hora</span>
@@ -1297,21 +1451,23 @@ export default function Workspace() {
                 </div>
 
                 {voos.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <PlaneTakeoff size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum plano de voo registado.</p>
+                  <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <PlaneTakeoff size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum plano de voo registado.</p>
                   </div>
                 ) : (
                   voos.map((v) => (
-                    <div key={v.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('logbook') ? '2fr 1fr 1fr 1fr 1fr' : '2fr 1fr 1fr 1fr') : '1fr' }}>
+                    <div key={v.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('logbook') ? '2.5fr 1fr 1fr 1fr 1fr' : '2.5fr 1fr 1fr 1fr') : '1fr' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#f8fafc', fontSize: '0.95rem', fontWeight: 500, marginBottom: '2px' }}>{v.pilotoNome}</span>
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{v.aeronave} • {v.tipoMissao}</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px' }}>{v.pilotoNome}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{v.aeronave} • {v.tipoMissao}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: '#e2e8f0', fontSize: '0.9rem' }}>
-                        {v.origem} <ChevronRight size={14} color="#f59e0b" /> {v.destino}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 600, color: '#e2e8f0', fontSize: '0.95rem' }}>
+                        <span style={{ background: 'rgba(0,0,0,0.5)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>{v.origem}</span>
+                        <ChevronRight size={14} color="#f59e0b" /> 
+                        <span style={{ background: 'rgba(0,0,0,0.5)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>{v.destino}</span>
                       </div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                      <div style={{ color: '#cbd5e1', fontSize: '0.9rem', fontWeight: 500 }}>
                         {v.dataHora}
                       </div>
                       <div>
@@ -1319,7 +1475,7 @@ export default function Workspace() {
                           background: v.status === 'Concluído' ? 'rgba(16, 185, 129, 0.1)' : v.status === 'Em Voo' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
                           color: v.status === 'Concluído' ? '#10b981' : v.status === 'Em Voo' ? '#38bdf8' : '#f59e0b',
                           border: v.status === 'Concluído' ? '1px solid rgba(16, 185, 129, 0.3)' : v.status === 'Em Voo' ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
-                          padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'
+                          padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase'
                         }}>
                           {v.status}
                         </span>
@@ -1327,8 +1483,8 @@ export default function Workspace() {
                       
                       {checkPermission('logbook') && (
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
-                          <button onClick={() => handleEditarVoo(v)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={16} /></button>
-                          <button onClick={() => handleDeletarItem(v.id, 'voos', 'este voo', 'logbook')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={16} /></button>
+                          <button onClick={() => handleEditarVoo(v)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
+                          <button onClick={() => handleDeletarItem(v.id, 'voos', 'este voo', 'logbook')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={16} /></button>
                         </div>
                       )}
                     </div>
@@ -1341,46 +1497,44 @@ export default function Workspace() {
           {activeTab === 'pilotos' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Piloto' : 'Cadastrar Piloto'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Piloto' : 'Cadastrar Piloto'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarPiloto} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Nome Completo</label>
-                          <input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" placeholder="Ex: João Silva" />
+                    <form onSubmit={handleSalvarPiloto} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '1.25rem' }}>
+                          <div>
+                            <label className="form-label">Posição</label>
+                            <input type="number" min="1" max="7" value={novoPosicao} onChange={e => setNovoPosicao(e.target.value)} className="form-input" />
+                          </div>
+                          <div>
+                            <label className="form-label">Nome Completo</label>
+                            <input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" placeholder="Ex: João Silva" />
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Cidade</label>
-                          <input required type="text" value={novaCidade} onChange={e => setNovaCidade(e.target.value)} className="form-input" placeholder="Ex: São Paulo" />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">UF</label>
-                          <CustomSelect searchable value={novaUf} onChange={(val) => setNovaUf(val)} options={ufsBrasileiros} placeholder="Selecione..." />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Posição na Esquadrilha</label>
-                          <CustomSelect 
-                            value={novoPosicao} onChange={(val) => setNovoPosicao(val)}
-                            options={[
-                              { value: '1', label: '#1 - Líder' }, { value: '2', label: '#2 - Ala Direita' }, { value: '3', label: '#3 - Ala Esquerda' },
-                              { value: '4', label: '#4 - Ferrolho' }, { value: '5', label: '#5 - Ala Esq. Externa' }, { value: '6', label: '#6 - Ala Dir. Externa' }, { value: '7', label: '#7 - Isolado' }
-                            ]}
-                          />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '1.25rem' }}>
+                          <div>
+                            <label className="form-label">Cidade</label>
+                            <input required type="text" value={novaCidade} onChange={e => setNovaCidade(e.target.value)} className="form-input" placeholder="Ex: São Paulo" />
+                          </div>
+                          <div>
+                            <label className="form-label">UF</label>
+                            <CustomSelect searchable value={novaUf} onChange={(val) => setNovaUf(val)} options={ufsBrasileiros} placeholder="Sel..." />
+                          </div>
                         </div>
 
                         {/* Sistema de Ocultar / Reserva */}
-                        <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '6px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
+                        <div style={{ marginTop: '0.5rem', padding: '1.5rem', background: 'rgba(0,0,0,0.3)', border: '1px dashed rgba(239, 68, 68, 0.4)', borderRadius: '8px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#fca5a5', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600 }}>
                             <div className={`toggle-switch ${novoOculto ? 'active' : ''}`} onClick={() => setNovoOculto(!novoOculto)} style={{ background: novoOculto ? '#ef4444' : '#334155' }} />
-                            <EyeOff size={18} /> Enviar para a Reserva (Ocultar do site público)
+                            <EyeOff size={20} /> Enviar para a Reserva (Ocultar do site público)
                           </label>
                           
                           {novoOculto && (
-                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
                               <label className="form-label" style={{ color: '#f87171' }}>Justificativa / Motivo da Inatividade</label>
                               <input required type="text" value={novoJustificativa} onChange={e => setNovoJustificativa(e.target.value)} className="form-input" placeholder="Ex: Punido (Regra 3.2) / Afastamento Médico" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }} />
                             </div>
@@ -1388,9 +1542,9 @@ export default function Workspace() {
                         </div>
 
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Salvar Piloto</button>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { e.currentTarget.style.background = '#f59e0b'; }}>Salvar Piloto</button>
                       </div>
                     </form>
                   </div>
@@ -1398,7 +1552,7 @@ export default function Workspace() {
               )}
               
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1.5fr 2fr 2fr 1fr' : '1.5fr 2fr 2fr', padding: '0 1.5rem 0.5rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr', padding: '0 1.5rem 0.75rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   <span>Posição</span>
                   <span>Piloto</span>
                   <span>Localidade</span>
@@ -1406,33 +1560,33 @@ export default function Workspace() {
                 </div>
 
                 {pilotos.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Users size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum piloto cadastrado.</p>
+                  <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <Users size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum piloto cadastrado.</p>
                   </div>
                 ) : (
                   pilotos.map((p) => (
-                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') ? '1.5fr 2fr 2fr 1fr' : '1.5fr 2fr 2fr') : '1fr', opacity: p.oculto ? 0.6 : 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontSize: '1.25rem', fontFamily: '"PosicaoFont", sans-serif', lineHeight: 1 }}>{p.posicao}</span>
-                        <span style={{ color: '#f8fafc', fontSize: '0.9rem', fontWeight: 500 }}>{getPosicaoNome(p.posicao)}</span>
+                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.6 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <span style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', fontSize: '1.5rem', fontFamily: '"PosicaoFont", sans-serif', lineHeight: 1 }}>{p.posicao}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.95rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{getPosicaoNome(p.posicao)}</span>
                       </div>
                       
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ fontWeight: 400, color: '#e2e8f0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {p.nome} {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>RESERVA</span>}
+                        <div style={{ fontWeight: 600, color: '#f8fafc', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {p.nome} {p.oculto && <span style={{ fontSize: '0.7rem', background: '#ef4444', color: '#fff', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, letterSpacing: '0.05em' }}>RESERVA</span>}
                         </div>
-                        {p.oculto && p.justificativa && <span style={{ fontSize: '0.75rem', color: '#f87171', marginTop: '2px' }}>{p.justificativa}</span>}
+                        {p.oculto && p.justificativa && <span style={{ fontSize: '0.8rem', color: '#f87171', marginTop: '4px' }}>{p.justificativa}</span>}
                       </div>
 
-                      <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                      <div style={{ color: '#cbd5e1', fontSize: '0.95rem' }}>
                         {p.cidade || 'City'} {p.uf ? `- ${p.uf}` : '- UF'}
                       </div>
                       
                       {checkPermission('pilotos') && (
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
-                          <button onClick={() => handleEditarPiloto(p)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={16} /></button>
-                          <button onClick={() => handleDeletarItem(p.id, 'pilotos', 'este piloto', 'pilotos')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={16} /></button>
+                          <button onClick={() => handleEditarPiloto(p)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
+                          <button onClick={() => handleDeletarItem(p.id, 'pilotos', 'este piloto', 'pilotos')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={16} /></button>
                         </div>
                       )}
                     </div>
@@ -1445,18 +1599,18 @@ export default function Workspace() {
           {activeTab === 'agenda' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Evento' : 'Nova Demonstração'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Evento' : 'Nova Demonstração'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarAgenda} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <form onSubmit={handleSalvarAgenda} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Cidade do Evento</label>
                           <input required type="text" value={agCidade} onChange={e => setAgCidade(e.target.value)} className="form-input" placeholder="Ex: Brasília - DF" />
-                          <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>As coordenadas do mapa serão buscadas automaticamente via satélite.</span>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '6px' }}>As coordenadas do mapa serão buscadas automaticamente via satélite.</span>
                         </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1472,9 +1626,9 @@ export default function Workspace() {
                           />
                         </div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} disabled={loadingGeocode} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" disabled={loadingGeocode} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: loadingGeocode ? 'wait' : 'pointer', opacity: loadingGeocode ? 0.7 : 1, fontFamily: appleFontStack }}>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} disabled={loadingGeocode} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" disabled={loadingGeocode} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: loadingGeocode ? 'wait' : 'pointer', opacity: loadingGeocode ? 0.7 : 1, fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { if(!loadingGeocode) e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { if(!loadingGeocode) e.currentTarget.style.background = '#f59e0b'; }}>
                           {loadingGeocode ? 'Buscando...' : 'Salvar Evento'}
                         </button>
                       </div>
@@ -1484,7 +1638,7 @@ export default function Workspace() {
               )}
               
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('agenda') ? '2fr 1fr 1fr 1fr' : '2fr 1fr 1fr', padding: '0 1.5rem 0.5rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('agenda') ? '2.5fr 1fr 1fr 1fr' : '2.5fr 1fr 1fr', padding: '0 1.5rem 0.75rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   <span>Data / Local</span>
                   <span>Status</span>
                   <span>Status Real</span>
@@ -1492,19 +1646,19 @@ export default function Workspace() {
                 </div>
 
                 {agendas.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <CalendarCheck2 size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum evento na agenda.</p>
+                  <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <CalendarCheck2 size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum evento na agenda.</p>
                   </div>
                 ) : (
                   agendas.map((a) => (
-                    <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('agenda') ? '2fr 1fr 1fr 1fr' : '2fr 1fr 1fr') : '1fr' }}>
+                    <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('agenda') ? '2.5fr 1fr 1fr 1fr' : '2.5fr 1fr 1fr') : '1fr' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '2px' }}>{a.dataHora}</span>
-                        <span style={{ color: '#e2e8f0', fontSize: '0.95rem' }}>{a.cidade}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '4px' }}>{a.dataHora}</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.1rem', fontWeight: 600 }}>{a.cidade}</span>
                       </div>
                       <div>
-                        <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em' }}>
+                        <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>
                           M-PREC
                         </span>
                       </div>
@@ -1513,7 +1667,7 @@ export default function Workspace() {
                           background: a.status === 'Confirmado' ? 'rgba(16, 185, 129, 0.1)' : a.status === 'Cancelado' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
                           color: a.status === 'Confirmado' ? '#10b981' : a.status === 'Cancelado' ? '#ef4444' : '#f59e0b',
                           border: a.status === 'Confirmado' ? '1px solid rgba(16, 185, 129, 0.3)' : a.status === 'Cancelado' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
-                          padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em' 
+                          padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' 
                         }}>
                           {a.status}
                         </span>
@@ -1521,8 +1675,8 @@ export default function Workspace() {
                       
                       {checkPermission('agenda') && (
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
-                          <button onClick={() => handleEditarAgenda(a)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={16} /></button>
-                          <button onClick={() => handleDeletarItem(a.id, 'agenda', 'este evento', 'agenda')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={16} /></button>
+                          <button onClick={() => handleEditarAgenda(a)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
+                          <button onClick={() => handleDeletarItem(a.id, 'agenda', 'este evento', 'agenda')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={16} /></button>
                         </div>
                       )}
                     </div>
@@ -1535,81 +1689,83 @@ export default function Workspace() {
           {activeTab === 'noticias' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Publicação' : 'Nova Notícia'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '750px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Publicação' : 'Nova Notícia'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarNoticia} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Título da Notícia</label>
-                          <input required type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" placeholder="Ex: Apresentação Confirmada!" />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Data da Publicação</label>
-                          <CustomDatePicker value={notData} onChange={(val) => setNotData(val)} />
+                    <form onSubmit={handleSalvarNoticia} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1.5rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="form-label">Data</label>
+                            <input type="text" value={notData} onChange={e => setNotData(e.target.value)} className="form-input" placeholder="10 MAI" />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="form-label">Título</label>
+                            <input type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" placeholder="Ex: Demonstração Cancelada" />
+                          </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Imagem de Capa (Upload Automático)</label>
-                          <label style={{ padding: '0.75rem 1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', borderRadius: '6px', fontSize: '0.95rem', cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                          <label style={{ padding: '1rem', background: 'rgba(0, 0, 0, 0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#f8fafc', borderRadius: '8px', fontSize: '0.95rem', cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}>
                             {uploadProgress !== null ? (
-                              <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} color="#f59e0b" /> A enviar... {Math.round(uploadProgress)}%</>
+                              <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} color="#f59e0b" /> A enviar... {Math.round(uploadProgress)}%</>
                             ) : (
-                              <><ImagePlus size={18} color="#f59e0b"/> {notImagem ? 'Trocar Imagem' : 'Selecionar e Enviar Imagem'}</>
+                              <><ImagePlus size={20} color="#f59e0b"/> {notImagem ? 'Trocar Imagem' : 'Selecionar e Enviar Imagem'}</>
                             )}
                             <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
                           </label>
                           
                           {uploadProgress !== null && (
-                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '0.5rem' }}>
+                            <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '0.75rem' }}>
                               <div style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.2s ease' }} />
                             </div>
                           )}
                         </div>
                         
                         {notImagem && uploadProgress === null && (
-                          <div style={{ width: '100%', height: '140px', borderRadius: '6px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(255,255,255,0.1)' }} />
+                          <div style={{ width: '100%', height: '180px', borderRadius: '8px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(255,255,255,0.1)' }} />
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="form-label">Resumo (Texto curto)</label>
-                          <textarea required value={notResumo} onChange={e => setNotResumo(e.target.value)} rows={3} className="form-input" style={{ resize: 'none' }} placeholder="Digite o resumo da notícia..." />
+                          <textarea required value={notResumo} onChange={e => setNotResumo(e.target.value)} rows={4} className="form-input" style={{ resize: 'none' }} placeholder="Digite o resumo da notícia..." />
                         </div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" disabled={uploadProgress !== null} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: uploadProgress !== null ? 'wait' : 'pointer', opacity: uploadProgress !== null ? 0.7 : 1, fontFamily: appleFontStack }}>Publicar</button>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" disabled={uploadProgress !== null} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: uploadProgress !== null ? 'wait' : 'pointer', opacity: uploadProgress !== null ? 0.7 : 1, fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { if(uploadProgress === null) e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { if(uploadProgress === null) e.currentTarget.style.background = '#f59e0b'; }}>Publicar</button>
                       </div>
                     </form>
                   </div>
                 </div>
               )}
               
-              <div className="news-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              <div className="news-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {noticias.length === 0 ? (
-                  <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Newspaper size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhuma notícia publicada.</p>
+                  <div style={{ gridColumn: '1 / -1', padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <Newspaper size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhuma notícia publicada.</p>
                   </div>
                 ) : (
                   noticias.map((n) => (
-                    <div key={n.id} style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(30, 41, 59, 0.8)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)'}>
+                    <div key={n.id} style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(30, 41, 59, 0.8)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 15px 30px -10px rgba(0,0,0,0.5)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                       {n.imagem ? (
-                        <div style={{ height: '140px', backgroundImage: `url(${n.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }} />
+                        <div style={{ height: '160px', backgroundImage: `url(${n.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }} />
                       ) : (
-                        <div style={{ height: '140px', background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={32} color="#64748b"/></div>
+                        <div style={{ height: '160px', background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={32} color="#64748b"/></div>
                       )}
-                      <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                        <h4 style={{ margin: '0 0 0.25rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>{n.titulo}</h4>
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '0.75rem' }}>{n.data}</span>
-                        <p style={{ color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1.5rem 0', flexGrow: 1 }}>{n.resumo.length > 80 ? n.resumo.substring(0, 80) + '...' : n.resumo}</p>
+                      <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.15rem', fontWeight: 600 }}>{n.titulo}</h4>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1rem', fontWeight: 500 }}>{n.data}</span>
+                        <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, margin: '0 0 1.5rem 0', flexGrow: 1 }}>{n.resumo.length > 90 ? n.resumo.substring(0, 90) + '...' : n.resumo}</p>
                         
                         {checkPermission('noticias') && (
-                          <div style={{ display: 'flex', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-                            <button onClick={() => handleEditarNoticia(n)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.4rem', borderRadius: '6px', flexGrow: 1, display: 'flex', justifyContent: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#f8fafc'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
-                            <button onClick={() => handleDeletarItem(n.id, 'noticias', 'esta notícia', 'noticias')} style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.4rem', borderRadius: '6px', flexGrow: 1, display: 'flex', justifyContent: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ef4444'; }}><Trash2 size={16} /></button>
+                          <div style={{ display: 'flex', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+                            <button onClick={() => handleEditarNoticia(n)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#f8fafc'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
+                            <button onClick={() => handleDeletarItem(n.id, 'noticias', 'esta notícia', 'noticias')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.color = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; }}><Trash2 size={16} /></button>
                           </div>
                         )}
                       </div>
@@ -1623,16 +1779,16 @@ export default function Workspace() {
           {activeTab === 'mods' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="form-modal-content" style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'visible', margin: '5vh auto' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Arial, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Link' : 'Cadastrar Utilitário'}</h3>
-                      <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={20} /></button>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', margin: 'auto' }}>
+                    <div style={{ padding: '1.5rem 2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{editingId ? 'Editar Link' : 'Cadastrar Utilitário'}</h3>
+                      <button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><X size={20} /></button>
                     </div>
-                    <form onSubmit={handleSalvarMod} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <form onSubmit={handleSalvarMod} style={{ padding: '2.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="form-label">Título do Arquivo/Link</label>
+                          <label className="form-label">Nome / Título</label>
                           <input required type="text" value={modTitulo} onChange={e => setModTitulo(e.target.value)} className="form-input" placeholder="Ex: Textura A-29" />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1643,14 +1799,15 @@ export default function Workspace() {
                           <label className="form-label">Descrição</label>
                           <input required type="text" value={modDesc} onChange={e => setModDesc(e.target.value)} className="form-input" placeholder="Ex: Texturas oficiais do esquadrão..." />
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.95rem', marginTop: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '1.25rem', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.2)' }}>
                           <div className={`toggle-switch ${modMarketplace ? 'active' : ''}`} onClick={() => setModMarketplace(!modMarketplace)} />
-                          É um item pago do Marketplace oficial?
+                          É um item pago do Marketplace oficial? (Altera o ícone)
                         </label>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontFamily: appleFontStack }}>Cancelar</button>
-                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.6rem 1.5rem', borderRadius: '6px', fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: appleFontStack }}>Salvar Link</button>
+
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+                        <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f59e0b', color: '#000', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: appleFontStack, transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { e.currentTarget.style.background = '#f59e0b'; }}>Salvar Link</button>
                       </div>
                     </form>
                   </div>
@@ -1659,27 +1816,27 @@ export default function Workspace() {
               
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {mods.length === 0 ? (
-                  <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <Link2 size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum utilitário salvo.</p>
+                  <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    <Link2 size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum utilitário salvo.</p>
                   </div>
                 ) : (
                   mods.map((m) => (
                     <div key={m.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? 'auto 1fr auto' : '1fr', gap: '1.5rem' }}>
-                      <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Link2 size={24} color="#64748b" />
+                      <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.05)' }}>
+                        <Link2 size={26} color="#64748b" />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#e2e8f0', fontSize: '1.05rem', fontWeight: 500, marginBottom: '0.2rem' }}>{m.titulo}</span>
-                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{m.desc}</span>
+                        <span style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: 600, marginBottom: '4px' }}>{m.titulo}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>{m.desc}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'space-between' }}>
-                        <span style={{ color: '#64748b', fontSize: '0.8rem', paddingRight: '1rem', borderRight: '1px solid rgba(255,255,255,0.1)' }}>{m.isMarketplace ? 'Loja do Jogo' : 'Link Externo'}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'space-between' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.85rem', paddingRight: '1.25rem', borderRight: '1px solid rgba(255,255,255,0.1)', fontWeight: 500 }}>{m.isMarketplace ? 'Loja do Jogo' : 'Link Externo'}</span>
                         
                         {checkPermission('mods') && (
                           <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button onClick={() => handleEditarMod(m)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}><Edit2 size={16} /></button>
-                            <button onClick={() => handleDeletarItem(m.id, 'mods', 'este link', 'mods')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = '#ef4444'}><Trash2 size={16} /></button>
+                            <button onClick={() => handleEditarMod(m)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#cbd5e1'; }}><Edit2 size={16} /></button>
+                            <button onClick={() => handleDeletarItem(m.id, 'mods', 'este link', 'mods')} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '6px', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}><Trash2 size={16} /></button>
                           </div>
                         )}
                       </div>
@@ -1693,25 +1850,25 @@ export default function Workspace() {
           {activeTab === 'config' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', maxWidth: '1000px' }}>
               
-              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Alistamento</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Habilite para exibir o botão de recrutamento no site público.</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem', background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <span style={{ color: '#cbd5e1', fontWeight: 500, fontSize: '0.95rem' }}>{alistamentoAberto ? 'Inscrições Abertas' : 'Inscrições Fechadas'}</span>
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2.5rem', backdropFilter: 'blur(12px)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.15rem', fontWeight: 600 }}>Alistamento</h4>
+                <p style={{ margin: '0 0 2.5rem 0', fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6 }}>Habilite para exibir o botão de recrutamento no site público.</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: '1rem' }}>{alistamentoAberto ? 'Inscrições Abertas' : 'Inscrições Fechadas'}</span>
                   
                   {checkPermission('alistamento') ? (
-                    <div className={`toggle-switch ${alistamentoAberto ? 'active' : ''}`} onClick={handleToggleAlistamento} />
+                    <div className={`toggle-switch ${alistamentoAberto ? 'active' : ''}`} onClick={handleToggleAlistamento} style={{ transform: 'scale(1.1)' }} />
                   ) : (
-                    <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>Bloqueado</span>
+                    <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 700, letterSpacing: '0.05em' }}>BLOQUEADO</span>
                   )}
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Mídias e Transmissões</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Coloque os links dos seus vídeos/lives. O sistema irá ajustá-los automaticamente. Deixe vazio para desativar.</p>
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2.5rem', backdropFilter: 'blur(12px)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.15rem', fontWeight: 600 }}>Mídias e Transmissões</h4>
+                <p style={{ margin: '0 0 2.5rem 0', fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6 }}>Coloque os links dos seus vídeos/lives. O sistema irá ajustá-los automaticamente. Deixe vazio para desativar.</p>
                 
-                <form onSubmit={handleSalvarMidias} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <form onSubmit={handleSalvarMidias} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="form-label">Link YouTube</label>
                     <input type="text" value={ytUrl} onChange={e => setYtUrl(e.target.value)} className="form-input" placeholder="Ex: https://www.youtube.com/watch?v=..." />
@@ -1728,42 +1885,42 @@ export default function Workspace() {
                   </div>
 
                   {checkPermission('header') ? (
-                    <button type="submit" style={{ marginTop: '0.5rem', background: '#f59e0b', color: '#000', border: 'none', padding: '0.75rem', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s', fontFamily: appleFontStack }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
+                    <button type="submit" style={{ marginTop: '1rem', background: '#f59e0b', color: '#000', border: 'none', padding: '1rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s', fontFamily: appleFontStack, fontSize: '0.95rem' }} onMouseEnter={e => e.currentTarget.style.background = '#d97706'} onMouseLeave={e => e.currentTarget.style.background = '#f59e0b'}>
                       Salvar Links de Mídia
                     </button>
                   ) : (
-                    <div style={{ padding: '0.85rem 1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed', marginTop: '0.5rem' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed', marginTop: '1rem' }}>
                       Sem permissão para alterar
                     </div>
                   )}
                 </form>
               </div>
 
-              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>Imagem de Fundo</h4>
-                <p style={{ margin: '0 0 2rem 0', fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>Altere a imagem de cabeçalho do site principal (Upload direto).</p>
+              <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '2.5rem', backdropFilter: 'blur(12px)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.15rem', fontWeight: 600 }}>Imagem de Fundo</h4>
+                <p style={{ margin: '0 0 2.5rem 0', fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6 }}>Altere a imagem de cabeçalho do site principal (Upload direto).</p>
                 
                 {customHeader && (
-                  <div style={{ height: '100px', backgroundImage: `url(${customHeader})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.1)' }} />
+                  <div style={{ height: '140px', backgroundImage: `url(${customHeader})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.1)' }} />
                 )}
                 
                 {uploadProgress !== null && activeTab === 'config' && (
-                  <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                  <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.5rem' }}>
                     <div style={{ width: `${uploadProgress}%`, height: '100%', backgroundColor: '#f59e0b', transition: 'width 0.2s ease' }} />
                   </div>
                 )}
 
                 {checkPermission('header') ? (
-                  <label style={{ padding: '0.85rem 1rem', background: '#f59e0b', color: '#000', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 600, cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', transition: 'background 0.2s', opacity: uploadProgress !== null ? 0.7 : 1 }} onMouseEnter={e => { if(uploadProgress === null) e.currentTarget.style.background = '#d97706'; }} onMouseLeave={e => { if(uploadProgress === null) e.currentTarget.style.background = '#f59e0b'; }}>
+                  <label style={{ padding: '1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#f59e0b', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: uploadProgress !== null ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', transition: 'all 0.2s', opacity: uploadProgress !== null ? 0.7 : 1 }} onMouseEnter={e => { if(uploadProgress === null) e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; }} onMouseLeave={e => { if(uploadProgress === null) e.currentTarget.style.background = 'rgba(0,0,0,0.4)'; }}>
                     {uploadProgress !== null ? (
-                      <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Enviando Imagem...</>
+                      <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Enviando Imagem...</>
                     ) : (
-                      <><ImagePlus size={18} /> Atualizar Imagem</>
+                      <><ImagePlus size={20} /> Atualizar Imagem</>
                     )}
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUploadHeader} disabled={uploadProgress !== null} />
                   </label>
                 ) : (
-                  <div style={{ padding: '0.85rem 1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.4)', border: '1px dashed rgba(255,255,255,0.2)', color: '#ef4444', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'center', cursor: 'not-allowed' }}>
                     Sem permissão para alterar
                   </div>
                 )}
@@ -1774,31 +1931,31 @@ export default function Workspace() {
 
           {activeTab === 'parametros' && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '2fr 2fr 1fr', padding: '0 1.5rem 0.5rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '2fr 2fr 1fr', padding: '0 1.5rem 0.75rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <span>Utilizador</span>
                 <span>E-mail</span>
                 <span>Cargo Geral</span>
               </div>
 
               {usuarios.length === 0 ? (
-                <div style={{ padding: '4rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <Shield size={48} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>Nenhum utilizador registado.</p>
+                <div style={{ padding: '5rem 2rem', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <Shield size={56} color="#334155" style={{ margin: '0 auto 1.5rem' }} />
+                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '1.05rem' }}>Nenhum utilizador registado.</p>
                 </div>
               ) : (
                 usuarios.map((u) => (
-                  <div key={u.id} className="list-row" style={{ gridTemplateColumns: '1fr', gap: '1.5rem', padding: '1.5rem' }}>
+                  <div key={u.id} className="list-row" style={{ gridTemplateColumns: '1fr', gap: '2rem', padding: '2rem 1.5rem', background: 'rgba(30, 41, 59, 0.6)' }}>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '2fr 2fr 1fr' : '1fr', gap: '1rem', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '2fr 2fr 1fr' : '1fr', gap: '1.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                         {u.foto ? (
-                          <img src={u.foto} alt="Perfil" style={{ width: 42, height: 42, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
+                          <img src={u.foto} alt="Perfil" style={{ width: 48, height: 48, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
                         ) : (
-                          <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}><UserCircle size={24}/></div>
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}><UserCircle size={28}/></div>
                         )}
-                        <span style={{ color: '#f8fafc', fontSize: '1.05rem', fontWeight: 600 }}>{u.nome}</span>
+                        <span style={{ color: '#f8fafc', fontSize: '1.15rem', fontWeight: 600 }}>{u.nome}</span>
                       </div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
                         {u.email}
                       </div>
                       <div>
@@ -1815,12 +1972,12 @@ export default function Workspace() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2rem' }}>
                       <PermissionToggle label="Logbook" active={!!u.permissoes?.logbook} onChange={() => handlePermissao(u.id!, 'logbook', !u.permissoes?.logbook)} />
-                      <PermissionToggle label="Adicionar Agenda" active={!!u.permissoes?.agenda} onChange={() => handlePermissao(u.id!, 'agenda', !u.permissoes?.agenda)} />
-                      <PermissionToggle label="Adicionar Mod" active={!!u.permissoes?.mods} onChange={() => handlePermissao(u.id!, 'mods', !u.permissoes?.mods)} />
-                      <PermissionToggle label="Alterar Header" active={!!u.permissoes?.header} onChange={() => handlePermissao(u.id!, 'header', !u.permissoes?.header)} />
-                      <PermissionToggle label="Abrir Alistamento" active={!!u.permissoes?.alistamento} onChange={() => handlePermissao(u.id!, 'alistamento', !u.permissoes?.alistamento)} />
+                      <PermissionToggle label="Agenda" active={!!u.permissoes?.agenda} onChange={() => handlePermissao(u.id!, 'agenda', !u.permissoes?.agenda)} />
+                      <PermissionToggle label="Mods" active={!!u.permissoes?.mods} onChange={() => handlePermissao(u.id!, 'mods', !u.permissoes?.mods)} />
+                      <PermissionToggle label="Header" active={!!u.permissoes?.header} onChange={() => handlePermissao(u.id!, 'header', !u.permissoes?.header)} />
+                      <PermissionToggle label="Alistamento" active={!!u.permissoes?.alistamento} onChange={() => handlePermissao(u.id!, 'alistamento', !u.permissoes?.alistamento)} />
                     </div>
 
                   </div>
