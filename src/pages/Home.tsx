@@ -1016,15 +1016,13 @@ export default function Home() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
       `}</style>
 
-      {/* SPLASH SCREEN */}
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#38bdf8', fontSize: '1.2rem', letterSpacing: '0.1em' }}>CARREGANDO SISTEMAS</span>
+          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>LIGANDO MOTORES!</span>
         </div>
       </div>
 
-      {/* MENU SUPERIOR */}
       <nav style={{ position: 'fixed', top: 0, width: '100%', zIndex: 100, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(40px) saturate(200%)', WebkitBackdropFilter: 'blur(40px) saturate(200%)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'all 0.3s ease', padding: scrolled || mobileMenuOpen ? '0.6rem 0' : '1.4rem 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
@@ -1113,7 +1111,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PILOTOS */}
       <div style={{ position: 'relative', backgroundColor: '#030712' }}>
         <section id="pilotos" className="section-container">
           <SectionHeader title="PILOTOS" color="#38bdf8" />
@@ -1131,9 +1128,9 @@ export default function Home() {
           </div>
 
           {pilotosViewMode === 'cards' ? (
-            <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '2rem' }}>
+            <div className="responsive-grid" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem' }}>
               {dbPilotos.length === 0 ? (
-                <p style={{ color: '#64748b', textAlign: 'center', gridColumn: '1 / -1', fontWeight: 300 }}>Carregando dados dos pilotos...</p>
+                <p style={{ color: '#64748b', textAlign: 'center', width: '100%', fontWeight: 300 }}>Carregando dados dos pilotos...</p>
               ) : (
                 dbPilotos.map((piloto, index) => {
                   let role = "";
@@ -1151,8 +1148,8 @@ export default function Home() {
                   if (piloto.oculto) return null; 
 
                   return (
-                    <div key={index} className="card-piloto-novo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
-                      <div style={{ width: '100%', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '160px', maxWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1rem' }}>
+                      <div style={{ width: '80%', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <img src={pilotoImage} alt="Piloto" className="piloto-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
@@ -1335,7 +1332,7 @@ export default function Home() {
         <div style={{ backgroundColor: '#030712' }}>
           <section id="noticias" className="section-container">
             <SectionHeader title="ARTIGOS" />
-            <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
               {dbNoticias.map((noticia, idx) => (
                 <div key={idx} className="news-card glass-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease', border: 'none' }}>
                   {noticia.imagem && (
