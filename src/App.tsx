@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 
 import Home from './pages/Home';
+import HomeEn from './pages/HomeEn';
 import Intranet from './pages/Workspace';
 import Login from './pages/Login';
 
@@ -31,7 +32,10 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        {/* Rota principal em Português */}
         <Route path="/" element={<Home />} />
+        
+        <Route path="/en" element={<HomeEn />} />
         
         <Route path="/login" element={<Login />} />
         
@@ -40,8 +44,6 @@ const App: React.FC = () => {
             <Intranet />
           </RotaProtegida>
         } />
-
-      
         
       </Routes>
     </Router>

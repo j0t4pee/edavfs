@@ -5,6 +5,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../App.css'; 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -13,7 +14,7 @@ import {
   Plane, ChevronRight, Map as MapIcon, 
   ShoppingCart, CheckCircle2, Calendar, Newspaper, 
   ChevronUp, Quote, Download, Menu, X, ShieldCheck, FileText, AlertTriangle, LayoutGrid, Send, Cookie, ChevronDown,
-  GraduationCap, Crosshair, Award
+  GraduationCap, Crosshair, Award, Globe, Mail
 } from 'lucide-react';
 
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -47,13 +48,13 @@ const southAmericaBounds = L.latLngBounds(
 );
 
 const getMarkerIcon = (status: string) => {
-  const color = status === 'Confirmado' ? '#10b981' : status === 'Cancelado' ? '#ef4444' : '#38bdf8';
+  const color = status === 'Confirmado' ? '#10b981' : status === 'Cancelado' ? '#ef4444' : '#0ea5e9';
   return new L.DivIcon({
     className: 'custom-map-marker',
     html: `
       <div style="position:relative; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center;">
         <div style="position:absolute; width:100%; height:100%; border-radius:50%; border: 1px solid ${color}; opacity: 0.4; animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-        <div style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 10px ${color};"></div>
+        <div style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ffffff;"></div>
       </div>
     `,
     iconSize: [24, 24],
@@ -68,8 +69,8 @@ interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolea
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
 
-const SectionHeader = ({ title, color = '#38bdf8' }: { title: string, color?: string }) => (
-  <div className="section-header" style={{ marginBottom: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
+const SectionHeader = ({ title }: { title: string }) => (
+  <div className="section-header" style={{ marginBottom: '3.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
     <h2 className="section-title" style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, letterSpacing: '0.05em', color: '#f8fafc', fontSize: 'clamp(1.6rem, 2.8vw, 2.2rem)', textTransform: 'uppercase', textAlign: 'center', margin: 0 }}>{title}</h2>
   </div>
 );
@@ -78,7 +79,7 @@ const AppleSpec = ({ value, unit, label }: { value: string, unit?: string, label
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '4px', border: 'none', backdropFilter: 'blur(12px)' }}>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', color: '#f8fafc' }}>
       <span style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif', background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</span>
-      {unit && <span style={{ fontSize: '1rem', fontWeight: 400, color: '#38bdf8', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
+      {unit && <span style={{ fontSize: '1rem', fontWeight: 400, color: '#0ea5e9', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
     </div>
     <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.25rem', fontWeight: 300, fontFamily: '"Inter", sans-serif' }}>{label}</span>
   </div>
@@ -86,9 +87,9 @@ const AppleSpec = ({ value, unit, label }: { value: string, unit?: string, label
 
 const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
-    <div style={{ color: '#38bdf8', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
-    <span style={{ fontSize: '3.2rem', fontFamily: '"StratumNo2", sans-serif', fontStyle: 'italic', fontWeight: 700, color: '#ffffff', lineHeight: 1, letterSpacing: '0.02em', textShadow: '0 0 20px rgba(56, 189, 248, 0.3)' }}>{value}</span>
-    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif' }}>{label}</span>
+    <div style={{ color: '#0ea5e9', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
+    <span style={{ fontSize: '3.2rem', fontFamily: '"StratumNo2", sans-serif', fontStyle: 'italic', fontWeight: 700, background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, letterSpacing: '0.02em', padding: '0 10px' }}>{value}</span>
+    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif', textAlign: 'center' }}>{label}</span>
   </div>
 );
 
@@ -99,6 +100,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
   
   const [pilotosViewMode, setPilotosViewMode] = useState<'cards' | 'formatura'>('cards');
   
@@ -131,6 +133,8 @@ export default function Home() {
   const [modalIdadeOpen, setModalIdadeOpen] = useState(false); 
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [isBlocked, setIsBlocked] = useState(false); 
+
+  const navigate = useNavigate();
 
   const [nome, setNome] = useState('');
   const [nickname, setNickname] = useState('');
@@ -502,7 +506,7 @@ export default function Home() {
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}>3. Uso de Insígnias e Marcas</h4>
           <p>A utilização de pinturas, logotipos inspirados, referências a aeronaves (como o Embraer A-29 Super Tucano) e terminologias militares possui caráter puramente ilustrativo, ficcional e lúdico, com o objetivo único de homenagear os profissionais reais da aviação em ambiente virtual.</p>
           <p style={{ marginTop: '1rem' }}>
-            Encorajamos fortemente todos os interessados e entusiastas a visitarem e conhecerem o trabalho incrível da <strong>EDAV Oficial</strong> acessando o link <a href="https://edav.com.br" target="_blank" rel="noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>edav.com.br</a>. Deixamos aqui o nosso máximo respeito e profunda admiração por tudo o que eles representam para a comunidade.
+            Encorajamos fortemente todos os interessados e entusiastas a visitarem e conhecerem o trabalho incrível da <strong>EDAV Oficial</strong> acessando o link <a href="https://edav.com.br" target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 600 }}>edav.com.br</a>. Deixamos aqui o nosso máximo respeito e profunda admiração por tudo o que eles representam para a comunidade.
           </p>
         </>
       )
@@ -556,7 +560,9 @@ export default function Home() {
           <span style={{ 
             fontSize: '3.5rem', 
             fontFamily: '"PosicaoFont", sans-serif', 
-            color: '#38bdf8',
+            background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             lineHeight: 0.8
           }}>
             {posicao}
@@ -567,7 +573,7 @@ export default function Home() {
             flexDirection: 'column', 
             textAlign: isLeft ? 'right' : 'left'
           }}>
-            <span style={{ display: 'block', color: '#38bdf8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: '"Inter", sans-serif' }}>{role}</span>
+            <span style={{ display: 'block', color: '#0ea5e9', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: '"Inter", sans-serif' }}>{role}</span>
             <span style={{ display: 'block', color: '#f8fafc', fontSize: '0.95rem', fontWeight: 300, fontFamily: '"Inter", sans-serif', marginTop: '2px', whiteSpace: 'nowrap' }}>{piloto ? piloto.nome : 'Vago'}</span>
           </div>
         </div>
@@ -622,7 +628,7 @@ export default function Home() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+        ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 
         h1, h2, h3, h4, h5, h6 { font-family: "StratumNo2", sans-serif !important; color: #ffffff; }
 
@@ -647,10 +653,6 @@ export default function Home() {
 
         .piloto-img {
           opacity: 0.95;
-        }
-
-        .tatic-number {
-          color: #38bdf8 !important;
         }
         
         .slot-info { 
@@ -689,9 +691,9 @@ export default function Home() {
         .splash-screen.hidden { opacity: 0; visibility: hidden; }
         .pulse-logo { animation: pulseLogo 2s infinite ease-in-out; }
         @keyframes pulseLogo { 
-          0% { transform: scale(1); opacity: 0.8; } 
-          50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3)); } 
-          100% { transform: scale(1); opacity: 0.8; } 
+          0% { transform: scale(1); opacity: 0.7; } 
+          50% { transform: scale(1.05); opacity: 1; filter: none; } 
+          100% { transform: scale(1); opacity: 0.7; } 
         }
 
         .stats-grain {
@@ -708,7 +710,7 @@ export default function Home() {
           transform: translate(-50%, -50%);
           width: 800px;
           height: 800px;
-          background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 60%);
+          background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 60%);
           filter: blur(60px);
           z-index: 0;
         }
@@ -725,8 +727,8 @@ export default function Home() {
           position: relative;
         }
         .academy-phase-card:hover {
-          border-left: 2px solid #38bdf8;
-          background: linear-gradient(90deg, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0) 100%);
+          border-left: 2px solid #0ea5e9;
+          background: linear-gradient(90deg, rgba(14,165,233,0.15) 0%, transparent 100%);
           transform: translateX(10px);
         }
 
@@ -747,7 +749,7 @@ export default function Home() {
         }
         .modern-input:focus {
           background: rgba(255, 255, 255, 0.06);
-          border-bottom: 1px solid #38bdf8;
+          border-bottom: 1px solid #0ea5e9;
         }
         .modern-input::placeholder { color: #64748b !important; opacity: 0.5 !important; font-weight: 300; }
 
@@ -765,13 +767,13 @@ export default function Home() {
         }
         .leaflet-touch .leaflet-bar a, .leaflet-bar a {
           background-color: rgba(15, 23, 42, 0.8) !important;
-          color: #38bdf8 !important;
+          color: #0ea5e9 !important;
           border: 1px solid rgba(255,255,255,0.05) !important;
           transition: all 0.3s ease !important;
           border-radius: 0 !important;
         }
         .leaflet-touch .leaflet-bar a:hover, .leaflet-bar a:hover {
-          background-color: #38bdf8 !important;
+          background-color: #0ea5e9 !important;
           color: #000 !important;
         }
 
@@ -789,18 +791,18 @@ export default function Home() {
           transition: color 0.3s ease;
           cursor: pointer;
         }
-        .nav-link:hover { color: #38bdf8; }
-        .nav-link.active { color: #38bdf8; font-weight: 700; }
+        .nav-link:hover { color: #0ea5e9; }
+        .nav-link.active { color: #0ea5e9; font-weight: 700; }
 
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .mobile-menu.open { transform: translateY(0); }
         .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 700; font-family: "StratumNo2", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
-        .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #38bdf8; }
+        .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #0ea5e9; }
 
         .legal-tab { background: transparent; border: none; color: #94a3b8; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-family: "Inter", sans-serif !important; transition: all 0.3s ease; font-size: 0.9rem; text-transform: uppercase; }
         .legal-tab:hover { background: rgba(255,255,255,0.05); color: #ffffff; }
-        .legal-tab.active { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .legal-tab.active { background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; }
         
         .modal-body-scroll::-webkit-scrollbar { width: 6px; }
         .modal-body-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -827,12 +829,12 @@ export default function Home() {
           text-transform: uppercase;
         }
         .platform-btn.active {
-          background: #38bdf8;
-          color: #030712;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+          color: #ffffff;
         }
         .platform-btn.active-blue {
-          background: #38bdf8;
-          color: #030712;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+          color: #ffffff;
         }
         .platform-btn:hover:not(.active):not(.active-blue) {
           background: rgba(255, 255, 255, 0.05);
@@ -859,14 +861,14 @@ export default function Home() {
           color: #ffffff;
         }
         .view-toggle-btn.active {
-          background: #38bdf8 !important;
-          color: #030712 !important;
-          border-color: #38bdf8 !important;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
+          color: #ffffff !important;
+          border-color: transparent !important;
         }
         .view-toggle-btn.active-blue {
-          background: #38bdf8 !important;
-          color: #030712 !important;
-          border-color: #38bdf8 !important;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
+          color: #ffffff !important;
+          border-color: transparent !important;
         }
 
         .view-toggle-btn.active-yt {
@@ -911,12 +913,12 @@ export default function Home() {
         .tb-button {
           position: relative;
           background: transparent;
-          color: #38bdf8;
+          color: #0ea5e9;
           font-family: 'StratumNo2', sans-serif !important;
           font-weight: 700;
           font-size: 0.95rem;
-          padding: 0.85rem 2rem;
-          border: 1px solid #38bdf8;
+          padding: 0.6rem 1.4rem;
+          border: 1px solid #0ea5e9;
           outline: none;
           border-radius: 4px;
           cursor: pointer;
@@ -930,8 +932,9 @@ export default function Home() {
         }
 
         .tb-button:hover {
-          background: #38bdf8;
-          color: #030712;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+          color: #ffffff;
+          border-color: transparent;
         }
         
         .tb-button:disabled {
@@ -942,22 +945,66 @@ export default function Home() {
         }
 
         .btn-alistamento {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
           color: #ffffff !important;
           border: none !important;
-          box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+          box-shadow: none !important;
           transition: all 0.3s ease !important;
         }
         .btn-alistamento:hover {
-          background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%) !important;
-          color: #030712 !important;
-          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+          background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%) !important;
+          color: #ffffff !important;
           transform: translateY(-2px);
+          box-shadow: none !important;
         }
 
         .agenda-card {
           border-radius: 0;
           border: none;
+        }
+
+        @keyframes dropFade {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lang-dropdown-wrapper {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          padding-top: 6px;
+          z-index: 50;
+        }
+
+        .lang-dropdown {
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 6px;
+          min-width: 100px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          animation: dropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          overflow: hidden;
+        }
+        
+        .lang-item {
+          padding: 0.6rem 0.8rem;
+          color: #cbd5e1;
+          cursor: pointer;
+          font-size: 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s ease;
+          font-family: "Inter", sans-serif;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .lang-item:hover {
+          background: rgba(14, 165, 233, 0.1);
+          color: #0ea5e9;
         }
         
         .split-grid {
@@ -1007,11 +1054,11 @@ export default function Home() {
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#38bdf8', fontSize: '1.2rem', letterSpacing: '0.1em' }}>AGUARDE...</span>
+          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>CARREGANDO SISTEMAS</span>
         </div>
       </div>
 
-      <nav style={{ position: 'fixed', top: 0, width: '100%', zIndex: 100, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(40px) saturate(200%)', WebkitBackdropFilter: 'blur(40px) saturate(200%)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'all 0.3s ease', padding: scrolled || mobileMenuOpen ? '0.4rem 0' : '1.4rem 0' }}>
+      <nav style={{ position: 'fixed', top: 0, width: '100%', zIndex: 100, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(40px) saturate(200%)', WebkitBackdropFilter: 'blur(40px) saturate(200%)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'all 0.3s ease', padding: scrolled || mobileMenuOpen ? '0.6rem 0' : '1.4rem 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: scrolled ? '45px' : '60px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
@@ -1020,7 +1067,7 @@ export default function Home() {
                 ESQUADRILHA DA FUMAÇA VIRTUAL
               </span>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginTop: '4px' }}>
-                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #3b82f6 100%)', transform: 'skewX(-20deg)', boxShadow: '0 2px 10px rgba(14, 165, 233, 0.2)' }}>
+                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', transform: 'skewX(-20deg)' }}>
                   <span style={{ display: 'inline-block', transform: 'skewX(20deg)', fontStyle: 'italic', fontWeight: 700 }}>MICROSOFT FLIGHT SIMULATOR</span>
                 </span>
               </div>
@@ -1045,6 +1092,36 @@ export default function Home() {
                 QUERO FAZER PARTE
               </button>
             )}
+
+            <div style={{ position: 'relative', marginLeft: '0.5rem', height: '100%', display: 'flex', alignItems: 'center' }} onMouseEnter={() => setLangMenuOpen(true)} onMouseLeave={() => setLangMenuOpen(false)}>
+              <button style={{ 
+                padding: '0.5rem', 
+                fontSize: '0.8rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '4px', 
+                border: 'none', 
+                background: 'transparent',
+                color: langMenuOpen ? '#0ea5e9' : '#f8fafc',
+                fontFamily: '"StratumNo2", sans-serif',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                transition: 'color 0.2s ease'
+              }}>
+                <Globe size={16} /> PT-BR <ChevronDown size={14} style={{ opacity: 0.7, transform: langMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+              </button>
+              
+              {langMenuOpen && (
+                <div className="lang-dropdown-wrapper">
+                  <div className="lang-dropdown">
+                    <div className="lang-item" onClick={() => navigate('/en')}>
+                      <Globe size={14} /> EN-US
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <button className="mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -1070,10 +1147,17 @@ export default function Home() {
             QUERO FAZER PARTE
           </button>
         )}
+        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Language</span>
+          <button className="tb-button" onClick={() => navigate('/en')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Globe size={18} /> EN-US
+          </button>
+        </div>
       </div>
 
-      <section className="hero" style={{ height: '70vh', minHeight: '550px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section className="hero" style={{ height: '80vh', minHeight: '650px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(3,7,18,0) 0%, rgba(3,7,18,0.5) 80%, #030712 100%)', pointerEvents: 'none' }} />
       </section>
 
       <div style={{ backgroundColor: '#030712', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
@@ -1087,11 +1171,8 @@ export default function Home() {
                ))
              ) : (
                <>
-                 <StatBox iconClass="fa-solid fa-users" value="7" label="Pilotos Ativos" />
                  <StatBox iconClass="fa-solid fa-arrow-trend-up" value="+150" label="Demonstrações" />
                  <StatBox iconClass="fa-solid fa-clock" value="+2.5k" label="Horas de Voo" />
-                 <StatBox iconClass="fa-solid fa-plane" value="2" label="Aeronaves" />
-                 <StatBox iconClass="fa-solid fa-globe" value="5" label="Países Visitados" />
                </>
              )}
           </div>
@@ -1099,8 +1180,8 @@ export default function Home() {
       </div>
 
       <div style={{ position: 'relative', backgroundColor: '#030712' }}>
-        <section id="pilotos" className="section-container">
-          <SectionHeader title="PILOTOS" color="#38bdf8" />
+        <section id="pilotos" className="section-container" style={{ paddingTop: '2rem' }}>
+          <SectionHeader title="PILOTOS" />
           <p style={{ textAlign: 'center', color: '#cbd5e1', maxWidth: '700px', margin: '-1.5rem auto 3rem', fontWeight: 300, fontFamily: '"Inter", sans-serif', lineHeight: '1.8' }}>
             Conheça os aviadores virtuais que compõem a Esquadrilha Virtual.
           </p>
@@ -1138,13 +1219,13 @@ export default function Home() {
                     <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '140px', maxWidth: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
                       <div style={{ width: '85%', margin: '0 auto', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
                         <img src={pilotoImage} alt="Piloto" className="piloto-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', bottom: 0, right: -1, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', padding: '0.2rem 0.5rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-                          <span style={{ fontSize: '2rem', fontFamily: '"PosicaoFont", sans-serif', color: '#f59e0b', lineHeight: 1 }}>{piloto.posicao}</span>
+                        <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', padding: '0.2rem 0.5rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ fontSize: '2.8rem', fontFamily: '"PosicaoFont", sans-serif', color: '#e9910e', lineHeight: 1 }}>{piloto.posicao}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
-                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0', fontWeight: 300, fontFamily: '"Inter", sans-serif' }}>{piloto.nome}</h3>
-                        <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{role}</span>
+                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0', fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>{piloto.nome}</h3>
+                        <span style={{ color: '#e9910e', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{role}</span>
                         <span style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.1rem' }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
                       </div>
                     </div>
@@ -1193,7 +1274,7 @@ export default function Home() {
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {groupedAgenda[month].map((dem: Demonstracao, idx: number) => {
-                      let statusColor = '#38bdf8'; 
+                      let statusColor = '#0ea5e9'; 
                       if (dem.status === 'Confirmado') statusColor = '#10b981';
                       if (dem.status === 'Cancelado') statusColor = '#ef4444';
 
@@ -1221,7 +1302,7 @@ export default function Home() {
               ))
             ) : (
                <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-                <Calendar size={32} color="#38bdf8" style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                <Calendar size={32} color="#0ea5e9" style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
                 <p style={{ fontWeight: 300, color: '#64748b', fontFamily: '"Inter", sans-serif' }}>Nada ainda, volte mais tarde</p>
               </div>
             )}
@@ -1240,7 +1321,7 @@ export default function Home() {
 
       <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0b1121', display: 'flex', alignItems: 'center' }}>
         <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 246, 0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }} />
         
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tucano3png})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1, filter: 'brightness(1.15) contrast(1.05)', zIndex: 0 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0b1121 0%, rgba(3,7,18,0.3) 50%, #030712 100%)', zIndex: 0 }} />
@@ -1269,7 +1350,7 @@ export default function Home() {
           <div className="split-grid">
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #38bdf8', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, -20px)' }}></div>
+              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
               <div className="zoom-wrapper">
                 <img src={tucano2png} alt="Transição A-29" className="zoom-image" style={{ filter: 'grayscale(10%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.6) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
@@ -1278,7 +1359,7 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
               <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                A NOVA <span style={{ color: '#38bdf8' }}>ERA</span>
+                A NOVA <span style={{ color: '#0ea5e9' }}>ERA</span>
               </h2>
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
                 Os nossos pilotos encontram-se em intenso treinamento e adaptação para a implementação oficial do A-29 Super Tucano. Esta fase marca um momento histórico de evolução e aprimoramento das nossas capacidades acrobáticas no simulador.
@@ -1290,14 +1371,14 @@ export default function Home() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0b1121' }}>
-        <div style={{ position: 'absolute', top: '0', left: '0', width: '800px', height: '800px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '0', left: '0', width: '800px', height: '800px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
         
         <section id="t27" className="section-container" style={{ position: 'relative', zIndex: 1 }}>
           <SectionHeader title="ERA T-27" />
           <div className="split-grid reverse">
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #38bdf8', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(-20px, 20px)' }}></div>
+              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(-20px, 20px)' }}></div>
               <div className="zoom-wrapper">
                 <img src={t271} alt="Formação T-27" className="zoom-image" style={{ filter: 'grayscale(10%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
@@ -1306,7 +1387,7 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
               <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                O LEGADO DO <span style={{ color: '#38bdf8' }}>VETERANO</span>
+                O LEGADO DO <span style={{ color: '#0ea5e9' }}>VETERANO</span>
               </h2>
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
                 Relembre a nossa trajetória e as gloriosas operações com o lendário Embraer T-27 Tucano. Após 3 anos de atividade no nosso esquadrão virtual, o veterano já tem data para se aposentar e dar lugar ao moderno A-29 Super Tucano.
@@ -1328,7 +1409,7 @@ export default function Home() {
                     <div style={{ height: '180px', backgroundImage: `url(${noticia.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8 }}></div>
                   )}
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                    <span style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
+                    <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
                     <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', fontWeight: 500, marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.8, fontWeight: 300, flexGrow: 1, margin: 0, fontFamily: '"Inter", sans-serif' }}>{noticia.resumo}</p>
                   </div>
@@ -1341,7 +1422,7 @@ export default function Home() {
 
       {hasLive && (
         <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0b1121' }}>
-          <div style={{ position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
           
           <section id="midias" className="section-container" style={{ position: 'relative', zIndex: 1 }}>
             <SectionHeader title="MÍDIAS" />
@@ -1391,11 +1472,11 @@ export default function Home() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '850px', margin: '0 auto' }}>
             <div className="academy-phase-card">
-              <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '1rem', borderRadius: '8px', color: '#38bdf8', flexShrink: 0 }}>
+              <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '1rem', borderRadius: '8px', color: '#0ea5e9', flexShrink: 0 }}>
                 <GraduationCap size={28} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 01</span>
+                <span style={{ fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 01</span>
                 <h3 style={{ margin: '0.2rem 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>CADETE</h3>
                 <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
                   Fase de admissão e treinamento inicial. O Cadete foca na adaptação total ao vetor da esquadrilha (T-27/A-29), aperfeiçoamento da navegação por instrumentos, rádio-comunicação e fundamentos básicos de voo em elemento.
@@ -1404,12 +1485,12 @@ export default function Home() {
             </div>
 
             <div className="academy-phase-card">
-              <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '1rem', borderRadius: '8px', color: '#38bdf8', flexShrink: 0 }}>
+              <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '1rem', borderRadius: '8px', color: '#0ea5e9', flexShrink: 0 }}>
                 <GraduationCap size={28} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 02</span>
-                <h3 style={{ margin: '0.2rem 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ESQUADRÕES DE INSTRUÇÃO AVANÇADA</h3>
+                <span style={{ fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 02</span>
+                <h3 style={{ margin: '0.2rem 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ALA (TRAINEE)</h3>
                 <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
                   Período de treinamento intensivo de formaturas acrobáticas. O Ala aprende a voar em posição diamante, cobra e seta, mantendo distâncias mínimas de segurança, além de executar manobras complexas sincronizadas com o líder.
                 </p>
@@ -1420,7 +1501,7 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '1rem 0' }}>
                 <span style={{ fontSize: '0.75rem', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 03</span>
                 <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.5rem', color: '#ef4444', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.1em' }}>
-                  TREINAMENTO AVANÇADO
+                  [CONFIDENCIAL]
                 </h3>
               </div>
             </div>
@@ -1430,13 +1511,13 @@ export default function Home() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0b1121' }}>
-        <div style={{ position: 'absolute', top: '0', right: '0', width: '800px', height: '800px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '0', right: '0', width: '800px', height: '800px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', zIndex: 0, pointerEvents: 'none' }} />
         
         <section id="sobre" className="section-container" style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '4rem', alignItems: 'center' }}>
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #38bdf8', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
+              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
               <div className="zoom-wrapper">
                 <img src={formacaoImage} alt="Formação EDAV" className="zoom-image" style={{ filter: 'grayscale(20%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
@@ -1445,15 +1526,15 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
               <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                A EXCELÊNCIA COMO <span style={{ color: '#38bdf8' }}>DOUTRINA</span>
+                A EXCELÊNCIA COMO <span style={{ color: '#0ea5e9' }}>DOUTRINA</span>
               </h2>
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
                 A Esquadrilha da Fumaça Virtual nasce da paixão pela aviação e pelo voo em formação de alta performance. Operando exclusivamente no Microsoft Flight Simulator, o nosso esquadrão busca replicar com extrema fidelidade, precisão e profissionalismo a doutrina da verdadeira Esquadrilha da Fumaça.
               </p>
               
-              <blockquote style={{ borderLeft: '3px solid #38bdf8', paddingLeft: '1.5rem', margin: '1rem 0 0 0', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', lineHeight: '1.7', color: '#94a3b8', fontFamily: '"Inter", sans-serif' }}>
+              <blockquote style={{ borderLeft: '3px solid #0ea5e9', paddingLeft: '1.5rem', margin: '1rem 0 0 0', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', lineHeight: '1.7', color: '#94a3b8', fontFamily: '"Inter", sans-serif' }}>
                 "O nosso objetivo não é apenas voar, mas elevar a demonstração aérea no simulador aos mais altos níveis de disciplina, beleza e sincronia. O treinamento nunca termina."
-                <footer style={{ marginTop: '0.5rem', color: '#38bdf8', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comandante</footer>
+                <footer style={{ marginTop: '0.5rem', color: '#0ea5e9', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comando Geral EDAV</footer>
               </blockquote>
             </div>
 
@@ -1468,46 +1549,40 @@ export default function Home() {
             <img src={logoImage} alt="EDAV Logo" style={{ height: '60px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
               <span style={{ display: 'block', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
                 <span style={{ display: 'inline-block', transform: 'skewX(24deg)', fontStyle: 'italic' }}>MICROSOFT FLIGHT SIMULATOR</span>
               </span>
             </div>
+            
             <div style={{ display: 'flex', gap: '1rem', color: '#a1a1aa', marginTop: '0.5rem' }}>
-              <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '50%', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#000'; e.currentTarget.style.background = '#38bdf8'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
+              <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '50%', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#000'; e.currentTarget.style.background = '#0ea5e9'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
               </span>
+              <a href="mailto:fumacavirtualmfs@gmail.com" style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '50%', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#000'; e.currentTarget.style.background = '#0ea5e9'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
+                <Mail size={20} />
+              </a>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h4 style={{ color: '#ffffff', fontFamily: '"Inter", sans-serif', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Navegação</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Pilotos</span>
-              <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Agenda</span>
-              <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Aeronave</span>
+              <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Pilotos</span>
+              <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Agenda</span>
+              <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Aeronave</span>
               {dbNoticias.length > 0 && (
-                <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Artigos</span>
+                <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Artigos</span>
               )}
               {hasLive && (
-                <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
+                <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
               )}
-              <span onClick={() => document.getElementById('academia')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Academia</span>
-              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.9rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre</span>
+              <span onClick={() => document.getElementById('academia')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Academia</span>
+              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h4 style={{ color: '#ffffff', fontFamily: '"Inter", sans-serif', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Utilitários & Mods</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '320px' }}>
-              {dbMods.length > 0 ? dbMods.map((mod, idx) => (
-                <span key={idx} onClick={() => window.open(mod.link, '_blank')} style={{ width: '100%', color: '#10b981', background: 'transparent', padding: '0.4rem 0', border: 'none', textDecoration: 'none', fontSize: '0.8rem', fontFamily: '"Inter", sans-serif', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.color = '#059669'; }} onMouseLeave={e => { e.currentTarget.style.color = '#10b981'; }}>
-                  {mod.isMarketplace ? <ShoppingCart size={16} /> : <Download size={16} />} 
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mod.titulo}</span>
-                </span>
-              )) : <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'normal', fontFamily: 'Arial, sans-serif' }}>Em breve...</span>}
-            </div>
-
-            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <h4 style={{ color: '#ffffff', fontFamily: '"Inter", sans-serif', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Nossa Plataforma</h4>
               <img src={mfLogo} alt="MSFS 2020" style={{ height: '40px', width: 'auto', alignSelf: 'flex-start', opacity: 0.8 }} />
             </div>
@@ -1516,25 +1591,6 @@ export default function Home() {
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2.5rem' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', color: '#8e8e93', fontSize: '0.85rem' }}>
-              <span onClick={() => openLegalModal('termos')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: '"Inter", sans-serif' }} onMouseEnter={e => e.currentTarget.style.color = '#ffffff'} onMouseLeave={e => e.currentTarget.style.color = '#8e8e93'}>
-                <FileText size={14} /> Termos de Uso
-              </span>
-              <span>|</span>
-              <span onClick={() => openLegalModal('privacidade')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: '"Inter", sans-serif' }} onMouseEnter={e => e.currentTarget.style.color = '#ffffff'} onMouseLeave={e => e.currentTarget.style.color = '#8e8e93'}>
-                <ShieldCheck size={14} /> Privacidade de Dados
-              </span>
-              <span>|</span>
-              <span onClick={() => openLegalModal('cookies')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: '"Inter", sans-serif' }} onMouseEnter={e => e.currentTarget.style.color = '#ffffff'} onMouseLeave={e => e.currentTarget.style.color = '#8e8e93'}>
-                <Cookie size={14} /> Política de Cookies
-              </span>
-              <span>|</span>
-              <span onClick={() => openLegalModal('disclaimer')} style={{ cursor: 'pointer', transition: 'color 0.3s', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: '"Inter", sans-serif' }} onMouseEnter={e => e.currentTarget.style.color = '#ffffff'} onMouseLeave={e => e.currentTarget.style.color = '#8e8e93'}>
-                <AlertTriangle size={14} /> Aviso Legal & Disclaimer
-              </span>
-            </div>
-
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
               <div style={{ flex: 1, minWidth: '300px' }}>
                 <p style={{ color: '#64748b', fontSize: '0.7rem', lineHeight: 1.6, margin: 0, textAlign: 'justify', fontFamily: 'Arial, sans-serif' }}>
@@ -1549,7 +1605,7 @@ export default function Home() {
       {showCookieBanner && (
         <div style={{ position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(28, 28, 30, 0.85)', backdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '1rem 1.5rem', zIndex: 9999, display: 'flex', alignItems: 'center', gap: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', width: 'auto', maxWidth: '90%', flexWrap: 'nowrap' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flex: 1, minWidth: '250px' }}>
-            <ShieldCheck size={24} color="#38bdf8" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <ShieldCheck size={24} color="#0ea5e9" style={{ flexShrink: 0, marginTop: '2px' }} />
             <p style={{ color: '#cbd5e1', fontSize: '0.8rem', margin: 0, fontFamily: '"Inter", sans-serif', lineHeight: 1.5 }}>
               Nosso portal utiliza cookies essenciais para garantir o funcionamento correto e melhorar sua experiência de navegação, em conformidade com a LGPD. 
             </p>
@@ -1558,14 +1614,14 @@ export default function Home() {
             <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#38bdf8', border: '1px solid #38bdf8', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = '#38bdf8'; e.currentTarget.style.color = '#030712'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#38bdf8'; }}>
+            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)'; e.currentTarget.style.color = '#030712'; e.currentTarget.style.borderColor = 'transparent'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.borderColor = '#0ea5e9'; }}>
               ENTENDI E ACEITO
             </button>
           </div>
         </div>
       )}
 
-      <button onClick={scrollToTop} style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 999, background: 'transparent', color: '#94a3b8', border: 'none', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: showTopBtn ? 0.6 : 0, pointerEvents: showTopBtn ? 'auto' : 'none', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.color = '#38bdf8'; e.currentTarget.style.opacity = '1'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.opacity = '0.6'; }}>
+      <button onClick={scrollToTop} style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 999, background: 'transparent', color: '#94a3b8', border: 'none', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: showTopBtn ? 0.6 : 0, pointerEvents: showTopBtn ? 'auto' : 'none', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.opacity = '1'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.opacity = '0.6'; }}>
         <ChevronUp size={28} strokeWidth={2} />
       </button>
 
@@ -1583,11 +1639,11 @@ export default function Home() {
                   Para participar no processo seletivo, é <strong>obrigatório</strong> possuir todos os requisitos listados abaixo, além do preenchimento correto e sincero de todos os dados do formulário.
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#38bdf8" /> +17 Anos</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#38bdf8" /> MSFS Original</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#38bdf8" /> HOTAS/Yoke</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#38bdf8" /> EMB-312 | RP Simulations</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#38bdf8" /> EMB-314 | RP Simulations</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#0ea5e9" /> +17 Anos</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#0ea5e9" /> MSFS Original</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#0ea5e9" /> HOTAS/Yoke</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#0ea5e9" /> EMB-312 | RP Simulations</span>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}><CheckCircle2 size={14} color="#0ea5e9" /> EMB-314 | RP Simulations</span>
                 </div>
               </div>
 
