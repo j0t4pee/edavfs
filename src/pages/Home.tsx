@@ -1219,12 +1219,12 @@ export default function Home() {
                     <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '140px', maxWidth: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
                       <div style={{ width: '85%', margin: '0 auto', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
                         <img src={pilotoImage} alt="Piloto" className="piloto-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', padding: '0.2rem 0.5rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ position: 'absolute', bottom: -1, right: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', padding: '0.2rem 0.5rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
                           <span style={{ fontSize: '2.8rem', fontFamily: '"PosicaoFont", sans-serif', color: '#e9910e', lineHeight: 1 }}>{piloto.posicao}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
-                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0', fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>{piloto.nome}</h3>
+                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0', fontWeight: 200, fontFamily: '"Inter", sans-serif' }}>{piloto.nome}</h3>
                         <span style={{ color: '#e9910e', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{role}</span>
                         <span style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.1rem' }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
                       </div>
