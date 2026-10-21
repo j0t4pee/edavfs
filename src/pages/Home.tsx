@@ -1466,7 +1466,7 @@ export default function Home() {
             
             <div className="timeline-item">
               <span style={{ display: 'block', fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 01</span>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>CADETE</h3>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ESQUADRÃO APOLO</h3>
               <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
                 Fase de admissão e treinamento inicial. O Cadete foca na adaptação total ao vetor da esquadrilha (T-27/A-29), aperfeiçoamento da navegação por instrumentos, rádio-comunicação e fundamentos básicos de voo em elemento.
               </p>
@@ -1474,7 +1474,7 @@ export default function Home() {
 
             <div className="timeline-item">
               <span style={{ display: 'block', fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 02</span>
-              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ALA (TRAINEE)</h3>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ESQUADRÃO COMETA</h3>
               <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
                 Período de treinamento intensivo de formaturas acrobáticas. O Ala aprende a voar em posição diamante, cobra e seta, mantendo distâncias mínimas de segurança, além de executar manobras complexas sincronizadas com o líder.
               </p>
