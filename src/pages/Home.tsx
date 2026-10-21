@@ -14,7 +14,7 @@ import {
   Plane, ChevronRight, Map as MapIcon, 
   ShoppingCart, CheckCircle2, Calendar, Newspaper, 
   ChevronUp, Quote, Download, Menu, X, ShieldCheck, FileText, AlertTriangle, LayoutGrid, Send, Cookie, ChevronDown,
-  GraduationCap, Crosshair, Award, Globe, Mail
+  GraduationCap, Crosshair, Award, Globe, Mail, PlaneTakeoff
 } from 'lucide-react';
 
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -71,15 +71,15 @@ interface Estatistica { id?: string; icone: string; valor: string; rotulo: strin
 
 const SectionHeader = ({ title }: { title: string }) => (
   <div className="section-header" style={{ marginBottom: '3.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
-    <h2 className="section-title" style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, letterSpacing: '0.05em', color: '#f8fafc', fontSize: 'clamp(1.6rem, 2.8vw, 2.2rem)', textTransform: 'uppercase', textAlign: 'center', margin: 0 }}>{title}</h2>
+    <h2 className="section-title" style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, letterSpacing: '0.05em', color: '#f8fafc', fontSize: 'clamp(1.6rem, 2.8vw, 2.2rem)', textTransform: 'uppercase', textAlign: 'center', margin: 0 }}>{title}</h2>
   </div>
 );
 
 const AppleSpec = ({ value, unit, label }: { value: string, unit?: string, label: string }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '4px', border: 'none', backdropFilter: 'blur(12px)' }}>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', color: '#f8fafc' }}>
-      <span style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif', background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</span>
-      {unit && <span style={{ fontSize: '1rem', fontWeight: 400, color: '#0ea5e9', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
+      <span style={{ fontSize: '2.5rem', fontWeight: 300, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif', background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</span>
+      {unit && <span style={{ fontSize: '1rem', fontWeight: 300, color: '#eab308', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
     </div>
     <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.25rem', fontWeight: 300, fontFamily: '"Inter", sans-serif' }}>{label}</span>
   </div>
@@ -87,9 +87,9 @@ const AppleSpec = ({ value, unit, label }: { value: string, unit?: string, label
 
 const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
-    <div style={{ color: '#0ea5e9', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
-    <span style={{ fontSize: '3.2rem', fontFamily: '"StratumNo2", sans-serif', fontStyle: 'italic', fontWeight: 700, background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, letterSpacing: '0.02em', padding: '0 10px' }}>{value}</span>
-    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif', textAlign: 'center' }}>{label}</span>
+    <div style={{ color: '#eab308', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
+    <span style={{ fontSize: '3.2rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, letterSpacing: '0.02em', padding: '0 10px' }}>{value}</span>
+    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif', textAlign: 'center' }}>{label}</span>
   </div>
 );
 
@@ -560,7 +560,7 @@ export default function Home() {
           <span style={{ 
             fontSize: '3.5rem', 
             fontFamily: '"PosicaoFont", sans-serif', 
-            background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)',
+            background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             lineHeight: 0.8
@@ -573,7 +573,7 @@ export default function Home() {
             flexDirection: 'column', 
             textAlign: isLeft ? 'right' : 'left'
           }}>
-            <span style={{ display: 'block', color: '#0ea5e9', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: '"Inter", sans-serif' }}>{role}</span>
+            <span style={{ display: 'block', color: '#eab308', fontWeight: 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: '"Inter", sans-serif' }}>{role}</span>
             <span style={{ display: 'block', color: '#f8fafc', fontSize: '0.95rem', fontWeight: 300, fontFamily: '"Inter", sans-serif', marginTop: '2px', whiteSpace: 'nowrap' }}>{piloto ? piloto.nome : 'Vago'}</span>
           </div>
         </div>
@@ -630,29 +630,15 @@ export default function Home() {
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 
-        h1, h2, h3, h4, h5, h6 { font-family: "StratumNo2", sans-serif !important; color: #ffffff; }
+        h1, h2, h3, h4, h5, h6 { font-family: "StratumNo2", sans-serif !important; color: #ffffff; font-weight: 400; }
 
         .section-title {
           font-family: "StratumNo2", sans-serif !important;
-        }
-
-        .glass-panel { 
-          background: rgba(15, 23, 42, 0.4);
-          border-radius: 4px;
-          border: 1px solid rgba(255,255,255,0.05);
+          font-weight: 400;
         }
 
         .card-piloto-novo {
-          border-radius: 6px; 
           background: transparent;
-          transition: transform 0.2s ease;
-        }
-        .card-piloto-novo:hover {
-          transform: translateY(-5px);
-        }
-
-        .piloto-img {
-          opacity: 0.95;
         }
         
         .slot-info { 
@@ -715,23 +701,6 @@ export default function Home() {
           z-index: 0;
         }
 
-        .academy-phase-card {
-          display: flex;
-          align-items: flex-start;
-          gap: 1.25rem;
-          background: linear-gradient(90deg, rgba(15,23,42,0.6) 0%, rgba(15,23,42,0) 100%);
-          border-left: 2px solid #334155;
-          padding: 1.5rem;
-          border-radius: 0 8px 8px 0;
-          transition: all 0.4s ease;
-          position: relative;
-        }
-        .academy-phase-card:hover {
-          border-left: 2px solid #0ea5e9;
-          background: linear-gradient(90deg, rgba(14,165,233,0.15) 0%, transparent 100%);
-          transform: translateX(10px);
-        }
-
         .modern-input {
           width: 100%;
           background: rgba(255, 255, 255, 0.03);
@@ -782,7 +751,7 @@ export default function Home() {
         .nav-link {
           color: #ffffff;
           text-decoration: none;
-          font-weight: 700; 
+          font-weight: 500; 
           font-style: normal;
           font-size: 0.8rem; 
           font-family: "StratumNo2", sans-serif !important;
@@ -792,12 +761,12 @@ export default function Home() {
           cursor: pointer;
         }
         .nav-link:hover { color: #0ea5e9; }
-        .nav-link.active { color: #0ea5e9; font-weight: 700; }
+        .nav-link.active { color: #0ea5e9; font-weight: 500; }
 
         .mobile-toggle { display: none; background: transparent; border: none; color: #f8fafc; cursor: pointer; }
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .mobile-menu.open { transform: translateY(0); }
-        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 700; font-family: "StratumNo2", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
+        .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 500; font-family: "StratumNo2", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
         .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #0ea5e9; }
 
         .legal-tab { background: transparent; border: none; color: #94a3b8; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-family: "Inter", sans-serif !important; transition: all 0.3s ease; font-size: 0.9rem; text-transform: uppercase; }
@@ -824,16 +793,16 @@ export default function Home() {
           gap: 0.5rem;
           transition: all 0.3s ease;
           font-family: "Inter", sans-serif;
-          font-weight: 500;
+          font-weight: 400;
           font-size: 0.85rem;
           text-transform: uppercase;
         }
         .platform-btn.active {
-          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
           color: #ffffff;
         }
         .platform-btn.active-blue {
-          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
           color: #ffffff;
         }
         .platform-btn:hover:not(.active):not(.active-blue) {
@@ -848,7 +817,7 @@ export default function Home() {
           padding: 0.6rem 1.25rem;
           border-radius: 4px;
           font-size: 0.85rem;
-          font-weight: 500;
+          font-weight: 400;
           cursor: pointer;
           transition: all 0.3s ease;
           display: flex;
@@ -861,12 +830,12 @@ export default function Home() {
           color: #ffffff;
         }
         .view-toggle-btn.active {
-          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
           color: #ffffff !important;
           border-color: transparent !important;
         }
         .view-toggle-btn.active-blue {
-          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
           color: #ffffff !important;
           border-color: transparent !important;
         }
@@ -915,7 +884,7 @@ export default function Home() {
           background: transparent;
           color: #0ea5e9;
           font-family: 'StratumNo2', sans-serif !important;
-          font-weight: 700;
+          font-weight: 400;
           font-size: 0.95rem;
           padding: 0.6rem 1.4rem;
           border: 1px solid #0ea5e9;
@@ -945,17 +914,20 @@ export default function Home() {
         }
 
         .btn-alistamento {
-          background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%) !important;
+          background: #10b981 !important;
           color: #ffffff !important;
-          border: none !important;
+          border: 1px solid #ffffff !important;
           box-shadow: none !important;
+          border-radius: 0 !important;
+          font-family: "Inter", sans-serif !important;
+          font-weight: 400 !important;
+          letter-spacing: 0.05em !important;
+          text-transform: none !important;
           transition: all 0.3s ease !important;
         }
         .btn-alistamento:hover {
-          background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%) !important;
-          color: #ffffff !important;
-          transform: translateY(-2px);
-          box-shadow: none !important;
+          background: #059669 !important;
+          transform: translateY(-2px) !important;
         }
 
         .agenda-card {
@@ -997,7 +969,7 @@ export default function Home() {
           gap: 6px;
           transition: all 0.2s ease;
           font-family: "Inter", sans-serif;
-          font-weight: 500;
+          font-weight: 400;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
@@ -1017,6 +989,26 @@ export default function Home() {
         .ao-vivo-content {
           margin-top: 1rem;
         }
+
+        .timeline-item {
+          position: relative;
+          padding-left: 2.5rem;
+          margin-bottom: 3rem;
+        }
+        .timeline-item::before {
+          content: '';
+          position: absolute;
+          left: -0.5rem;
+          top: 0;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #0ea5e9;
+          border: 4px solid #030712;
+          z-index: 2;
+        }
+        .timeline-item.last { margin-bottom: 0; }
+        .timeline-item.last::before { background: #eab308; }
         
         @media (min-width: 900px) {
           .split-grid { grid-template-columns: 1fr 1fr; }
@@ -1033,20 +1025,19 @@ export default function Home() {
           .footer-content img { margin: 0 auto; }
           .footer-content div { align-items: center !important; justify-content: center !important; }
           .responsive-grid { grid-template-columns: 1fr !important; }
-          .academy-phase-card { flex-direction: column; gap: 1rem; padding: 1.5rem; }
 
           .formacao-wrapper {
-             transform: scale(0.60);
+             transform: scale(0.75);
              transform-origin: top center;
-             margin-bottom: -120px;
+             margin-bottom: -50px;
           }
         }
 
         @media (max-width: 600px) {
            .formacao-wrapper {
-             transform: scale(0.38);
+             transform: scale(0.55);
              transform-origin: top center;
-             margin-bottom: -220px;
+             margin-bottom: -150px;
            }
         }
       `}</style>
@@ -1054,7 +1045,7 @@ export default function Home() {
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>CARREGANDO SISTEMAS</span>
+          <span style={{ fontFamily: '"StratumNo2", sans-serif', color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>Aguarde..</span>
         </div>
       </div>
 
@@ -1063,12 +1054,12 @@ export default function Home() {
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: scrolled ? '45px' : '60px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', justifyContent: 'center' }}>
-              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
                 ESQUADRILHA DA FUMAÇA VIRTUAL
               </span>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginTop: '4px' }}>
-                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', transform: 'skewX(-20deg)' }}>
-                  <span style={{ display: 'inline-block', transform: 'skewX(20deg)', fontStyle: 'italic', fontWeight: 700 }}>MICROSOFT FLIGHT SIMULATOR</span>
+                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', transform: 'skewX(-20deg)' }}>
+                  <span style={{ display: 'inline-block', transform: 'skewX(20deg)', fontStyle: 'italic', fontWeight: 500 }}>MICROSOFT FLIGHT SIMULATOR</span>
                 </span>
               </div>
             </div>
@@ -1087,12 +1078,6 @@ export default function Home() {
             <span onClick={() => scrollToSection('academia')} className={`nav-link ${activeSection === 'academia' ? 'active' : ''}`}>ACADEMIA</span>
             <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>SOBRE</span>
             
-            {alistamentoAberto && (
-              <button className="tb-button btn-alistamento" onClick={() => setIsFormModalOpen(true)} style={{ fontSize: '0.8rem', padding: '0.6rem 1.4rem', marginLeft: '0.5rem', fontFamily: '"StratumNo2", sans-serif' }}>
-                QUERO FAZER PARTE
-              </button>
-            )}
-
             <div style={{ position: 'relative', marginLeft: '0.5rem', height: '100%', display: 'flex', alignItems: 'center' }} onMouseEnter={() => setLangMenuOpen(true)} onMouseLeave={() => setLangMenuOpen(false)}>
               <button style={{ 
                 padding: '0.5rem', 
@@ -1104,7 +1089,7 @@ export default function Home() {
                 background: 'transparent',
                 color: langMenuOpen ? '#0ea5e9' : '#f8fafc',
                 fontFamily: '"StratumNo2", sans-serif',
-                fontWeight: 700,
+                fontWeight: 500,
                 letterSpacing: '0.05em',
                 cursor: 'pointer',
                 transition: 'color 0.2s ease'
@@ -1142,11 +1127,7 @@ export default function Home() {
         )}
         <span className={activeSection === 'academia' ? 'active' : ''} onClick={() => scrollToSection('academia')}>ACADEMIA</span>
         <span className={activeSection === 'sobre' ? 'active' : ''} onClick={() => scrollToSection('sobre')}>SOBRE O EDA FS</span>
-        {alistamentoAberto && (
-          <button className="tb-button btn-alistamento" onClick={() => { setIsFormModalOpen(true); setMobileMenuOpen(false); }} style={{ marginTop: '1rem', fontSize: '1rem', fontFamily: '"StratumNo2", sans-serif' }}>
-            QUERO FAZER PARTE
-          </button>
-        )}
+        
         <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <span style={{ color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Language</span>
           <button className="tb-button" onClick={() => navigate('/en')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1155,9 +1136,17 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="hero" style={{ height: '80vh', minHeight: '650px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section className="hero" style={{ height: '100vh', minHeight: '800px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(3,7,18,0) 0%, rgba(3,7,18,0.5) 80%, #030712 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(3,7,18,0) 0%, rgba(3,7,18,0.6) 80%, #030712 100%)', pointerEvents: 'none' }} />
+        
+        {alistamentoAberto && (
+          <div style={{ position: 'absolute', bottom: '8%', zIndex: 20, textAlign: 'center', width: '100%', display: 'flex', justifyContent: 'center', animation: 'fadeIn 1s ease 0.5s both' }}>
+            <button className="tb-button btn-alistamento" onClick={() => setIsFormModalOpen(true)} style={{ padding: '1.2rem 3.5rem', fontSize: '1.1rem' }}>
+              Alistamento
+            </button>
+          </div>
+        )}
       </section>
 
       <div style={{ backgroundColor: '#030712', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
@@ -1216,17 +1205,20 @@ export default function Home() {
                   if (piloto.oculto) return null; 
 
                   return (
-                    <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '140px', maxWidth: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '85%', margin: '0 auto', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                    <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '160px', maxWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ width: '100%', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', marginBottom: '1rem' }}>
                         <img src={pilotoImage} alt="Piloto" className="piloto-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', bottom: -1, right: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', padding: '0.2rem 0.5rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-                          <span style={{ fontSize: '2.8rem', fontFamily: '"PosicaoFont", sans-serif', color: '#e9910e', lineHeight: 1 }}>{piloto.posicao}</span>
+                        <div style={{ position: 'absolute', bottom: -1, right: 0, background: 'rgba(3, 7, 18, 0.7)', backdropFilter: 'blur(8px)', padding: '0.4rem 0.8rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ fontSize: '2.2rem', fontFamily: '"PosicaoFont", sans-serif', background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
+                            {piloto.posicao}
+                          </span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
-                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0', fontWeight: 200, fontFamily: '"Inter", sans-serif' }}>{piloto.nome}</h3>
-                        <span style={{ color: '#e9910e', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{role}</span>
-                        <span style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.1rem' }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
+                      
+                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.3rem 0', fontWeight: 300, fontFamily: '"Inter", sans-serif', letterSpacing: '0.02em' }}>{piloto.nome}</h3>
+                        <span style={{ color: '#eab308', fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{role}</span>
+                        <span style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.3rem', fontWeight: 300 }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
                       </div>
                     </div>
                   );
@@ -1269,7 +1261,7 @@ export default function Home() {
             {Object.keys(groupedAgenda).length > 0 ? (
               Object.keys(groupedAgenda).map(month => (
                 <div key={month} style={{ marginBottom: '2.5rem' }}>
-                  <h3 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
+                  <h3 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.2rem', fontWeight: 400, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
                     {month}
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1289,9 +1281,9 @@ export default function Home() {
                           padding: '1rem 1.5rem'
                         }}>
                           <span style={{ fontFamily: '"Inter", sans-serif', fontSize: '1.05rem', color: '#f8fafc', fontWeight: 300 }}>
-                            {datePart}{timePart}: <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem' }}>{dem.cidade}</span>
+                            {datePart}{timePart} <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '1rem' }}>{dem.cidade}</span>
                           </span>
-                          <span style={{ color: statusColor, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                          <span style={{ color: statusColor, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                             {dem.status === 'Planejamento' ? 'PREVISÃO' : dem.status}
                           </span>
                         </div>
@@ -1359,7 +1351,7 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
               <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                A NOVA <span style={{ color: '#0ea5e9' }}>ERA</span>
+                A NOVA <span style={{ color: '#eab308' }}>ERA</span>
               </h2>
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
                 Os nossos pilotos encontram-se em intenso treinamento e adaptação para a implementação oficial do A-29 Super Tucano. Esta fase marca um momento histórico de evolução e aprimoramento das nossas capacidades acrobáticas no simulador.
@@ -1387,7 +1379,7 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
               <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                O LEGADO DO <span style={{ color: '#0ea5e9' }}>VETERANO</span>
+                O LEGADO DO <span style={{ color: '#eab308' }}>VETERANO</span>
               </h2>
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
                 Relembre a nossa trajetória e as gloriosas operações com o lendário Embraer T-27 Tucano. Após 3 anos de atividade no nosso esquadrão virtual, o veterano já tem data para se aposentar e dar lugar ao moderno A-29 Super Tucano.
@@ -1409,8 +1401,8 @@ export default function Home() {
                     <div style={{ height: '180px', backgroundImage: `url(${noticia.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8 }}></div>
                   )}
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                    <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
-                    <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', fontWeight: 500, marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
+                    <span style={{ color: '#eab308', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
+                    <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', fontWeight: 400, marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.8, fontWeight: 300, flexGrow: 1, margin: 0, fontFamily: '"Inter", sans-serif' }}>{noticia.resumo}</p>
                   </div>
                 </div>
@@ -1470,43 +1462,32 @@ export default function Home() {
             A jornada no EDA FS exige extrema dedicação. Conheça as etapas de formação e as responsabilidades assumidas pelos nossos pilotos até alcançarem o cobiçado status operacional.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '850px', margin: '0 auto' }}>
-            <div className="academy-phase-card">
-              <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '1rem', borderRadius: '8px', color: '#0ea5e9', flexShrink: 0 }}>
-                <GraduationCap size={28} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 01</span>
-                <h3 style={{ margin: '0.2rem 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>CADETE</h3>
-                <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
-                  Fase de admissão e treinamento inicial. O Cadete foca na adaptação total ao vetor da esquadrilha (T-27/A-29), aperfeiçoamento da navegação por instrumentos, rádio-comunicação e fundamentos básicos de voo em elemento.
-                </p>
-              </div>
+          <div style={{ maxWidth: '850px', margin: '0 auto', borderLeft: '2px solid #1e293b', paddingLeft: '2rem', marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
+            
+            <div className="timeline-item">
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 01</span>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>CADETE</h3>
+              <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
+                Fase de admissão e treinamento inicial. O Cadete foca na adaptação total ao vetor da esquadrilha (T-27/A-29), aperfeiçoamento da navegação por instrumentos, rádio-comunicação e fundamentos básicos de voo em elemento.
+              </p>
             </div>
 
-            <div className="academy-phase-card">
-              <div style={{ background: 'rgba(14, 165, 233, 0.1)', padding: '1rem', borderRadius: '8px', color: '#0ea5e9', flexShrink: 0 }}>
-                <GraduationCap size={28} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 02</span>
-                <h3 style={{ margin: '0.2rem 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ALA (TRAINEE)</h3>
-                <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
-                  Período de treinamento intensivo de formaturas acrobáticas. O Ala aprende a voar em posição diamante, cobra e seta, mantendo distâncias mínimas de segurança, além de executar manobras complexas sincronizadas com o líder.
-                </p>
-              </div>
+            <div className="timeline-item">
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 02</span>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif' }}>ALA (TRAINEE)</h3>
+              <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7', fontWeight: 300, fontFamily: '"Inter", sans-serif', margin: 0 }}>
+                Período de treinamento intensivo de formaturas acrobáticas. O Ala aprende a voar em posição diamante, cobra e seta, mantendo distâncias mínimas de segurança, além de executar manobras complexas sincronizadas com o líder.
+              </p>
             </div>
 
-            <div className="academy-phase-card" style={{ borderLeftColor: '#ef4444' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '1rem 0' }}>
-                <span style={{ fontSize: '0.75rem', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Fase 03</span>
-                <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.5rem', color: '#ef4444', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.1em' }}>
-                  [CONFIDENCIAL]
-                </h3>
-              </div>
+            <div className="timeline-item last">
+              <span style={{ display: 'block', fontSize: '0.75rem', color: '#eab308', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 03</span>
+              <h3 style={{ margin: '0 0 0 0', fontSize: '1.5rem', color: '#eab308', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.1em' }}>
+                [CONFIDENCIAL]
+              </h3>
             </div>
+
           </div>
-
         </section>
       </div>
 
@@ -1534,7 +1515,7 @@ export default function Home() {
               
               <blockquote style={{ borderLeft: '3px solid #0ea5e9', paddingLeft: '1.5rem', margin: '1rem 0 0 0', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', lineHeight: '1.7', color: '#94a3b8', fontFamily: '"Inter", sans-serif' }}>
                 "O nosso objetivo não é apenas voar, mas elevar a demonstração aérea no simulador aos mais altos níveis de disciplina, beleza e sincronia. O treinamento nunca termina."
-                <footer style={{ marginTop: '0.5rem', color: '#0ea5e9', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comando Geral EDAV</footer>
+                <footer style={{ marginTop: '0.5rem', color: '#0ea5e9', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comandante</footer>
               </blockquote>
             </div>
 
@@ -1548,9 +1529,9 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: '60px', width: 'auto', alignSelf: 'flex-start' }} />
             <div>
-              <span style={{ display: 'block', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
-              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontSize: '0.75rem', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
-                <span style={{ display: 'inline-block', transform: 'skewX(24deg)', fontStyle: 'italic' }}>MICROSOFT FLIGHT SIMULATOR</span>
+              <span style={{ display: 'block', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '1.1rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '0.75rem', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', transform: 'skewX(-24deg)', display: 'inline-block', marginTop: '8px' }}>
+                <span style={{ display: 'inline-block', transform: 'skewX(24deg)', fontStyle: 'italic', fontWeight: 500 }}>MICROSOFT FLIGHT SIMULATOR</span>
               </span>
             </div>
             
@@ -1567,17 +1548,17 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <h4 style={{ color: '#ffffff', fontFamily: '"Inter", sans-serif', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontWeight: 600 }}>Navegação</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Pilotos</span>
-              <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Agenda</span>
-              <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Aeronave</span>
+              <span onClick={() => document.getElementById('pilotos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Pilotos</span>
+              <span onClick={() => document.getElementById('agenda')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Agenda</span>
+              <span onClick={() => document.getElementById('aeronave')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Aeronave</span>
               {dbNoticias.length > 0 && (
-                <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Artigos</span>
+                <span onClick={() => document.getElementById('noticias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Artigos</span>
               )}
               {hasLive && (
-                <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
+                <span onClick={() => document.getElementById('midias')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Mídias</span>
               )}
-              <span onClick={() => document.getElementById('academia')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Academia</span>
-              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 700, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre</span>
+              <span onClick={() => document.getElementById('academia')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Academia</span>
+              <span onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontStyle: 'normal', letterSpacing: '0.05em', transition: 'color 0.3s ease', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.currentTarget.style.color = '#0ea5e9'} onMouseLeave={e => e.currentTarget.style.color = '#a1a1aa'}><ChevronRight size={12} /> Sobre</span>
             </div>
           </div>
 
@@ -1614,8 +1595,8 @@ export default function Home() {
             <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)'; e.currentTarget.style.color = '#030712'; e.currentTarget.style.borderColor = 'transparent'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.borderColor = '#0ea5e9'; }}>
-              ENTENDI E ACEITO
+            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 500, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)'; e.currentTarget.style.color = '#030712'; e.currentTarget.style.borderColor = 'transparent'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.borderColor = '#0ea5e9'; }}>
+              ACEITAR
             </button>
           </div>
         </div>
@@ -1742,11 +1723,11 @@ export default function Home() {
 
                 <button 
                   type="submit" 
-                  className="tb-button btn-alistamento"
+                  className="tb-button"
                   disabled={isSubmitting || !isFormReady} 
-                  style={{ width: '100%', marginTop: '1rem', padding: '0.85rem', fontSize: '0.9rem' }}
+                  style={{ width: '100%', marginTop: '1rem', padding: '0.85rem', fontSize: '1rem', background: '#0ea5e9', color: '#fff', border: 'none', transition: 'all 0.2s ease' }}
                 >
-                  {isSubmitting ? 'A PROCESSAR...' : <>ENVIAR APLICAÇÃO <Send size={16} style={{ marginLeft: '6px' }} /></>}
+                  {isSubmitting ? 'A PROCESSAR...' : 'Enviar aplicação'}
                 </button>
               </form>
             </div>
