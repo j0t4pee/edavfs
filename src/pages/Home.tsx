@@ -21,7 +21,7 @@ import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 import headerImage from '../images/tucano.jpg';
-import a29Image from '../images/a29.png'; 
+import a29Image from '../images/tucano3.jpg'; 
 import logoImage from '../images/logo.png';
 import parceiroImage from '../images/parceiro.png';
 import faviconImage from '../images/favicon.png';
@@ -32,6 +32,8 @@ import twLogo from '../images/tw.png';
 import tkLogo from '../images/tk.png';
 import formacaoImage from '../images/formacao.png';
 import mfLogo from '../images/mf.png';
+import mfLogo24 from '../images/mf24.png';
+
 
 import tucano3png from '../images/tucano3.jpg';
 import tucano2png from '../images/tucano2.jpg';
@@ -63,8 +65,8 @@ const getMarkerIcon = (status: string) => {
   });
 };
 
-interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; oculto?: boolean; }
-interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; tipo: string; }
+interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; oculto?: boolean; plataforma?: string; }
+interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; tipo: string; plataforma?: string; }
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; link: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
@@ -76,19 +78,29 @@ const SectionHeader = ({ title }: { title: string }) => (
 );
 
 const AppleSpec = ({ value, unit, label }: { value: string, unit?: string, label: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '4px', border: 'none', backdropFilter: 'blur(12px)' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '2px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)', transition: 'transform 0.2s ease', cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', color: '#f8fafc' }}>
-      <span style={{ fontSize: '2.5rem', fontWeight: 300, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif', background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</span>
-      {unit && <span style={{ fontSize: '1rem', fontWeight: 300, color: '#eab308', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
+      <span style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif', background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</span>
+      {unit && <span style={{ fontSize: '1rem', fontWeight: 700, color: '#eab308', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
     </div>
-    <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.25rem', fontWeight: 300, fontFamily: '"Inter", sans-serif' }}>{label}</span>
+    <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.25rem', fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>{label}</span>
+  </div>
+);
+
+const AppleSpecText = ({ value, unit, label }: { value: string, unit?: string, label: string }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', color: '#f8fafc' }}>
+      <span style={{ fontSize: '3rem', fontWeight: 700, letterSpacing: '-0.02em', fontFamily: 'Arial, sans-serif' }}>{value}</span>
+      {unit && <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#eab308', fontFamily: '"Inter", sans-serif' }}>{unit}</span>}
+    </div>
+    <span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.25rem', fontWeight: 700, fontFamily: '"Inter", sans-serif' }}>{label}</span>
   </div>
 );
 
 const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
     <div style={{ color: '#eab308', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
-    <span style={{ fontSize: '3.2rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, letterSpacing: '0.02em', padding: '0 10px' }}>{value}</span>
+    <span style={{ fontSize: '3.5rem', fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, background: 'linear-gradient(90deg, #fde047 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, letterSpacing: '0.02em', padding: '0 10px' }}>{value}</span>
     <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: '"Inter", sans-serif', textAlign: 'center' }}>{label}</span>
   </div>
 );
@@ -103,6 +115,8 @@ export default function Home() {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   
   const [pilotosViewMode, setPilotosViewMode] = useState<'cards' | 'formatura'>('cards');
+  const [pilotoTab, setPilotoTab] = useState<'2020' | '2024'>('2020');
+  const [agendaTab, setAgendaTab] = useState<'2020' | '2024'>('2020');
   
   const [isMidiasOpen, setIsMidiasOpen] = useState(false);
   const [livePlatform, setLivePlatform] = useState<'youtube' | 'twitch' | 'tiktok'>('youtube');
@@ -297,7 +311,7 @@ export default function Home() {
     setScrolled(window.scrollY > 30);
     setShowTopBtn(window.scrollY > 400); 
 
-    const sections = ['pilotos', 'agenda', 'aeronave', 'destaque', 't27', 'noticias', 'midias', 'academia', 'sobre'];
+    const sections = ['pilotos', 'agenda', 'aeronave', 't27', 'noticias', 'midias', 'academia', 'sobre'];
     let current = '';
     
     for (const section of sections) {
@@ -430,9 +444,13 @@ export default function Home() {
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  const totalAgendaPages = Math.ceil(dbDemonstracoes.length / AGENDA_ITEMS_PER_PAGE) || 1;
+  // Filtros
+  const filteredPilotos = dbPilotos.filter(p => (p.plataforma || '2020') === pilotoTab);
+  const filteredAgenda = dbDemonstracoes.filter(a => (a.plataforma || '2020') === agendaTab);
+  
+  const totalAgendaPages = Math.ceil(filteredAgenda.length / AGENDA_ITEMS_PER_PAGE) || 1;
   const startIndex = (agendaPage - 1) * AGENDA_ITEMS_PER_PAGE;
-  const currentAgendaItems = dbDemonstracoes.slice(startIndex, startIndex + AGENDA_ITEMS_PER_PAGE);
+  const currentAgendaItems = filteredAgenda.slice(startIndex, startIndex + AGENDA_ITEMS_PER_PAGE);
 
   const groupedAgenda = currentAgendaItems.reduce((acc: Record<string, Demonstracao[]>, dem) => {
     const parts = dem.dataHora.split('/');
@@ -514,7 +532,7 @@ export default function Home() {
   };
 
   const renderFormationSlot = (posicao: string) => {
-    const piloto = dbPilotos.find(p => p.posicao === posicao && !p.oculto);
+    const piloto = filteredPilotos.find(p => p.posicao === posicao && !p.oculto);
     
     let role = "";
     switch (posicao) {
@@ -627,7 +645,7 @@ export default function Home() {
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 
         h1, h2, h3, h4, h5, h6 { font-family: "StratumNo2", sans-serif !important; color: #ffffff; font-weight: 400; }
@@ -637,7 +655,14 @@ export default function Home() {
           font-weight: 400;
         }
 
+        .glass-panel { 
+          background: rgba(15, 23, 42, 0.4);
+          border-radius: 2px;
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+
         .card-piloto-novo {
+          border-radius: 2px; 
           background: transparent;
         }
         
@@ -656,7 +681,7 @@ export default function Home() {
         .zoom-wrapper {
           position: relative;
           z-index: 1;
-          border-radius: 4px;
+          border-radius: 2px;
           overflow: hidden;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
@@ -709,7 +734,7 @@ export default function Home() {
           outline: none;
           padding: 0.85rem 1rem;
           color: #ffffff;
-          border-radius: 4px 4px 0 0;
+          border-radius: 2px 2px 0 0;
           font-family: "Inter", sans-serif;
           font-size: 0.95rem;
           font-weight: 300;
@@ -724,14 +749,14 @@ export default function Home() {
 
         .section-container { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
         
-        .leaflet-popup-content-wrapper { background: #ffffff !important; color: #030712 !important; border: 1px solid #e2e8f0 !important; border-radius: 4px !important; font-family: "Inter", sans-serif; font-weight: 400; }
+        .leaflet-popup-content-wrapper { background: #ffffff !important; color: #030712 !important; border: 1px solid #e2e8f0 !important; border-radius: 2px !important; font-family: "Inter", sans-serif; font-weight: 400; }
         .leaflet-popup-tip { background-color: #ffffff !important; }
-        .leaflet-container { background: #e2e8f0 !important; border-radius: 4px; }
+        .leaflet-container { background: #e2e8f0 !important; border-radius: 2px; }
         .leaflet-layer { filter: none !important; }
 
         .leaflet-bar {
           border: none !important;
-          border-radius: 4px !important;
+          border-radius: 2px !important;
           overflow: hidden;
         }
         .leaflet-touch .leaflet-bar a, .leaflet-bar a {
@@ -769,13 +794,13 @@ export default function Home() {
         .mobile-menu a, .mobile-menu span { color: #f8fafc; font-size: 1.5rem; text-decoration: none; font-weight: 500; font-family: "StratumNo2", sans-serif !important; letter-spacing: 0.05em; transition: color 0.3s ease; cursor: pointer; text-transform: uppercase; }
         .mobile-menu a:hover, .mobile-menu span:hover, .mobile-menu .active { color: #0ea5e9; }
 
-        .legal-tab { background: transparent; border: none; color: #94a3b8; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-family: "Inter", sans-serif !important; transition: all 0.3s ease; font-size: 0.9rem; text-transform: uppercase; }
+        .legal-tab { background: transparent; border: none; color: #94a3b8; padding: 0.75rem 1.5rem; border-radius: 2px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-family: "Inter", sans-serif !important; transition: all 0.3s ease; font-size: 0.9rem; text-transform: uppercase; }
         .legal-tab:hover { background: rgba(255,255,255,0.05); color: #ffffff; }
         .legal-tab.active { background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; }
         
         .modal-body-scroll::-webkit-scrollbar { width: 6px; }
         .modal-body-scroll::-webkit-scrollbar-track { background: transparent; }
-        .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
         .modal-body-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
 
         .platform-btn {
@@ -784,7 +809,7 @@ export default function Home() {
           background: rgba(255, 255, 255, 0.05);
           border: none;
           outline: none;
-          border-radius: 4px;
+          border-radius: 2px;
           color: #94a3b8;
           cursor: pointer;
           display: flex;
@@ -815,7 +840,7 @@ export default function Home() {
           border: 1px solid rgba(255,255,255,0.05);
           color: #94a3b8;
           padding: 0.6rem 1.25rem;
-          border-radius: 4px;
+          border-radius: 2px;
           font-size: 0.85rem;
           font-weight: 400;
           cursor: pointer;
@@ -838,6 +863,34 @@ export default function Home() {
           background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
           color: #ffffff !important;
           border-color: transparent !important;
+        }
+
+        .tab-btn {
+          background: rgba(255,255,255,0.02);
+          color: #94a3b8;
+          border: none;
+          padding: 0.6rem 1.5rem;
+          cursor: pointer;
+          font-family: "StratumNo2", sans-serif;
+          font-weight: 400;
+          font-size: 1.1rem;
+          transition: all 0.2s ease;
+          letter-spacing: 0.05em;
+          border-radius: 2px;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .tab-btn:hover {
+          color: #f8fafc;
+          background: rgba(255,255,255,0.05);
+        }
+        .tab-btn:active {
+          transform: scale(0.95);
+        }
+        .tab-btn.active {
+          color: #0ea5e9;
+          background: rgba(14, 165, 233, 0.05);
         }
 
         .view-toggle-btn.active-yt {
@@ -889,13 +942,12 @@ export default function Home() {
           padding: 0.6rem 1.4rem;
           border: 1px solid #0ea5e9;
           outline: none;
-          border-radius: 4px;
+          border-radius: 2px;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          text-transform: uppercase;
           letter-spacing: 0.05em;
           transition: background 0.3s ease, color 0.3s ease;
         }
@@ -914,25 +966,46 @@ export default function Home() {
         }
 
         .btn-alistamento {
-          background: #10b981 !important;
+          background: linear-gradient(135deg, #0369a1 0%, #1e3a8a 100%) !important;
           color: #ffffff !important;
-          border: 1px solid #ffffff !important;
-          box-shadow: none !important;
-          border-radius: 0 !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3) !important;
+          border-radius: 2px !important;
           font-family: "Inter", sans-serif !important;
-          font-weight: 400 !important;
+          font-weight: 500 !important;
           letter-spacing: 0.05em !important;
           text-transform: none !important;
           transition: all 0.3s ease !important;
         }
         .btn-alistamento:hover {
-          background: #059669 !important;
+          background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%) !important;
           transform: translateY(-2px) !important;
+          box-shadow: 0 8px 25px rgba(2, 132, 199, 0.5) !important;
+          border-color: rgba(255, 255, 255, 0.5) !important;
         }
 
         .agenda-card {
-          border-radius: 0;
+          border-radius: 2px;
           border: none;
+        }
+
+        .cookie-banner {
+          position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+          background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px) saturate(180%);
+          border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 1rem 1.5rem;
+          z-index: 9999; display: flex; align-items: center; gap: 2rem;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.5); width: max-content; max-width: 90%;
+        }
+        .cookie-content { display: flex; align-items: flex-start; gap: 1rem; flex: 1; min-width: 250px; }
+        .cookie-actions { display: flex; gap: 1rem; flex-wrap: nowrap; }
+
+        @media (max-width: 768px) {
+          .cookie-banner {
+            flex-direction: column; width: calc(100% - 2rem); bottom: 1rem; padding: 1.25rem; gap: 1.25rem; text-align: center;
+          }
+          .cookie-content { flex-direction: column; align-items: center; min-width: 100%; gap: 0.5rem; }
+          .cookie-actions { width: 100%; }
+          .cookie-actions button { flex: 1; justify-content: center; }
         }
 
         @keyframes dropFade {
@@ -952,7 +1025,7 @@ export default function Home() {
           background: rgba(15, 23, 42, 0.85);
           backdrop-filter: blur(12px);
           border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 6px;
+          border-radius: 2px;
           min-width: 100px;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
           animation: dropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -993,7 +1066,7 @@ export default function Home() {
         .timeline-item {
           position: relative;
           padding-left: 2.5rem;
-          margin-bottom: 3rem;
+          margin-bottom: 1.5rem;
         }
         .timeline-item::before {
           content: '';
@@ -1054,12 +1127,12 @@ export default function Home() {
           <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
             <img src={logoImage} alt="EDAV Logo" style={{ height: scrolled ? '45px' : '60px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', justifyContent: 'center' }}>
-              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
+              <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, fontSize: '1.05rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.1 }}>
                 ESQUADRILHA DA FUMAÇA VIRTUAL
               </span>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginTop: '4px' }}>
-                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 500, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '0px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', transform: 'skewX(-20deg)' }}>
-                  <span style={{ display: 'inline-block', transform: 'skewX(20deg)', fontStyle: 'italic', fontWeight: 500 }}>MICROSOFT FLIGHT SIMULATOR</span>
+                <span style={{ fontFamily: '"StratumNo2", sans-serif', fontWeight: 400, fontSize: '0.75rem', color: '#ffffff', padding: '3px 12px', borderRadius: '2px', letterSpacing: '0.1em', display: 'inline-block', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', transform: 'skewX(-20deg)' }}>
+                  <span style={{ display: 'inline-block', transform: 'skewX(20deg)', fontStyle: 'italic', fontWeight: 400 }}>MICROSOFT FLIGHT SIMULATOR</span>
                 </span>
               </div>
             </div>
@@ -1089,7 +1162,7 @@ export default function Home() {
                 background: 'transparent',
                 color: langMenuOpen ? '#0ea5e9' : '#f8fafc',
                 fontFamily: '"StratumNo2", sans-serif',
-                fontWeight: 500,
+                fontWeight: 400,
                 letterSpacing: '0.05em',
                 cursor: 'pointer',
                 transition: 'color 0.2s ease'
@@ -1142,31 +1215,26 @@ export default function Home() {
         
         {alistamentoAberto && (
           <div style={{ position: 'absolute', bottom: '8%', zIndex: 20, textAlign: 'center', width: '100%', display: 'flex', justifyContent: 'center', animation: 'fadeIn 1s ease 0.5s both' }}>
-            <button className="tb-button btn-alistamento" onClick={() => setIsFormModalOpen(true)} style={{ padding: '1.2rem 3.5rem', fontSize: '1.1rem' }}>
+            <button className="tb-button btn-alistamento" onClick={() => setIsFormModalOpen(true)} style={{ padding: '0.8rem 3rem', fontSize: '1.1rem' }}>
               Alistamento
             </button>
           </div>
         )}
       </section>
 
-      <div style={{ backgroundColor: '#030712', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
-        <div className="stats-bg-light"></div>
-        <div className="stats-grain"></div>
-        <div className="section-container" style={{ padding: '1.5rem 2rem', zIndex: 2, position: 'relative' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', textAlign: 'center' }}>
-             {dbEstatisticas.length > 0 ? (
-               dbEstatisticas.map((stat, idx) => (
-                 <StatBox key={idx} iconClass={stat.icone} value={stat.valor} label={stat.rotulo} />
-               ))
-             ) : (
-               <>
-                 <StatBox iconClass="fa-solid fa-arrow-trend-up" value="+150" label="Demonstrações" />
-                 <StatBox iconClass="fa-solid fa-clock" value="+2.5k" label="Horas de Voo" />
-               </>
-             )}
+      {dbEstatisticas.length > 0 && (
+        <div style={{ backgroundColor: '#030712', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
+          <div className="stats-bg-light"></div>
+          <div className="stats-grain"></div>
+          <div className="section-container" style={{ padding: '1.5rem 2rem', zIndex: 2, position: 'relative' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', textAlign: 'center' }}>
+              {dbEstatisticas.map((stat, idx) => (
+                <StatBox key={idx} iconClass={stat.icone} value={stat.valor} label={stat.rotulo} />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div style={{ position: 'relative', backgroundColor: '#030712' }}>
         <section id="pilotos" className="section-container" style={{ paddingTop: '2rem' }}>
@@ -1174,6 +1242,15 @@ export default function Home() {
           <p style={{ textAlign: 'center', color: '#cbd5e1', maxWidth: '700px', margin: '-1.5rem auto 3rem', fontWeight: 300, fontFamily: '"Inter", sans-serif', lineHeight: '1.8' }}>
             Conheça os aviadores virtuais que compõem a Esquadrilha Virtual.
           </p>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0', marginBottom: '3rem', flexWrap: 'wrap' }}>
+            <button className={`tab-btn ${pilotoTab === '2020' ? 'active' : ''}`} onClick={() => setPilotoTab('2020')}>
+              <img src={mfLogo} alt="MSFS" style={{ height: '16px', filter: pilotoTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+            </button>
+            <button className={`tab-btn ${pilotoTab === '2024' ? 'active' : ''}`} onClick={() => setPilotoTab('2024')}>
+              <img src={mfLogo24} alt="MSFS" style={{ height: '26px', filter: pilotoTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+            </button>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem' }}>
             <button onClick={() => setPilotosViewMode('cards')} className={`view-toggle-btn ${pilotosViewMode === 'cards' ? 'active-blue' : ''}`} style={{ textTransform: 'none' }}>
@@ -1186,10 +1263,10 @@ export default function Home() {
 
           {pilotosViewMode === 'cards' ? (
             <div className="responsive-grid" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem' }}>
-              {dbPilotos.length === 0 ? (
-                <p style={{ color: '#64748b', textAlign: 'center', width: '100%', fontWeight: 300 }}>Carregando dados dos pilotos...</p>
+              {filteredPilotos.length === 0 ? (
+                <p style={{ color: '#64748b', textAlign: 'center', width: '100%', fontWeight: 300 }}>Nada ainda.</p>
               ) : (
-                dbPilotos.map((piloto, index) => {
+                filteredPilotos.map((piloto, index) => {
                   let role = "";
                   switch (piloto.posicao) {
                     case '1': role = 'LÍDER'; break;
@@ -1205,20 +1282,20 @@ export default function Home() {
                   if (piloto.oculto) return null; 
 
                   return (
-                    <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '160px', maxWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ width: '100%', aspectRatio: '3/4', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', marginBottom: '1rem' }}>
+                    <div key={index} className="card-piloto-novo" style={{ width: '100%', minWidth: '180px', maxWidth: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', transition: 'transform 0.2s ease' }}>
+                      <div style={{ width: '100%', aspectRatio: '3/4', backgroundColor: 'transparent', overflow: 'hidden', position: 'relative', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <img src={pilotoImage} alt="Piloto" className="piloto-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', bottom: -1, right: 0, background: 'rgba(3, 7, 18, 0.7)', backdropFilter: 'blur(8px)', padding: '0.4rem 0.8rem', borderTopLeftRadius: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-                          <span style={{ fontSize: '2.2rem', fontFamily: '"PosicaoFont", sans-serif', background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
+                        <div style={{ position: 'absolute', bottom: -1, right: -1, background: 'rgba(3, 7, 18, 0.4)', backdropFilter: 'blur(9px)', padding: '0.4rem 0.8rem', borderTopLeftRadius: '4px', borderTop: '1px solid rgba(255,255,255,0.1)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ fontSize: '2.1rem', fontFamily: '"PosicaoFont", sans-serif', background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
                             {piloto.posicao}
                           </span>
                         </div>
                       </div>
                       
-                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', margin: '0 0 0.3rem 0', fontWeight: 300, fontFamily: '"Inter", sans-serif', letterSpacing: '0.02em' }}>{piloto.nome}</h3>
-                        <span style={{ color: '#eab308', fontSize: '0.7rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{role}</span>
-                        <span style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.3rem', fontWeight: 300 }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <h3 style={{ color: '#f8fafc', fontSize: '1.05rem', margin: '0 0 0.25rem 0', fontWeight: 400, fontFamily: '"Inter", sans-serif', letterSpacing: '0.02em' }}>{piloto.nome}</h3>
+                        <span style={{ color: '#eab308', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{role}</span>
+                        <span style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.25rem', fontWeight: 400 }}>{piloto.cidade || 'Base'} {piloto.uf ? `- ${piloto.uf}` : ''}</span>
                       </div>
                     </div>
                   );
@@ -1256,6 +1333,15 @@ export default function Home() {
               Acompanhe a nossa programação oficial. As demonstrações seguem horários e condições meteorológicas em tempo real.
             </p>
             
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0', marginBottom: '2rem', flexWrap: 'wrap' }}>
+              <button className={`tab-btn ${agendaTab === '2020' ? 'active' : ''}`} onClick={() => setAgendaTab('2020')}>
+                <img src={mfLogo} alt="MSFS" style={{ height: '16px', filter: agendaTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} /> 
+              </button>
+              <button className={`tab-btn ${agendaTab === '2024' ? 'active' : ''}`} onClick={() => setAgendaTab('2024')}>
+                <img src={mfLogo24} alt="MSFS" style={{ height: '28px', filter: agendaTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+              </button>
+            </div>
+
             <div style={{ height: '1px', width: '100%', background: '#334155', marginBottom: '2.5rem' }} />
             
             {Object.keys(groupedAgenda).length > 0 ? (
@@ -1295,15 +1381,15 @@ export default function Home() {
             ) : (
                <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
                 <Calendar size={32} color="#0ea5e9" style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-                <p style={{ fontWeight: 300, color: '#64748b', fontFamily: '"Inter", sans-serif' }}>Nada ainda, volte mais tarde</p>
+                <p style={{ fontWeight: 300, color: '#64748b', fontFamily: '"Inter", sans-serif' }}>Nenhum evento agendado para esta plataforma.</p>
               </div>
             )}
 
             {totalAgendaPages > 1 && (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2.5rem' }}>
-                <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>&lt; ANTERIOR</button>
+                <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '2px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>&lt; ANTERIOR</button>
                 <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontFamily: '"StratumNo2", sans-serif' }}>PÁG {agendaPage} / {totalAgendaPages}</span>
-                <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '4px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>PRÓXIMA &gt;</button>
+                <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '2px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer', fontFamily: '"StratumNo2", sans-serif' }}>PRÓXIMA &gt;</button>
               </div>
             )}
 
@@ -1312,52 +1398,22 @@ export default function Home() {
       </div>
 
       <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0b1121', display: 'flex', alignItems: 'center' }}>
-        <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${a29Image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.5, zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #030712 0%, rgba(3,7,18,0.3) 50%, #030712 100%)', zIndex: 0 }} />
         
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tucano3png})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1, filter: 'brightness(1.15) contrast(1.05)', zIndex: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0b1121 0%, rgba(3,7,18,0.3) 50%, #030712 100%)', zIndex: 0 }} />
-        
-        <section id="aeronave" className="section-container" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '900px', margin: '0 auto', padding: '6rem 2rem' }}>
-          <SectionHeader title="O SUPER TUCANO" />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', textAlign: 'center' }}>
-            <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.1rem', lineHeight: '1.8', color: '#f8fafc', margin: '0 auto', fontFamily: '"Inter", sans-serif', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+        <section id="aeronave" className="section-container" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '900px', margin: '0 auto', padding: '8rem 2rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'center', alignItems: 'center' }}>
+            <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '2.5rem', color: '#f8fafc', margin: 0, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.05em' }}>O SUPER TUCANO</h2>
+            <p style={{ textAlign: 'center', fontWeight: 300, fontSize: '1.1rem', lineHeight: '1.8', color: '#cbd5e1', margin: '0', fontFamily: '"Inter", sans-serif', maxWidth: '800px' }}>
               O Embraer EMB-314 Super Tucano é uma aeronave turboélice de ataque leve e treinamento avançado. Reconhecido mundialmente por sua robustez e alta tecnologia, é o vetor oficial da nossa esquadrilha virtual.
             </p>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem', borderRadius: '10px', marginTop: '2.5rem' }}>
-              <AppleSpec label="Desenvolvedor" value="RPSim" />
-              <AppleSpec label="Velocidade Máx." value="593" unit="km/h" />
-              <AppleSpec label="Teto de Serviço" value="10.6" unit="km" />
-              <AppleSpec label="Potência" value="1.600" unit="shp" />
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '3rem', marginTop: '2rem' }}>
+              <AppleSpecText label="Desenvolvedor" value="RPSim" unit="" />
+              <AppleSpecText label="Velocidade Máx." value="593" unit="km/h" />
+              <AppleSpecText label="Teto de Serviço" value="10.6" unit="km" />
+              <AppleSpecText label="Potência" value="1.600" unit="shp" />
             </div>
-          </div>
-        </section>
-      </div>
-
-      <div style={{ backgroundColor: '#030712' }}>
-        <section id="destaque" className="section-container">
-          <SectionHeader title="TRANSIÇÃO PARA O SUPER TUCANO" />
-          <div className="split-grid">
-            
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
-              <div className="zoom-wrapper">
-                <img src={tucano2png} alt="Transição A-29" className="zoom-image" style={{ filter: 'grayscale(10%) contrast(110%)' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.6) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', zIndex: 2 }}>
-              <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: 'clamp(2rem, 4vw, 2.5rem)', color: '#f8fafc', lineHeight: 1.1, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                A NOVA <span style={{ color: '#eab308' }}>ERA</span>
-              </h2>
-              <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0, fontFamily: '"Inter", sans-serif' }}>
-                Os nossos pilotos encontram-se em intenso treinamento e adaptação para a implementação oficial do A-29 Super Tucano. Esta fase marca um momento histórico de evolução e aprimoramento das nossas capacidades acrobáticas no simulador.
-              </p>
-            </div>
-
           </div>
         </section>
       </div>
@@ -1370,7 +1426,7 @@ export default function Home() {
           <div className="split-grid reverse">
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(-20px, 20px)' }}></div>
+              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '2px', zIndex: 0, opacity: 0.5, transform: 'translate(-20px, 20px)' }}></div>
               <div className="zoom-wrapper">
                 <img src={t271} alt="Formação T-27" className="zoom-image" style={{ filter: 'grayscale(10%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
@@ -1401,7 +1457,7 @@ export default function Home() {
                     <div style={{ height: '180px', backgroundImage: `url(${noticia.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8 }}></div>
                   )}
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                    <span style={{ color: '#eab308', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
+                    <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{noticia.data}</span>
                     <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"NormalFont", sans-serif', fontWeight: 400, marginBottom: '1rem', lineHeight: 1.4 }}>{noticia.titulo}</h3>
                     <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.8, fontWeight: 300, flexGrow: 1, margin: 0, fontFamily: '"Inter", sans-serif' }}>{noticia.resumo}</p>
                   </div>
@@ -1438,7 +1494,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div style={{ position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', aspectRatio: '16/9', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', aspectRatio: '16/9', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '2px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
                 {livePlatform === 'youtube' && liveYT && (
                   <iframe width="100%" height="100%" src={liveYT} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ position: 'absolute', inset: 0 }}></iframe>
                 )}
@@ -1462,7 +1518,7 @@ export default function Home() {
             A jornada no EDA FS exige extrema dedicação. Conheça as etapas de formação e as responsabilidades assumidas pelos nossos pilotos até alcançarem o cobiçado status operacional.
           </p>
 
-          <div style={{ maxWidth: '850px', margin: '0 auto', borderLeft: '2px solid #1e293b', paddingLeft: '2rem', marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
+          <div style={{ maxWidth: '850px', margin: '0 auto', borderLeft: '2px solid #1e293b', paddingLeft: '2rem', marginLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             <div className="timeline-item">
               <span style={{ display: 'block', fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '0.2rem' }}>Fase 01</span>
@@ -1498,7 +1554,7 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '4rem', alignItems: 'center' }}>
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '4px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
+              <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '2px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
               <div className="zoom-wrapper">
                 <img src={formacaoImage} alt="Formação EDAV" className="zoom-image" style={{ filter: 'grayscale(20%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
@@ -1537,7 +1593,7 @@ export default function Home() {
             
             <div style={{ display: 'flex', gap: '1rem', color: '#a1a1aa', marginTop: '0.5rem' }}>
               <span onClick={() => window.open('https://www.instagram.com/eda.msfs/', '_blank')} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '50%', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#000'; e.currentTarget.style.background = '#0ea5e9'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
               </span>
               <a href="mailto:fumacavirtualmfs@gmail.com" style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '50%', transition: 'all 0.3s ease', display: 'inline-flex' }} onMouseEnter={e => { e.currentTarget.style.color = '#000'; e.currentTarget.style.background = '#0ea5e9'; }} onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>
                 <Mail size={20} />
@@ -1584,18 +1640,18 @@ export default function Home() {
       </footer>
 
       {showCookieBanner && (
-        <div style={{ position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(28, 28, 30, 0.85)', backdropFilter: 'blur(24px) saturate(180%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '1rem 1.5rem', zIndex: 9999, display: 'flex', alignItems: 'center', gap: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', width: 'auto', maxWidth: '90%', flexWrap: 'nowrap' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flex: 1, minWidth: '250px' }}>
+        <div className="cookie-banner">
+          <div className="cookie-content">
             <ShieldCheck size={24} color="#0ea5e9" style={{ flexShrink: 0, marginTop: '2px' }} />
             <p style={{ color: '#cbd5e1', fontSize: '0.8rem', margin: 0, fontFamily: '"Inter", sans-serif', lineHeight: 1.5 }}>
-              Nosso website utiliza cookies essenciais para garantir o funcionamento correto e melhorar sua experiência de navegação, em conformidade com a LGPD. 
+              Nosso portal utiliza cookies essenciais para garantir o funcionamento correto e melhorar sua experiência de navegação, em conformidade com a LGPD. 
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '4px', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
+          <div className="cookie-actions">
+            <button onClick={() => handleCookie(false)} style={{ background: 'transparent', color: '#94a3b8', border: '1px solid #334155', padding: '0.6rem 1.25rem', borderRadius: '2px', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.borderColor = '#64748b'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = '#334155'; }}>
               RECUSAR
             </button>
-            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '0.6rem 1.5rem', borderRadius: '4px', fontWeight: 500, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)'; e.currentTarget.style.color = '#030712'; e.currentTarget.style.borderColor = 'transparent'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.borderColor = '#0ea5e9'; }}>
+            <button onClick={() => handleCookie(true)} style={{ background: 'transparent', color: '#0ea5e9', border: '1px solid #0ea5e9', padding: '0.6rem 1.5rem', borderRadius: '2px', fontWeight: 500, fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s', letterSpacing: '0.05em' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)'; e.currentTarget.style.color = '#030712'; e.currentTarget.style.borderColor = 'transparent'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#0ea5e9'; e.currentTarget.style.borderColor = '#0ea5e9'; }}>
               ACEITAR
             </button>
           </div>
@@ -1607,7 +1663,7 @@ export default function Home() {
       </button>
 
       <div className={`modal-overlay ${isFormModalOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content glass-panel modal-body-scroll" style={{ padding: '2.5rem', background: '#0b1121', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+        <div className="modal-content glass-panel modal-body-scroll" style={{ padding: '2.5rem', background: '#0b1121', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
           <button onClick={() => setIsFormModalOpen(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', transition: 'color 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
             <X size={24} />
           </button>
@@ -1714,7 +1770,7 @@ export default function Home() {
                   <label style={{ fontSize: '0.7rem', fontWeight: 500, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Sua Plataforma (MSFS) *</label>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', width: '100%', maxWidth: '250px', margin: '0 auto' }}>
                     {['PC', 'Console'].map(plat => (
-                      <button key={plat} type="button" onClick={() => setPlataforma(plat)} className={`platform-btn ${plataforma === plat ? 'active-blue' : ''}`} style={{ borderRadius: '4px' }}>
+                      <button key={plat} type="button" onClick={() => setPlataforma(plat)} className={`platform-btn ${plataforma === plat ? 'active-blue' : ''}`} style={{ borderRadius: '2px' }}>
                         {plat}
                       </button>
                     ))}
@@ -1741,34 +1797,34 @@ export default function Home() {
       </div>
 
       <div className={`modal-overlay ${modalAlistamento ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #10b981', borderRadius: '4px', maxWidth: '400px', textAlign: 'center' }}>
+        <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #10b981', borderRadius: '2px', maxWidth: '400px', textAlign: 'center' }}>
           <CheckCircle2 size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
           <h3 style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 400, fontFamily: '"StratumNo2", sans-serif' }}>Aplicação Enviada!</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 300, fontSize: '0.9rem', fontFamily: '"Inter", sans-serif' }}>Recebemos seus dados com sucesso. Nossa equipe entrará em contato em breve.</p>
-          <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"StratumNo2", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
+          <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '2px', fontFamily: '"StratumNo2", sans-serif' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
         </div>
       </div>
 
       <div className={`modal-overlay ${modalIdadeOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #ef4444', borderRadius: '4px', maxWidth: '400px', textAlign: 'center' }}>
+        <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #ef4444', borderRadius: '2px', maxWidth: '400px', textAlign: 'center' }}>
           <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} />
           <h3 style={{ color: '#f8fafc', fontSize: '1.35rem', margin: '1.5rem 0 1rem', fontWeight: 700, fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>Idade Não Atingida</h3>
           <p style={{ color: '#cbd5e1', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 300, fontSize: '0.9rem', fontFamily: '"Inter", sans-serif' }}>
             A doutrina da AFA FS exige a idade mínima de <strong>17 anos completos</strong> para ingresso. Agradecemos o interesse!
           </p>
-          <button type="button" style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', letterSpacing: '0.1em', padding: '0.8rem 2rem', width: '100%', borderRadius: '4px', fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = '#334155'; }} onClick={() => setModalIdadeOpen(false)}>FECHAR</button>
+          <button type="button" style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', letterSpacing: '0.1em', padding: '0.8rem 2rem', width: '100%', borderRadius: '2px', fontFamily: '"StratumNo2", sans-serif', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.borderColor = '#334155'; }} onClick={() => setModalIdadeOpen(false)}>FECHAR</button>
         </div>
       </div>
 
       <div className={`modal-overlay ${legalModalOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content" style={{ padding: 0, background: '#0f172a', border: '1px solid #1e293b', width: '100%', maxWidth: '700px', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+        <div className="modal-content" style={{ padding: 0, background: '#0f172a', border: '1px solid #1e293b', width: '100%', maxWidth: '700px', borderRadius: '2px', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
           
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.25rem', fontFamily: '"Inter", sans-serif', fontWeight: 700 }}>{legalContent[activeLegalTab].title}</h2>
               <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem', fontFamily: '"Inter", sans-serif' }}>{legalContent[activeLegalTab].subtitle}</p>
             </div>
-            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#334155'; }}>
+            <button onClick={() => setLegalModalOpen(false)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.4rem', borderRadius: '2px', cursor: 'pointer', display: 'flex', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.color = '#f8fafc'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.borderColor = '#ef4444'; }} onMouseLeave={e => { e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#334155'; }}>
               <X size={18} />
             </button>
           </div>
