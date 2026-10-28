@@ -1565,7 +1565,7 @@ export default function Home() {
               </div>
               <div className="bf-action-card-content">
                 <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Alistamento EDA FS</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições Abertas</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições abertas.</span>
               </div>
             </div>
           )}
@@ -1576,8 +1576,8 @@ export default function Home() {
                 <PlaneTakeoff size={28} />
               </div>
               <div className="bf-action-card-content">
-                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Apresentação</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Convide o Esquadrão</span>
+                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Demonstração</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Faça uma solicitação e acompanhe a agenda!</span>
               </div>
             </div>
           )}
@@ -1588,7 +1588,7 @@ export default function Home() {
             </div>
             <div className="bf-action-card-content">
               <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Agenda Oficial</span>
-              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos voos</span>
+              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Proximos eventos.</span>
             </div>
           </div>
 
