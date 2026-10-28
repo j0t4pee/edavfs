@@ -11,7 +11,7 @@ import { auth, db, storage } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 import { 
-  LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, Loader2, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon
+  LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, Loader2, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
@@ -24,6 +24,7 @@ interface Noticia { id?: string; data: string; titulo: string; resumo: string; i
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; buttonText: string; link: string; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
 interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
+interface Solicitacao { id?: string; cidade: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
 interface Usuario { 
   id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
   permissoes?: { agenda?: boolean; mods?: boolean; alistamento?: boolean; };
@@ -41,13 +42,13 @@ const ufsBrasileiros = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','
 
 const PermissionToggle = ({ label, active, onChange }: { label: string, active: boolean, onChange: () => void }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
-    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: '"Regular", sans-serif' }}>{label}</span>
     <div className={`toggle-switch ${active ? 'active' : ''}`} onClick={onChange} style={{ transform: 'scale(0.8)', margin: '-5px -5px -5px 0' }} />
   </div>
 );
 
 const SimToggle = ({ label, active, onChange }: { label: string, active: boolean, onChange: () => void }) => (
-  <div onClick={onChange} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: active ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.3)', padding: '0.75rem', borderRadius: '12px', border: active ? '1px solid var(--fs-blue)' : '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s', color: active ? '#f8fafc' : '#9ca3af', fontSize: '0.85rem', fontWeight: 500 }}>
+  <div onClick={onChange} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: active ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.3)', padding: '0.75rem', borderRadius: '12px', border: active ? '1px solid var(--fs-blue)' : '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s', color: active ? '#f8fafc' : '#9ca3af', fontSize: '0.85rem', fontWeight: 500, fontFamily: '"Regular", sans-serif' }}>
     <div className={`toggle-switch ${active ? 'active' : ''}`} style={{ transform: 'scale(0.7)', margin: '-5px 0' }} />
     {label}
   </div>
@@ -60,11 +61,11 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
   const filteredOptions = searchable && search ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())) : options;
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif' }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
       <div onClick={() => setIsOpen(true)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 41, transition: 'all 0.2s' }}>
         {searchable && isOpen ? (
-          <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem' }} />
+          <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem', fontFamily: '"Regular", sans-serif' }} />
         ) : ( <span>{selectedOption ? selectedOption.label : placeholder}</span> )}
         <ChevronDown size={14} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', flexShrink: 0, marginLeft: '0.5rem' }} />
       </div>
@@ -116,7 +117,7 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', fontFamily: '"Regular", sans-serif' }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
       <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', transition: 'all 0.2s' }}>
         {value || "DD/MM/AAAA"} <Calendar size={16} color="#64748b" />
@@ -179,7 +180,7 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', fontFamily: '"Regular", sans-serif' }}>
       {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
       <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', transition: 'all 0.2s' }}>
         {display} <Calendar size={16} color="#64748b" />
@@ -239,11 +240,13 @@ export default function Workspace() {
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
   const [estatisticas, setEstatisticas] = useState<Estatistica[]>([]); 
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   
   const [pilotoFilter, setPilotoFilter] = useState<'2020' | '2024' | 'Ambos'>('Ambos');
   const [agendaFilter, setAgendaFilter] = useState<'2020' | '2024' | 'Ambos'>('Ambos');
 
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
+  const [solicitacaoAberta, setSolicitacaoAberta] = useState(true);
   
   // Configs Mídias / Discord
   const [ytUrl, setYtUrl] = useState('');
@@ -361,10 +364,16 @@ export default function Workspace() {
         const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
         setUsuarios(arr);
       }),
+      onSnapshot(collection(db, 'solicitacoes'), snap => {
+        const arr: Solicitacao[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Solicitacao));
+        arr.sort((a, b) => new Date(b.dataSolicitacao).getTime() - new Date(a.dataSolicitacao).getTime());
+        setSolicitacoes(arr);
+      }),
       onSnapshot(doc(db, 'config', 'geral'), docSnap => { 
         if (docSnap.exists()) {
           const d = docSnap.data();
           setAlistamentoAberto(d.alistamentoAberto || false); 
+          setSolicitacaoAberta(d.solicitacaoAberta !== undefined ? d.solicitacaoAberta : true);
           setYtUrl(d.liveYouTubeUrl || '');
           setTwUrl(d.liveTwitchUrl || ''); 
           setTkUrl(d.liveTikTokUrl || '');
@@ -383,7 +392,7 @@ export default function Workspace() {
   const checkPermission = (action: string) => {
     if (currentUserInfo?.role === 'admin') return true;
     if (['dashboard', 'notam', 'meteorologia'].includes(action)) return true; 
-    if (['pilotos', 'noticias', 'config', 'estatisticas'].includes(action)) return false; 
+    if (['pilotos', 'noticias', 'config', 'estatisticas', 'solicitacoes'].includes(action)) return false; 
     return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
   };
 
@@ -476,6 +485,12 @@ export default function Workspace() {
     catch { showToast("Erro", "error"); }
   };
 
+  const handleToggleSolicitacao = async () => {
+    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    try { await setDoc(doc(db, 'config', 'geral'), { solicitacaoAberta: !solicitacaoAberta }, { merge: true }); showToast(`Atualizado`, "success"); } 
+    catch { showToast("Erro", "error"); }
+  };
+
   const handleSalvarConfigsGerais = async (e: React.FormEvent) => {
     e.preventDefault(); if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
     try { 
@@ -506,6 +521,16 @@ export default function Workspace() {
     if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
     try { await updateDoc(doc(db, 'usuarios', userId), { role: newRole }); showToast("Cargo atualizado!", "success"); } 
     catch { showToast("Falha", "error"); }
+  };
+
+  const handleMudarStatusSolicitacao = async (id: string, novoStatus: string) => {
+    if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
+    try {
+      await updateDoc(doc(db, 'solicitacoes', id), { status: novoStatus });
+      showToast(`Status atualizado com sucesso!`, "success");
+    } catch {
+      showToast("Erro ao atualizar status.", "error");
+    }
   };
 
   const handleEditarPiloto = (p: Piloto) => { setEditingId(p.id || null); setNovoPosicao(p.posicao); setNovoNome(p.nome); setNovaCidade(p.cidade || ''); setNovaUf(p.uf || ''); setNovoOculto(p.oculto || false); setNovoJustificativa(p.justificativa || ''); loadPlatformToState(p.plataforma); setShowForm(true); };
@@ -775,10 +800,10 @@ export default function Workspace() {
       <aside className={`workspace-sidebar ${mobileSidebarOpen ? 'open' : ''}`}>
         <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img src={logoImage} alt="EDAV" style={{ height: '28px' }} />
+            <img src={logoImage} alt="EDAV" style={{ height: '32px' }} />
             <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.1rem', color: '#f8fafc', margin: 0, letterSpacing: '0.05em' }}>WORKSPACE</h2>
           </div>
-          <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{ display: window.innerWidth <= 900 ? 'block' : 'none', background: 'transparent', border: 'none', color: 'var(--fs-muted)' }}><X size={20} /></button>
+          <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{ display: window.innerWidth <= 900 ? 'block' : 'none', background: 'transparent', border: 'none', color: 'var(--fs-muted)' }}><X size={24} /></button>
         </div>
         
         <div className="fs-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -799,14 +824,21 @@ export default function Workspace() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
             <button className="nav-item" onClick={() => setGerenciaisAberto(!gerenciaisAberto)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-main)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Briefcase size={16} color="var(--fs-blue)" /> Gestão Tática</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Briefcase size={16} color="#0ea5e9" /> Gestão Tática</div>
               <ChevronDown size={14} style={{ transform: gerenciaisAberto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
             </button>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(59, 130, 246, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(14, 165, 233, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
               {currentUserInfo?.role === 'admin' && <button className={`nav-item ${activeTab === 'estatisticas' ? 'active' : ''}`} onClick={() => handleMenuClick('estatisticas')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Activity size={14} /> Estatísticas</button>}
               <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={14} /> Pilotos</button>
               <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={14} /> Agenda</button>
               <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={14} /> Notícias</button>
+              
+              {currentUserInfo?.role === 'admin' && (
+                <button className={`nav-item ${activeTab === 'solicitacoes' ? 'active' : ''}`} onClick={() => handleMenuClick('solicitacoes')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Inbox size={14} /> Solicitações</div>
+                  {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '12px' }}>{solicitacoes.filter(s => s.status === 'Pendente').length}</span>}
+                </button>
+              )}
             </div>
           </div>
 
@@ -853,7 +885,7 @@ export default function Workspace() {
         <div className="main-content" style={{ padding: '1rem 2rem 2rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 500, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>
-              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'estatisticas' ? 'Estatísticas' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : 'Config. e Acessos'}
+              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'estatisticas' ? 'Estatísticas' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
             </h2>
             
             {['pilotos', 'agenda', 'noticias', 'estatisticas'].includes(activeTab) && checkPermission(activeTab) && (
@@ -871,7 +903,7 @@ export default function Workspace() {
                 <DashboardCard title="Pilotos Ativos" value={pilotos.filter(p => !p.oculto).length} icon={<Users size={24} />} color="#0ea5e9" />
                 <DashboardCard title="Próximos Eventos" value={agendas.length} icon={<CalendarCheck2 size={24} />} color="#10b981" />
                 <DashboardCard title="Avisos NOTAM" value={notams.length} icon={<BellRing size={24} />} color="#ef4444" />
-                <DashboardCard title="Artigos Publicados" value={noticias.length} icon={<Newspaper size={24} />} color="#f59e0b" />
+                <DashboardCard title="Solicitações" value={solicitacoes.filter(s => s.status === 'Pendente').length} icon={<Inbox size={24} />} color="#f59e0b" />
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '2fr 1fr' : '1fr', gap: '1.5rem' }}>
@@ -899,6 +931,43 @@ export default function Workspace() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'solicitacoes' && currentUserInfo?.role === 'admin' && (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '1fr 1.5fr 1fr 1.5fr', padding: '0 1.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>
+                <span>Data do Pedido</span><span>Cidade / Evento</span><span>Transmissão</span><span style={{ textAlign: 'right' }}>Ações / Status</span>
+              </div>
+              
+              {solicitacoes.length === 0 ? (
+                <div style={{ padding: '4rem 2rem', textAlign: 'center', background: 'rgba(15,23,42,0.6)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Inbox size={48} color="#64748b" style={{ margin: '0 auto 1.5rem', opacity: 0.3 }} />
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.95rem' }}>Não existem solicitações pendentes no sistema.</p>
+                </div>
+              ) : (
+                solicitacoes.map((s) => (
+                  <div key={s.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? '1fr 1.5fr 1fr 1.5fr' : '1fr', opacity: s.status !== 'Pendente' ? 0.6 : 1, padding: '1.25rem' }}>
+                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{new Date(s.dataSolicitacao).toLocaleDateString('pt-BR')} <br/> <span style={{ fontSize: '0.7rem' }}>{new Date(s.dataSolicitacao).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span></div>
+                    <div style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.95rem' }}>{s.cidade}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ color: s.transmissao === 'sim' ? '#10b981' : '#ef4444', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase' }}>{s.transmissao === 'sim' ? 'Com Transmissão' : 'Sem Transmissão'}</span>
+                      {s.transmissao === 'sim' && <a href={s.canal} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', fontSize: '0.75rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}><Link2 size={12}/> Acessar Canal</a>}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
+                      {s.status === 'Pendente' ? (
+                        <>
+                          <button onClick={() => handleMudarStatusSolicitacao(s.id!, 'Aprovado')} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><Check size={14}/> Aprovar</button>
+                          <button onClick={() => handleMudarStatusSolicitacao(s.id!, 'Recusado')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><X size={14}/> Recusar</button>
+                        </>
+                      ) : (
+                        <span style={{ color: s.status === 'Aprovado' ? '#10b981' : '#ef4444', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', padding: '0.3rem 0.8rem', background: s.status === 'Aprovado' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: '6px' }}>{s.status}</span>
+                      )}
+                      <button onClick={() => handleDeletarItem(s.id, 'solicitacoes', `Solicitação de ${s.cidade}`)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.4rem' }}><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
@@ -980,11 +1049,11 @@ export default function Workspace() {
                           <label className="form-label">Exibir Piloto no Simulador:</label>
                           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                             <SimToggle label="MSFS 2020" active={plat2020Ativo} onChange={() => {
-                              if (plat2020Ativo && !plat2024Ativo) return; // Tem que ter pelo menos um ativo
+                              if (plat2020Ativo && !plat2024Ativo) return; 
                               setPlat2020Ativo(!plat2020Ativo);
                             }} />
                             <SimToggle label="MSFS 2024" active={plat2024Ativo} onChange={() => {
-                              if (plat2024Ativo && !plat2020Ativo) return; // Tem que ter pelo menos um ativo
+                              if (plat2024Ativo && !plat2020Ativo) return; 
                               setPlat2024Ativo(!plat2024Ativo);
                             }} />
                           </div>
@@ -1086,36 +1155,35 @@ export default function Workspace() {
           {activeTab === 'noticias' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', width: '100%', maxWidth: '700px', margin: 'auto' }}>
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Artigo / Notícia</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
-                    <form onSubmit={handleSalvarNoticia} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}><div><label className="form-label">Data</label><input type="text" value={notData} onChange={e => setNotData(e.target.value)} className="form-input" /></div><div><label className="form-label">Título do Artigo</label><input type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" /></div></div>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
+                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Notícia</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
+                    <form onSubmit={handleSalvarNoticia} style={{ padding: '1.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '1rem' }}><div><label className="form-label">Data</label><input type="text" value={notData} onChange={e => setNotData(e.target.value)} className="form-input" /></div><div><label className="form-label">Título</label><input type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" /></div></div>
                         <div>
-                          <label className="form-label">Imagem de Capa</label>
-                          <label style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px dashed var(--fs-border)', color: 'var(--fs-muted)', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', transition: 'border-color 0.2s' }} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--fs-blue)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--fs-border)'}>
-                            {uploadProgress !== null ? <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }}/> : <ImagePlus size={20}/>} {uploadProgress !== null ? `Enviando... ${Math.round(uploadProgress)}%` : 'Selecionar Imagem do Computador'}
+                          <label className="form-label">Imagem</label>
+                          <label style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px dashed rgba(255,255,255,0.1)', color: '#94a3b8', borderRadius: '8px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                            {uploadProgress !== null ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }}/> : <ImagePlus size={16}/>} {uploadProgress !== null ? `Enviando... ${Math.round(uploadProgress)}%` : 'Selecionar Imagem'}
                             <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
                           </label>
                         </div>
-                        {notImagem && uploadProgress === null && <div style={{ height: '150px', borderRadius: '12px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--fs-border)' }} />}
-                        <div><label className="form-label">Resumo / Conteúdo</label><textarea required value={notResumo} onChange={e => setNotResumo(e.target.value)} rows={4} className="form-input" style={{ resize: 'vertical', minHeight: '100px' }} /></div>
+                        {notImagem && uploadProgress === null && <div style={{ height: '100px', borderRadius: '8px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(255,255,255,0.1)' }} />}
+                        <div><label className="form-label">Resumo</label><textarea required value={notResumo} onChange={e => setNotResumo(e.target.value)} rows={3} className="form-input" style={{ resize: 'none' }} /></div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', borderTop: '1px solid var(--fs-border)', paddingTop: '2rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--text-main)', padding: '0.8rem 1.5rem', borderRadius: '12px', fontWeight: 500, cursor: 'pointer' }}>Cancelar</button><button type="submit" disabled={uploadProgress !== null} style={{ background: 'var(--fs-blue)', color: '#fff', padding: '0.8rem 1.5rem', borderRadius: '12px', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Publicar Artigo</button></div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" disabled={uploadProgress !== null} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
                     </form>
                   </div>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
                 {noticias.map((n) => (
-                  <div key={n.id} className="fs-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: 0 }}>
-                    {n.imagem ? <div style={{ height: '160px', backgroundImage: `url(${n.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', borderBottom: '1px solid var(--fs-border)' }} /> : <div style={{ height: '160px', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--fs-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={32} color="var(--fs-border)"/></div>}
-                    <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                      <span style={{ color: 'var(--fs-blue)', fontSize: '0.75rem', marginBottom: '0.5rem', fontWeight: 600, letterSpacing: '0.05em' }}>{n.data}</span>
-                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 600, fontFamily: '"Comum", sans-serif' }}>{n.titulo}</h4>
-                      <p style={{ color: 'var(--fs-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1.5rem 0', flexGrow: 1 }}>{n.resumo.length > 100 ? n.resumo.substring(0,100) + '...' : n.resumo}</p>
-                      {checkPermission('noticias') && <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--fs-border)', paddingTop: '1rem' }}><button onClick={() => handleEditarNoticia(n)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--text-main)', cursor: 'pointer', flexGrow: 1, padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='var(--fs-blue)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}><Edit2 size={16} /></button><button onClick={() => handleDeletarItem(n.id, 'noticias', n.titulo)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: '#ef4444', cursor: 'pointer', flexGrow: 1, padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(239,68,68,0.2)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}><Trash2 size={16} /></button></div>}
+                  <div key={n.id} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    {n.imagem ? <div style={{ height: '120px', backgroundImage: `url(${n.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }} /> : <div style={{ height: '120px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={24} color="#1e293b"/></div>}
+                    <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                      <h4 style={{ margin: '0 0 0.25rem 0', color: '#f8fafc', fontSize: '0.95rem', fontWeight: 500 }}>{n.titulo}</h4><span style={{ color: '#0ea5e9', fontSize: '0.75rem', marginBottom: '0.5rem' }}>{n.data}</span>
+                      <p style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: 1.4, margin: '0 0 1rem 0', flexGrow: 1 }}>{n.resumo}</p>
+                      {checkPermission('noticias') && <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}><button onClick={() => handleEditarNoticia(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'noticias', n.titulo)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button></div>}
                     </div>
                   </div>
                 ))}
@@ -1126,32 +1194,32 @@ export default function Workspace() {
           {activeTab === 'notam' && (
             <div>
               {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="fs-card modal-modern" style={{ width: '100%', maxWidth: '700px', margin: 'auto', padding: 0 }}>
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--fs-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: '"Comum", sans-serif' }}><AlertOctagon size={24} color="#ef4444" /> {editingId ? 'Editar NOTAM' : 'Publicar Aviso Operacional'}</h3><button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--fs-muted)', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px' }}><X size={20} /></button></div>
-                    <form onSubmit={handleSalvarNotam} style={{ padding: '2rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div><label className="form-label">Data de Emissão</label><CustomDatePicker value={notamData} onChange={(val) => setNotamData(val)} /></div>
-                        <div><label className="form-label">Assunto Principal (A-Z)</label><input required type="text" value={notamTitulo} onChange={e => setNotamTitulo(e.target.value)} className="form-input" style={{ textTransform: 'uppercase', color: '#ef4444', fontWeight: 600 }} /></div>
-                        <div><label className="form-label">Corpo da Mensagem</label><textarea required value={notamMensagem} onChange={e => setNotamMensagem(e.target.value)} rows={6} className="form-input" style={{ resize: 'vertical' }} /></div>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
+                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><AlertOctagon size={18} color="#ef4444" /> {editingId ? 'Editar NOTAM' : 'Publicar NOTAM'}</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
+                    <form onSubmit={handleSalvarNotam} style={{ padding: '1.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div><label className="form-label">Data</label><CustomDatePicker value={notamData} onChange={(val) => setNotamData(val)} /></div>
+                        <div><label className="form-label">Assunto</label><input required type="text" value={notamTitulo} onChange={e => setNotamTitulo(e.target.value)} className="form-input" style={{ textTransform: 'uppercase', color: '#ef4444' }} /></div>
+                        <div><label className="form-label">Mensagem</label><textarea required value={notamMensagem} onChange={e => setNotamMensagem(e.target.value)} rows={4} className="form-input" style={{ resize: 'none' }} /></div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', borderTop: '1px solid var(--fs-border)', paddingTop: '2rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--text-main)', padding: '0.8rem 1.5rem', borderRadius: '12px', fontWeight: 500, cursor: 'pointer' }}>Cancelar</button><button type="submit" style={{ background: '#ef4444', color: '#fff', padding: '0.8rem 1.5rem', borderRadius: '12px', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Emitir NOTAM</button></div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Emitir</button></div>
                     </form>
                   </div>
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxWidth: '900px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxWidth: '800px' }}>
                 {notams.map((n) => (
-                  <div key={n.id} className="fs-card" style={{ borderLeft: '4px solid #ef4444', padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                      <div><span style={{ color: '#ef4444', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em' }}>NOTAM OFICIAL</span><h4 style={{ margin: '0.5rem 0 0 0', color: 'var(--text-main)', fontSize: '1.3rem', fontFamily: '"Comum", sans-serif' }}>{n.titulo}</h4></div>
-                      <span style={{ background: 'rgba(0,0,0,0.3)', padding: '0.4rem 0.8rem', borderRadius: '8px', color: 'var(--fs-muted)', fontSize: '0.85rem', border: '1px solid var(--fs-border)', fontWeight: 600 }}>{n.data}</span>
+                  <div key={n.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '4px solid #ef4444', borderRadius: '8px', padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                      <div><span style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 600 }}>NOTAM</span><h4 style={{ margin: '0.25rem 0 0 0', color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>{n.titulo}</h4></div>
+                      <span style={{ background: 'rgba(0,0,0,0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#94a3b8', fontSize: '0.75rem', border: '1px solid rgba(255,255,255,0.05)' }}>{n.data}</span>
                     </div>
-                    <p style={{ color: '#cbd5e1', margin: '0 0 2rem 0', lineHeight: 1.6, fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--fs-border)', paddingTop: '1.5rem' }}>
-                      <span style={{ color: 'var(--fs-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Emitido por: <span style={{ color: 'var(--text-main)' }}>{n.autor}</span></span>
+                    <p style={{ color: '#cbd5e1', margin: '0 0 1.5rem 0', lineHeight: 1.5, fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                      <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Emitido por: {n.autor}</span>
                       {currentUserInfo?.role === 'admin' && (
-                        <div style={{ display: 'flex', gap: '1rem' }}><button onClick={() => handleEditarNotam(n)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--text-main)', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='var(--fs-blue)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}><Edit2 size={16} /></button><button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(239,68,68,0.2)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}><Trash2 size={16} /></button></div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => handleEditarNotam(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
                       )}
                     </div>
                   </div>
@@ -1215,11 +1283,19 @@ export default function Workspace() {
               </div>
 
               <div className="fs-card" style={{ padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Alistamento Público</h4>
-                <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: '#94a3b8' }}>Habilite o botão de recrutamento no site público.</p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '400px' }}>
-                  <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>{alistamentoAberto ? 'Inscrições Abertas' : 'Fechadas'}</span>
-                  <div className={`toggle-switch ${alistamentoAberto ? 'active' : ''}`} onClick={handleToggleAlistamento} style={{ transform: 'scale(0.9)' }} />
+                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Recursos Públicos</h4>
+                <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: '#94a3b8' }}>Gira a exibição de botões e formulários no site público.</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>Alistamento: <span style={{ color: alistamentoAberto ? '#10b981' : '#94a3b8' }}>{alistamentoAberto ? 'Aberto' : 'Fechado'}</span></span>
+                    <div className={`toggle-switch ${alistamentoAberto ? 'active' : ''}`} onClick={handleToggleAlistamento} style={{ transform: 'scale(0.9)' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>Solicitar Demo: <span style={{ color: solicitacaoAberta ? '#10b981' : '#94a3b8' }}>{solicitacaoAberta ? 'Visível' : 'Oculto'}</span></span>
+                    <div className={`toggle-switch ${solicitacaoAberta ? 'active' : ''}`} onClick={handleToggleSolicitacao} style={{ transform: 'scale(0.9)' }} />
+                  </div>
                 </div>
               </div>
 
