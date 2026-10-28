@@ -9,6 +9,18 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Comum';
+  src: url('./fonts/comum.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Regular';
+  src: url('./fonts/regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 @font-face {
   font-family: 'PosicaoFont';
@@ -986,3 +998,4 @@ h1, h2, h3, h4, h5, h6, .font-title {
   letter-spacing: 0.1em;
   opacity: 0.5;
 }
+
