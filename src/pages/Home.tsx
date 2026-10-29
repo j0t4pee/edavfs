@@ -20,6 +20,9 @@ import {
 import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
+import Header from './Header';
+import Footer from './Footer';
+
 import headerImage from '../images/tucano.jpg';
 import a29Image from '../images/tucano3.jpg'; 
 import logoImage from '../images/logo.png';
@@ -123,7 +126,7 @@ export default function Home() {
   const [liveYT, setLiveYT] = useState('');
   const [liveTwitch, setLiveTwitch] = useState('');
   const [liveTikTok, setLiveTikTok] = useState('');
-  const hasLive = liveYT || liveTwitch || liveTikTok;
+  const hasLive = Boolean(liveYT || liveTwitch || liveTikTok);  
   
   const [agendaPage, setAgendaPage] = useState(1);
   const AGENDA_ITEMS_PER_PAGE = 5;
@@ -133,7 +136,6 @@ export default function Home() {
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   
-  // Novos States para Solicitação de Demonstração
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [demoCidade, setDemoCidade] = useState('');
   const [demoTransmissao, setDemoTransmissao] = useState<'sim' | 'nao' | ''>('');
@@ -252,7 +254,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const allImages = [tucano2png, tucano3png, tucano4png, tucano5png, tucano8png, tucano9png, tucano10png, tucano11png, tucano13png];
+    const allImages = [tucano2png, tucano3png, tucano4png, tucano5png, tucano8png, tucano9png, tucano10png, tucano11png, tucano12png, tucano13png];
     setSliderImages([...allImages].sort(() => Math.random() - 0.5));
     
     if (isAppLoading) {
@@ -298,10 +300,6 @@ export default function Home() {
     linkFavicon.setAttribute('type', 'image/png');
     linkFavicon.setAttribute('sizes', '32x32');
     
-    if (!localStorage.getItem('cookiePref_edav')) {
-      setShowCookieBanner(true);
-    }
-
     const unsubPilotos = onSnapshot(collection(db, 'pilotos'), (snapshot) => {
       const arr: Piloto[] = [];
       snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Piloto));
@@ -387,8 +385,6 @@ export default function Home() {
 
   const handleScroll = () => {
     setOffsetY(window.pageYOffset);
-    setScrolled(window.scrollY > 30);
-    setShowTopBtn(window.scrollY > 400); 
 
     const sections = ['pilotos', 'agenda', 'aeronave', 'noticias', 'midias', 'sobre', 'alistamento'];
     let current = '';
@@ -410,16 +406,8 @@ export default function Home() {
     setActiveSection(current);
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    closeMobileMenu();
-  };
-
-  const handleCookie = (acc: boolean) => {
-    localStorage.setItem('cookiePref_edav', acc ? 'accepted' : 'rejected');
-    setShowCookieBanner(false);
   };
 
   const openLegalModal = (tab: 'privacidade' | 'termos' | 'cookies' | 'disclaimer') => {
@@ -521,16 +509,14 @@ export default function Home() {
     }
   };
 
-  // Submissão de Solicitação de Demonstração com Bloqueio de Flood (1 por dia)
   const submitDemonstracao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!demoCidade.trim() || !demoTransmissao) return;
     
-    // Verificação de Flood (Cache Local)
     const lastRequest = localStorage.getItem('lastDemoRequest_edav');
     if (lastRequest) {
       const timeDiff = Date.now() - parseInt(lastRequest);
-      if (timeDiff < 24 * 60 * 60 * 1000) { // 24 horas em milissegundos
+      if (timeDiff < 24 * 60 * 60 * 1000) {
         alert('Apenas uma solicitação por dia é permitida por dispositivo. Tente novamente amanhã.');
         return;
       }
@@ -547,9 +533,7 @@ export default function Home() {
         status: 'Pendente'
       });
 
-      // Regista o tempo da solicitação para evitar flood
       localStorage.setItem('lastDemoRequest_edav', Date.now().toString());
-
       setIsDemoModalOpen(false);
       setModalDemoSucesso(true);
       setDemoCidade(''); setDemoTransmissao(''); setDemoCanal('');
@@ -560,8 +544,6 @@ export default function Home() {
       setIsSubmittingDemo(false);
     }
   };
-
-  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   const filteredPilotos = dbPilotos.filter(p => (p.plataforma || '2020') === pilotoTab || p.plataforma === 'Ambos');
   const filteredAgenda = dbDemonstracoes.filter(a => (a.plataforma || '2020') === agendaTab || a.plataforma === 'Ambos');
@@ -1461,6 +1443,16 @@ export default function Home() {
         @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr; } .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; } }
       `}</style>
 
+      <Header 
+        activeSection={activeSection}
+        alistamentoAberto={alistamentoAberto}
+        solicitacaoAberta={solicitacaoAberta}
+        onOpenAlistamento={() => setIsFormModalOpen(true)}
+        onOpenDemo={() => setIsDemoModalOpen(true)}
+        hasLive={hasLive}
+        hasNoticias={dbNoticias.length > 0}
+      />
+
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1468,92 +1460,8 @@ export default function Home() {
         </div>
       </div>
 
-      <nav style={{ position: 'fixed', top: 0, width: '100%', zIndex: 100, background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(40px) saturate(200%)', WebkitBackdropFilter: 'blur(40px) saturate(200%)', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'all 0.3s ease', padding: scrolled || mobileMenuOpen ? '0.3rem 0' : '0.6rem 0' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div onClick={() => { scrollToTop(); closeMobileMenu(); }} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
-            <img src={logoImage} alt="EDAV Logo" style={{ height: scrolled ? '30px' : '45px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', justifyContent: 'center' }}>
-              <span style={{ fontFamily: '"Comum", sans-serif', fontWeight: 'bold', fontSize: '1.0rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>
-                ESQUADRILHA DA FUMAÇA VIRTUAL
-              </span>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginTop: '2px' }}>
-                <span style={{ fontFamily: '"Regular", sans-serif', fontWeight: 500, fontSize: '0.65rem', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '2px 10px', borderRadius: '4px', letterSpacing: '0.1em', transform: 'skewX(-35deg)' }}>
-                  <span style={{ display: 'inline-block', transform: 'skewX(35deg)', fontStyle: 'italic', fontWeight: 500 }}>MICROSOFT FLIGHT SIMULATOR</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="desktop-nav">
-            <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>Pilotos</span>
-            <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>Agenda</span>
-            <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</span>
-            {dbNoticias.length > 0 && (
-              <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
-            )}
-            {hasLive && (
-              <span onClick={() => scrollToSection('midias')} className={`nav-link ${activeSection === 'midias' ? 'active' : ''}`}>Mídias</span>
-            )}
-            <span onClick={() => scrollToSection('sobre')} className={`nav-link ${activeSection === 'sobre' ? 'active' : ''}`}>Sobre</span>
-            
-            <div style={{ position: 'relative', marginLeft: '0.5rem', height: '100%', display: 'flex', alignItems: 'center' }} onMouseEnter={() => setLangMenuOpen(true)} onMouseLeave={() => setLangMenuOpen(false)}>
-              <button style={{ 
-                padding: '0.5rem', 
-                fontSize: '0.8rem', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '4px', 
-                border: 'none', 
-                background: 'transparent',
-                color: langMenuOpen ? '#0ea5e9' : '#f8fafc',
-                fontWeight: 400,
-                letterSpacing: '0.05em',
-                cursor: 'pointer',
-                transition: 'color 0.2s ease'
-              }}>
-                <Globe size={16} /> PT-BR <ChevronDown size={14} style={{ opacity: 0.7, transform: langMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
-              </button>
-              
-              {langMenuOpen && (
-                <div className="lang-dropdown-wrapper">
-                  <div className="lang-dropdown">
-                    <div className="lang-item" onClick={() => navigate('/en')}>
-                      <Globe size={14} /> EN-US
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button className="mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={24} color="#ffffff" /> : <Menu size={24} color="#ffffff" />}
-          </button>
-        </div>
-      </nav>
-
-      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        <span className={activeSection === 'pilotos' ? 'active' : ''} onClick={() => scrollToSection('pilotos')}>Pilotos</span>
-        <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')}>Agenda</span>
-        <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>Aeronave</span>
-        {dbNoticias.length > 0 && (
-          <span className={activeSection === 'noticias' ? 'active' : ''} onClick={() => scrollToSection('noticias')}>Artigos</span>
-        )}
-        {hasLive && (
-          <span className={activeSection === 'midias' ? 'active' : ''} onClick={() => scrollToSection('midias')}>Mídias</span>
-        )}
-        <span className={activeSection === 'sobre' ? 'active' : ''} onClick={() => scrollToSection('sobre')}>Sobre</span>
-        
-        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Language</span>
-          <button className="tb-button" onClick={() => navigate('/en')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Globe size={18} /> EN-US
-          </button>
-        </div>
-      </div>
-
       <section className="hero" style={{ height: '80vh', minHeight: '500px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', paddingBottom: '2rem' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(3,7,18,0.3)', pointerEvents: 'none' }} />
         
         <div className="hero-notification-bar reveal-on-scroll" style={{ position: 'relative', zIndex: 20, padding: '0 2rem', maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -1565,7 +1473,7 @@ export default function Home() {
               </div>
               <div className="bf-action-card-content">
                 <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Alistamento EDA FS</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições abertas.</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições Abertas</span>
               </div>
             </div>
           )}
@@ -1576,8 +1484,8 @@ export default function Home() {
                 <PlaneTakeoff size={28} />
               </div>
               <div className="bf-action-card-content">
-                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Demonstração</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Faça uma solicitação e acompanhe a agenda!</span>
+                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Apresentação</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Solicite aqui uma demonstração</span>
               </div>
             </div>
           )}
@@ -1588,7 +1496,7 @@ export default function Home() {
             </div>
             <div className="bf-action-card-content">
               <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Agenda Oficial</span>
-              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Proximos eventos.</span>
+              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos eventos</span>
             </div>
           </div>
 
@@ -1665,7 +1573,7 @@ export default function Home() {
             {Object.keys(groupedAgenda).length > 0 ? (
               Object.keys(groupedAgenda).map(month => (
                 <div key={month} style={{ marginBottom: '2.5rem' }}>
-                  <h3 style={{ fontFamily: '"Regular", sans-serif', fontSize: '1.2rem', fontWeight: 400, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 400, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
                     {month}
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1685,10 +1593,10 @@ export default function Home() {
                           padding: '1rem 1.5rem'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            <span style={{ fontFamily: '"Comum", sans-serif', fontSize: '1.05rem', color: '#f8fafc', fontWeight: 300 }}>
+                            <span style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 300 }}>
                               {datePart}{timePart}
                             </span>
-                            <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem', fontFamily: '"Comum", sans-serif', fontSize: '1.05rem' }}>
+                            <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem', fontSize: '1.05rem' }}>
                               {dem.cidade}
                             </span>
                             <div style={{ display: 'flex', gap: '4px', marginLeft: '0.5rem' }}>
@@ -1944,71 +1852,10 @@ export default function Home() {
         </section>
       </div>
 
-      <footer className="footer-wrapper" style={{ position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', bottom: '-20%', left: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%)', filter: 'blur(80px)', pointerEvents: 'none' }} />
-        
-        <div className="footer-grid" style={{ position: 'relative', zIndex: 2 }}>
-          
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <img src={logoImage} alt="EDAV Logo" style={{ height: '48px', width: 'auto' }} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', justifyContent: 'center' }}>
-                <span style={{ fontFamily: '"Comum", sans-serif', fontWeight: 'bold', fontSize: '1.15rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>
-                  ESQUADRILHA DA FUMAÇA VIRTUAL
-                </span>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: '"Regular", sans-serif', fontWeight: 500, fontSize: '0.65rem', background: 'linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%)', color: '#f8fafc', padding: '2px 10px', borderRadius: '4px', letterSpacing: '0.1em', transform: 'skewX(-35deg)' }}>
-                    <span style={{ display: 'inline-block', transform: 'skewX(35deg)', fontStyle: 'italic', fontWeight: 500 }}>MICROSOFT FLIGHT SIMULATOR</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h4 className="footer-heading">Navegação</h4>
-            <a onClick={() => scrollToSection('pilotos')} className="footer-link">Pilotos</a>
-            <a onClick={() => scrollToSection('agenda')} className="footer-link">Agenda</a>
-            <a onClick={() => scrollToSection('aeronave')} className="footer-link">Aeronave</a>
-            {dbNoticias.length > 0 && <a onClick={() => scrollToSection('noticias')} className="footer-link">Artigos</a>}
-            <a onClick={() => scrollToSection('sobre')} className="footer-link">O Esquadrão</a>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h4 className="footer-heading">Simuladores</h4>
-            <a className="footer-link">Microsoft Flight Simulator 2020</a>
-            <a className="footer-link">Microsoft Flight Simulator 2024</a>
-
-            <h4 className="footer-heading" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>Contato</h4>
-            <div className="footer-pills" style={{ marginTop: '0' }}>
-              <a href="https://www.instagram.com/eda.msfs/" target="_blank" rel="noreferrer" className="footer-pill" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                <span style={{ marginTop: '1px' }}>Instagram</span>
-              </a>
-              <a href="mailto:fumacavirtualmfs@gmail.com" className="footer-pill" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-                <Mail size={14} /> Email
-              </a>
-            </div>
-          </div>
-
-        </div>
-
-        <div className="footer-bottom" style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <span>© 2026 EDAV MSFS. Todos os direitos reservados.</span>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', lineHeight: 1.6, margin: 0, textAlign: 'justify' }}>
-              AVISO LEGAL: A Esquadrilha da Fumaça Virtual é uma organização civil e independente, voltada exclusivamente à simulação de voo e esporte eletrônico (e-sports) no software Microsoft Flight Simulator. Não possuímos nenhum tipo de vínculo institucional, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB) ou com o Esquadrão de Demonstração Aérea (EDA) oficial. Logotipos e insígnias inspirados são utilizados estritamente em ambiente de simulação e lazer, visando homenagear a aviação brasileira.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <span onClick={() => openLegalModal('privacidade')} className="legal-footer-link">Privacidade</span>
-            <span onClick={() => openLegalModal('termos')} className="legal-footer-link">Termos de Uso</span>
-            <span onClick={() => openLegalModal('cookies')} className="legal-footer-link">Cookies</span>
-            <span onClick={() => openLegalModal('disclaimer')} className="legal-footer-link">Aviso Legal</span>
-          </div>
-        </div>
-      </footer>
+      <Footer 
+        hasNoticias={dbNoticias.length > 0}
+        onOpenLegal={openLegalModal}
+      />
 
       <div className={`modal-overlay ${isFormModalOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
         <div className="modal-content glass-panel modal-body-scroll" style={{ padding: '2.5rem', background: '#0b1121', border: '1px solid var(--border-light)', borderRadius: '24px', maxWidth: '600px', width: '90%', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
@@ -2201,7 +2048,7 @@ export default function Home() {
         <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: 'var(--bg-base)', border: '1px solid #10b981', borderRadius: '24px', maxWidth: '400px', textAlign: 'center' }}>
           <CheckCircle2 size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
           <h3 style={{ color: 'var(--text-main)', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 'bold' }}>Aplicação Enviada!</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>Recebemos os seus dados com sucesso. Nossa equipa entrará em contato em breve.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>Recebemos os dados com sucesso. Nossa equipa entrará em contato em breve.</p>
           <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '999px', fontWeight: 'bold' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
         </div>
       </div>
