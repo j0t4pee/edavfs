@@ -11,7 +11,7 @@ export default function Gateway() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(18);
   const [isPaused, setIsPaused] = useState(location.state?.startPaused || false);
 
   // Controlador do Cronómetro de redirecionamento
