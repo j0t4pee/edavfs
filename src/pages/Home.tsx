@@ -102,22 +102,9 @@ const AppleSpecText = ({ value, unit, label }: { value: string, unit?: string, l
   </div>
 );
 
-const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
-  <div className="noselect" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
-    <div style={{ color: '#0ea5e9', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
-    <span style={{ fontSize: '3.5rem', fontFamily: '"Regular", Arial, sans-serif', fontWeight: 300, color: '#f8fafc', letterSpacing: '-0.04em', lineHeight: 1, padding: '0 10px' }}>{value}</span>
-    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{label}</span>
-  </div>
-);
-
 export default function Home() {
   const [isAppLoading, setIsAppLoading] = useState(true);
-  const [scrolled, setScrolled] = useState(false);
-  const [showTopBtn, setShowTopBtn] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
   
   const [pilotoTab, setPilotoTab] = useState<'2020' | '2024'>('2020');
   const [agendaTab, setAgendaTab] = useState<'2020' | '2024'>('2020');
@@ -278,7 +265,7 @@ export default function Home() {
     document.title = "MSFS | Esquadrilha da Fumaça Virtual";
     document.documentElement.setAttribute('data-theme', 'dark');
 
-    if (localStorage.getItem('edav_age_blocked') === 'true') {
+    if (localStorage.getItem('edafs_age_blocked') === 'true') {
       setIsBlocked(true);
     }
 
@@ -480,7 +467,7 @@ export default function Home() {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          _subject: "Novo Alistamento Recebido - EDAV MSFS",
+          _subject: "Novo Alistamento Recebido - EDAFS MSFS",
           Nome: nome,
           Nickname: nickname,
           "Data de Nascimento": dataNascimento,
@@ -513,7 +500,7 @@ export default function Home() {
     e.preventDefault();
     if (!demoCidade.trim() || !demoTransmissao) return;
     
-    const lastRequest = localStorage.getItem('lastDemoRequest_edav');
+    const lastRequest = localStorage.getItem('lastDemoRequest_edafs');
     if (lastRequest) {
       const timeDiff = Date.now() - parseInt(lastRequest);
       if (timeDiff < 24 * 60 * 60 * 1000) {
@@ -533,7 +520,7 @@ export default function Home() {
         status: 'Pendente'
       });
 
-      localStorage.setItem('lastDemoRequest_edav', Date.now().toString());
+      localStorage.setItem('lastDemoRequest_edafs', Date.now().toString());
       setIsDemoModalOpen(false);
       setModalDemoSucesso(true);
       setDemoCidade(''); setDemoTransmissao(''); setDemoCanal('');
@@ -573,7 +560,7 @@ export default function Home() {
       subtitle: "Como protegemos e tratamos os seus dados.",
       body: (
         <>
-          <p>Este documento estabelece as diretrizes de proteção de dados e privacidade da Esquadrilha da Fumaça Virtual (EDAV), garantindo o cumprimento das leis vigentes e o respeito à sua navegação.</p>
+          <p>Este documento estabelece as diretrizes de proteção de dados e privacidade da Esquadrilha da Fumaça Virtual (EDAFS), garantindo o cumprimento das leis vigentes e o respeito à sua navegação.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Comum", sans-serif', fontWeight: 600 }}>1. Coleta de Dados</h4>
           <p>Ao realizar o alistamento, solicitamos informações essenciais (nome, idade, contacto, experiência) que são armazenadas de forma segura e com acesso restrito apenas aos membros do Comando Geral.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Comum", sans-serif', fontWeight: 600 }}>2. Finalidade e Uso</h4>
@@ -623,9 +610,6 @@ export default function Home() {
           <p><strong>Deixamos formalmente explícito que não possuímos nenhuma filiação, patrocínio, endosso ou ligação com a Força Aérea Brasileira (FAB), nem com o Esquadrão de Demonstração Aérea (EDA) oficial.</strong></p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Comum", sans-serif', fontWeight: 600 }}>3. Uso de Insígnias e Marcas</h4>
           <p>A utilização de pinturas, logotipos inspirados, referências a aeronaves (como o Embraer A-29 Super Tucano) e terminologias militares possui caráter puramente ilustrativo, ficcional e lúdico, com o objetivo único de homenagear os profissionais reais da aviação em ambiente virtual.</p>
-          <p style={{ marginTop: '1rem' }}>
-            Encorajamos fortemente todos os interessados e entusiastas a visitarem e conhecerem o trabalho incrível da <strong>EDAV Oficial</strong> acessando o link <a href="https://edav.com.br" target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 600 }}>edav.com.br</a>. Deixamos aqui o nosso máximo respeito e profunda admiração por tudo o que eles representam para a comunidade.
-          </p>
         </>
       )
     }
@@ -1454,7 +1438,7 @@ export default function Home() {
       />
 
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
-        <img src={logoImage} alt="EDAV Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
+        <img src={logoImage} alt="EDAFS Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>Aguarde..</span>
         </div>
@@ -1472,7 +1456,7 @@ export default function Home() {
                 <FileText size={28} />
               </div>
               <div className="bf-action-card-content">
-                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Alistamento EDA FS</span>
+                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Alistamento EDAFS</span>
                 <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições Abertas</span>
               </div>
             </div>
@@ -1485,7 +1469,7 @@ export default function Home() {
               </div>
               <div className="bf-action-card-content">
                 <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Apresentação</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Solicite aqui uma demonstração</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Convide o Esquadrão</span>
               </div>
             </div>
           )}
@@ -1496,7 +1480,7 @@ export default function Home() {
             </div>
             <div className="bf-action-card-content">
               <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Agenda Oficial</span>
-              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos eventos</span>
+              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos voos</span>
             </div>
           </div>
 
@@ -1823,7 +1807,7 @@ export default function Home() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '16px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }}></div>
               <div className="zoom-wrapper">
-                <img src={formacaoImage} alt="Formação EDAV" className="zoom-image" style={{ filter: 'grayscale(20%) contrast(110%)' }} />
+                <img src={formacaoImage} alt="Formação EDAFS" className="zoom-image" style={{ filter: 'grayscale(20%) contrast(110%)' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
               </div>
             </div>
@@ -1866,7 +1850,7 @@ export default function Home() {
           {alistamentoAberto ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ color: 'var(--text-main)', fontSize: '1.5rem', margin: '0 0 1rem 0', fontWeight: 'bold', letterSpacing: '-0.02em' }}>Alistamento EDA FS</h3>
+                <h3 style={{ color: 'var(--text-main)', fontSize: '1.5rem', margin: '0 0 1rem 0', fontWeight: 'bold', letterSpacing: '-0.02em' }}>Alistamento EDAFS</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 1.25rem 0', fontWeight: 400 }}>
                   Para participar no processo seletivo, é <strong>obrigatório</strong> possuir todos os requisitos listados abaixo.
                 </p>
@@ -2002,7 +1986,7 @@ export default function Home() {
             <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '12px', color: '#10b981' }}><PlaneTakeoff size={24} /></div>
             <h3 style={{ color: '#f8fafc', fontSize: '1.3rem', margin: 0, fontWeight: 600 }}>Solicitar Demonstração</h3>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>Preencha os dados abaixo para convidar o EDA FS para o seu evento ou cidade.</p>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>Preencha os dados abaixo para convidar o EDAFS para o seu evento ou cidade.</p>
 
           <form onSubmit={submitDemonstracao} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -2048,7 +2032,7 @@ export default function Home() {
         <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: 'var(--bg-base)', border: '1px solid #10b981', borderRadius: '24px', maxWidth: '400px', textAlign: 'center' }}>
           <CheckCircle2 size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.8 }} />
           <h3 style={{ color: 'var(--text-main)', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 'bold' }}>Aplicação Enviada!</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>Recebemos os dados com sucesso. Nossa equipa entrará em contato em breve.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>Recebemos os seus dados com sucesso. Nossa equipa entrará em contato em breve.</p>
           <button type="button" className="tb-button" style={{ letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '999px', fontWeight: 'bold' }} onClick={() => setModalAlistamento(false)}>CONFIRMAR</button>
         </div>
       </div>

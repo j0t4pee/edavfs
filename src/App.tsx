@@ -4,8 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 
+import Gateway from './pages/Gateway';
 import Home from './pages/Home';
-import HomeEn from './pages/HomeEn';
 import Intranet from './pages/Workspace';
 import Login from './pages/Login';
 
@@ -32,19 +32,15 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Rota principal em Português */}
-        <Route path="/" element={<Home />} />
-        
-        <Route path="/en" element={<HomeEn />} />
-        
+        <Route path="/" element={<Gateway />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        
         <Route path="/intranet" element={
           <RotaProtegida>
             <Intranet />
           </RotaProtegida>
         } />
-        
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

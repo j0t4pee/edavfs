@@ -21,7 +21,7 @@ export default function Footer({ hasNoticias, onOpenLegal }: FooterProps) {
         
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
-            <img src={logoImage} alt="EDAV Logo" style={{ height: '36px', width: 'auto' }} />
+            <img src={logoImage} alt="EDAFS Logo" style={{ height: '36px', width: 'auto' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontFamily: '"Comum", sans-serif', fontWeight: 'bold', fontSize: '1.2rem', color: '#fff', lineHeight: 1.1 }}>ESQUADRILHA DA FUMAÇA VIRTUAL</span>
               <div style={{ display: 'flex' }}>
@@ -61,7 +61,7 @@ export default function Footer({ hasNoticias, onOpenLegal }: FooterProps) {
 
       <div className="footer-bottom" style={{ position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span>© 2026 EDAV MSFS. Todos os direitos reservados.</span>
+          <span>© 2026 EDAFS. Todos os direitos reservados.</span>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', lineHeight: 1.6, margin: 0, textAlign: 'justify', fontFamily: '"Regular", Arial, sans-serif' }}>
             AVISO LEGAL: A Esquadrilha da Fumaça Virtual é uma organização civil e independente, voltada exclusivamente à simulação de voo e esporte eletrônico (e-sports) no software Microsoft Flight Simulator. Não possuímos nenhum tipo de vínculo institucional, afiliação, endosso ou patrocínio com a Força Aérea Brasileira (FAB) ou com o Esquadrão de Demonstração Aérea (EDA) oficial. Logotipos e insígnias inspirados são utilizados estritamente em ambiente de simulação e lazer, visando homenagear a aviação brasileira.
           </p>
