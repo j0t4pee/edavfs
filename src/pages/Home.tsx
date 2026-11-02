@@ -102,6 +102,14 @@ const AppleSpecText = ({ value, unit, label }: { value: string, unit?: string, l
   </div>
 );
 
+const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
+  <div className="noselect" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
+    <div style={{ color: '#0ea5e9', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
+    <span style={{ fontSize: '3.5rem', fontFamily: '"Regular", Arial, sans-serif', fontWeight: 300, color: '#f8fafc', letterSpacing: '-0.04em', lineHeight: 1, padding: '0 10px' }}>{value}</span>
+    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{label}</span>
+  </div>
+);
+
 export default function Home() {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('');
@@ -1149,13 +1157,33 @@ export default function Home() {
         .cookie-content { display: flex; align-items: flex-start; gap: 1rem; flex: 1; min-width: 250px; }
         .cookie-actions { display: flex; gap: 1rem; flex-wrap: nowrap; }
 
-        @media (max-width: 768px) {
-          .cookie-banner {
-            flex-direction: column; width: calc(100% - 2rem); bottom: 1rem; padding: 1.25rem; gap: 1.25rem; text-align: center;
+        @media (max-width: 900px) {
+          .desktop-nav { display: none !important; }
+          .mobile-toggle { display: block !important; }
+          .section-container { padding: 4rem 1.5rem !important; }
+          .map-box { height: 400px !important; }
+          .responsive-grid { grid-template-columns: 1fr !important; }
+          .formacao-wrapper {
+             transform: scale(0.65);
+             transform-origin: top center;
+             margin-bottom: -100px;
           }
-          .cookie-content { flex-direction: column; align-items: center; min-width: 100%; gap: 0.5rem; }
-          .cookie-actions { width: 100%; }
-          .cookie-actions button { flex: 1; justify-content: center; }
+        }
+
+        @media (max-width: 600px) {
+           .formacao-wrapper {
+             transform: scale(0.45);
+             transform-origin: top center;
+             margin-bottom: -180px;
+           }
+        }
+        
+        @media (max-width: 400px) {
+           .formacao-wrapper {
+             transform: scale(0.35);
+             transform-origin: top center;
+             margin-bottom: -220px;
+           }
         }
 
         @keyframes dropFade {
@@ -1226,27 +1254,6 @@ export default function Home() {
           .split-grid { grid-template-columns: 1fr 1fr; }
           .split-grid.reverse { direction: rtl; }
           .split-grid.reverse > * { direction: ltr; }
-        }
-
-        @media (max-width: 900px) {
-          .desktop-nav { display: none !important; }
-          .mobile-toggle { display: block !important; }
-          .section-container { padding: 4rem 1.5rem !important; }
-          .map-box { height: 400px !important; }
-          .responsive-grid { grid-template-columns: 1fr !important; }
-          .formacao-wrapper {
-             transform: scale(0.75);
-             transform-origin: top center;
-             margin-bottom: -50px;
-          }
-        }
-
-        @media (max-width: 600px) {
-           .formacao-wrapper {
-             transform: scale(0.55);
-             transform-origin: top center;
-             margin-bottom: -150px;
-           }
         }
 
         .bento-grid {
@@ -1444,7 +1451,7 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="hero" style={{ height: '80vh', minHeight: '500px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', paddingBottom: '2rem' }}>
+      <section className="hero" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', paddingTop: '8rem', paddingBottom: '2rem' }}>
         <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(3,7,18,0.3)', pointerEvents: 'none' }} />
         

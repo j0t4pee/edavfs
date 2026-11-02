@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowUpRight, ArrowRightCircle, Pause, Play } from 'lucide-react';
 import '../App.css'; 
 
-// Importe as imagens fixas
 import edavImage from '../images/edav.png'; 
 import edafsImage from '../images/tucano.jpg';
 
@@ -11,10 +10,9 @@ export default function Gateway() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [timeLeft, setTimeLeft] = useState(18);
+  const [timeLeft, setTimeLeft] = useState(10);
   const [isPaused, setIsPaused] = useState(location.state?.startPaused || false);
 
-  // Controlador do Cronómetro de redirecionamento
   useEffect(() => {
     if (timeLeft <= 0) {
       navigate('/home');
@@ -30,7 +28,8 @@ export default function Gateway() {
   }, [timeLeft, isPaused, navigate]);
 
   const handleVisitOfficial = () => {
-    window.location.href = 'https://edav.com.br';
+    // Abre a página num novo separador
+    window.open('https://edav.com.br', '_blank');
   };
 
   const handleStay = () => {
@@ -116,7 +115,7 @@ export default function Gateway() {
         }
 
         .gateway-title {
-          font-family: 'Comum', sans-serif;
+          font-family: 'Comum', sans-serif !important;
           font-size: clamp(2.5rem, 5vw, 4rem);
           color: #ffffff;
           margin: 0 0 1rem 0;
@@ -130,7 +129,7 @@ export default function Gateway() {
         }
 
         .gateway-desc {
-          font-family: 'Regular', sans-serif;
+          font-family: 'Regular', sans-serif !important;
           color: #cbd5e1;
           font-size: 1.1rem;
           line-height: 1.6;
@@ -140,7 +139,7 @@ export default function Gateway() {
         }
 
         .gateway-btn {
-          font-family: 'Regular', sans-serif;
+          font-family: 'Regular', sans-serif !important;
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -187,7 +186,7 @@ export default function Gateway() {
         
         .timer-text {
           color: #f8fafc;
-          font-family: 'Comum', sans-serif;
+          font-family: 'Comum', sans-serif !important;
           font-size: 0.75rem;
           font-weight: normal;
           min-width: 3ch;
@@ -225,15 +224,15 @@ export default function Gateway() {
       <div className="split-side">
         <div 
           className="bg-image" 
-          style={{ backgroundImage: `url(${edavImage})` }} 
+          style={{ backgroundImage: `url(${edafsImage})` }} 
         />
         <div className="content-layer">
-          <h1 className="gateway-title">EDAV</h1>
+          <h1 className="gateway-title">EDAFS</h1>
           <p className="gateway-desc">
-            O mais antigo time de demonstração aérea virtual do mundo (1998). Representante do Brasil no VFAT, recria com precisão as operações oficiais da verdadeira Esquadrilha da Fumaça.
+            Esquadrão virtual focado no Microsoft Flight Simulator. Nascidos da paixão pela aviação, replicamos com precisão a doutrina da verdadeira Esquadrilha da Fumaça.
           </p>
-          <button onClick={handleVisitOfficial} className="gateway-btn">
-            Ir para o EDAV <ArrowUpRight size={18} />
+          <button onClick={handleStay} className="gateway-btn">
+            Permanecer no EDAFS <ArrowRightCircle size={18} />
           </button>
         </div>
       </div>
@@ -243,22 +242,22 @@ export default function Gateway() {
       <div className="split-side">
         <div 
           className="bg-image" 
-          style={{ backgroundImage: `url(${edafsImage})` }} 
+          style={{ backgroundImage: `url(${edavImage})` }} 
         />
         <div className="content-layer">
-          <h1 className="gateway-title">EDAFS</h1>
+          <h1 className="gateway-title">EDAV</h1>
           <p className="gateway-desc">
-            Esquadrão focado no Microsoft Flight Simulator. Nascidos da paixão pela aviação, buscamos replicar com extrema fidelidade e profissionalismo a doutrina da Esquadrilha da Fumaça.
+            A organização pioneira no mundo (fundada em 1998) e representante histórica do Brasil no VFAT. Reconhecida amplamente como a imagem virtual oficial da Esquadrilha da Fumaça.
           </p>
-          <button onClick={handleStay} className="gateway-btn">
-            Permanecer no EDAFS <ArrowRightCircle size={18} />
+          <button onClick={handleVisitOfficial} className="gateway-btn">
+            Ir para o EDAV <ArrowUpRight size={18} />
           </button>
         </div>
       </div>
 
       <div className="timer-badge">
         <span className="timer-text" style={{ color: isPaused ? '#8e98a6' : '#ffc800' }}>
-          {isPaused ? 'Dê play para iniciar o contador de redirecionamento.' : `${timeLeft}s`}
+          {isPaused ? 'Iniciar contador de redirecionamento.' : `${timeLeft}s`}
         </span>
         <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.2)', margin: '0 4px' }}></div>
         <button onClick={togglePause} className="pause-btn" title={isPaused ? "Retomar Cronómetro" : "Pausar Cronómetro"}>
