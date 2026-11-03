@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 
-import Gateway from './pages/Gateway';
+// Gateway removido das importações
 import Home from './pages/Home';
 import Intranet from './pages/Workspace';
 import Login from './pages/Login';
@@ -32,8 +32,12 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Gateway />} />
-        <Route path="/home" element={<Home />} />
+        {/* A página principal agora é diretamente a Home */}
+        <Route path="/" element={<Home />} />
+        
+        {/* Redireciona quem tentar aceder ao antigo /home para a raiz */}
+        <Route path="/home" element={<Navigate to="/" replace />} />
+        
         <Route path="/login" element={<Login />} />
         <Route path="/intranet" element={
           <RotaProtegida>

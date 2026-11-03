@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import logoImage from '../images/logo.png';
 
@@ -24,8 +23,6 @@ export default function Header({
 }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,15 +37,6 @@ export default function Header({
     setMobileMenuOpen(false);
   };
 
-  const handleVoltarGateway = () => {
-    setMobileMenuOpen(false);
-    setIsExiting(true); 
-    
-    setTimeout(() => {
-      navigate('/', { state: { startPaused: true } });
-    }, 500);
-  };
-
   return (
     <>
       <style>{`
@@ -58,26 +46,16 @@ export default function Header({
         }
       `}</style>
 
-      {/* Camada de transição suave (Fade Out) */}
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 999999,
-        background: '#030712',
-        opacity: isExiting ? 1 : 0,
-        pointerEvents: isExiting ? 'all' : 'none',
-        transition: 'opacity 0.5s ease-in-out'
-      }} />
-
       <nav style={{ 
         position: 'fixed', 
         top: 0, 
         width: '100%', 
         zIndex: 100, 
-        background: 'rgba(15, 23, 42, 0.95)', 
-        backdropFilter: 'blur(40px) saturate(200%)', 
-        WebkitBackdropFilter: 'blur(40px) saturate(200%)', 
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)', 
+        /* Efeito de Vidro (Glassmorphism) */
+        background: scrolled ? 'rgba(15, 23, 42, 0.65)' : 'rgba(15, 23, 42, 0.4)', 
+        backdropFilter: 'blur(20px) saturate(180%)', 
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)', 
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)', 
         transition: 'all 0.3s ease', 
         padding: scrolled || mobileMenuOpen ? '0.5rem 0' : '0.9rem 0' 
       }}>
@@ -100,8 +78,6 @@ export default function Header({
           </div>
 
           <div className="desktop-nav">
-            {/* Link Início agora usa o mesmo padrão visual dos outros menus */}
-            <span onClick={handleVoltarGateway} className="nav-link">Início</span>
             <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>Pilotos</span>
             <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>Agenda</span>
             <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</span>
@@ -121,8 +97,6 @@ export default function Header({
       </nav>
 
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        {/* Link Início no menu mobile também é o primeiro */}
-        <span onClick={handleVoltarGateway}>Início</span>
         <span className={activeSection === 'pilotos' ? 'active' : ''} onClick={() => scrollToSection('pilotos')}>Pilotos</span>
         <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')}>Agenda</span>
         <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>Aeronave</span>

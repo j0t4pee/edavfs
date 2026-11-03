@@ -112,6 +112,14 @@ const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string
 
 export default function Home() {
   const [isAppLoading, setIsAppLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showTopBanner, setShowTopBanner] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('edafs_banner_closed') !== 'true';
+    }
+    return true;
+  });
+  
   const [activeSection, setActiveSection] = useState('');
   
   const [pilotoTab, setPilotoTab] = useState<'2020' | '2024'>('2020');
@@ -179,6 +187,43 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
 
   const minSwipeDistance = 50;
+
+  const handleCloseBanner = () => {
+    setShowTopBanner(false);
+    localStorage.setItem('edafs_banner_closed', 'true');
+  };
+
+  useEffect(() => {
+    if (isAppLoading) {
+      document.body.style.overflow = 'hidden';
+      const duration = 1800;
+      const intervalTime = 30;
+      const totalSteps = duration / intervalTime;
+      let step = 0;
+
+      const timer = setInterval(() => {
+        step++;
+        setLoadingProgress(Math.min(100, (step / totalSteps) * 100));
+        
+        if (step >= totalSteps) {
+          clearInterval(timer);
+          setIsAppLoading(false);
+          document.body.style.overflow = 'auto';
+        }
+      }, intervalTime);
+      
+      return () => clearInterval(timer);
+    }
+  }, [isAppLoading]);
+
+  useEffect(() => {
+    if (showTopBanner) {
+      document.body.classList.add('has-banner');
+    } else {
+      document.body.classList.remove('has-banner');
+    }
+    return () => document.body.classList.remove('has-banner');
+  }, [showTopBanner]);
 
   const onTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     setTouchEnd(null);
@@ -251,16 +296,7 @@ export default function Home() {
   useEffect(() => {
     const allImages = [tucano2png, tucano3png, tucano4png, tucano5png, tucano8png, tucano9png, tucano10png, tucano11png, tucano12png, tucano13png];
     setSliderImages([...allImages].sort(() => Math.random() - 0.5));
-    
-    if (isAppLoading) {
-      document.body.style.overflow = 'hidden';
-      const timer = setTimeout(() => {
-        setIsAppLoading(false);
-        document.body.style.overflow = 'auto';
-      }, 1800); 
-      return () => clearTimeout(timer);
-    }
-  }, [isAppLoading]);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -589,7 +625,7 @@ export default function Home() {
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Comum", sans-serif', fontWeight: 600 }}>2. Normas de Voo e Simulação</h4>
           <p>Operamos em ambientes de simulação (Microsoft Flight Simulator) buscando a mais alta fidelidade possível. O uso de cheats, modificações maliciosas ou conduta antidesportiva nas redes de simulação é estritamente proibido.</p>
           <h4 style={{ color: '#f8fafc', marginTop: '1.5rem', marginBottom: '0.5rem', fontFamily: '"Comum", sans-serif', fontWeight: 600 }}>3. Hierarquia</h4>
-          <p>As decisões tomadas pelo Comando Geral visam o bem-estar e a organização do grupo, devendo ser respeitadas. Sugestões e críticas construtivas são sempre bem-vindas nos canais adequados.</p>
+          <p>As decisions tomadas pelo Comando Geral visam o bem-estar e a organização do grupo, devendo ser respeitadas. Sugestões e críticas construtivas são sempre bem-vindas nos canais adequados.</p>
         </>
       )
     },
@@ -660,25 +696,17 @@ export default function Home() {
           </span>
         </div>
         
-        <div className="slot-info" style={{ 
-          position: 'absolute',
-          [isLeft ? 'right' : 'left']: 'calc(50% + 100px)',
-          zIndex: 4,
-          pointerEvents: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem'
-        }}>
+        <div className={`slot-info ${isLeft ? 'slot-left' : 'slot-right'}`}>
           {pilotosSlot.length > 0 ? pilotosSlot.map((piloto, idx) => (
-            <div key={idx} className="bio-card" style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '999px', padding: '0.75rem 1.5rem', backdropFilter: 'blur(20px)', whiteSpace: 'nowrap', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', flexDirection: isLeft ? 'row-reverse' : 'row' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', textAlign: isLeft ? 'right' : 'left' }}>
+            <div key={idx} className="bio-card">
+              <div className="bio-text">
                 <span style={{ fontSize: '1rem', fontFamily: '"Regular", Arial, sans-serif', fontWeight: 500, color: '#f8fafc' }}>{piloto.nome}</span>
                 <span style={{ fontSize: '0.7rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginTop: '2px' }}>{role}</span>
                 {piloto.cidade && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{piloto.cidade} {piloto.uf ? `- ${piloto.uf}` : ''}</span>}
               </div>
             </div>
           )) : (
-            <div className="bio-card" style={{ padding: '0.75rem 1.5rem' }}>
+            <div className="bio-card empty-card" style={{ padding: '0.75rem 1.5rem', background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '999px' }}>
               <span style={{ fontSize: '0.9rem', fontFamily: '"Comum", sans-serif', fontWeight: 500, color: '#94a3b8' }}>Vago</span>
             </div>
           )}
@@ -713,13 +741,139 @@ export default function Home() {
         }
 
         body, html { 
-          background: linear-gradient(145deg, #030712 0%, #060d1a 50%, #0a192f 100%) fixed !important;
+          background: #030712 !important;
           font-family: 'Regular', system-ui, -apple-system, sans-serif;
+          max-width: 100vw;
           overflow-x: hidden; 
           scroll-behavior: smooth; 
           color: #e2e8f0;
           -webkit-font-smoothing: antialiased;
         }
+
+        /* ----- ESTILOS DA NOVA TARJA ----- */
+        .tarja-banner {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          background: linear-gradient(90deg, #0ea5e9 0%, #0369a1 100%);
+          z-index: 1000000;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.6rem 2rem;
+          font-family: 'Regular', sans-serif;
+        }
+        
+        .tarja-left { display: flex; gap: 2.5rem; align-items: center; }
+        
+        .tarja-item {
+          position: relative;
+          cursor: help;
+          color: #ffffff;
+          font-weight: bold;
+          font-family: 'Comum', sans-serif;
+          font-size: 1rem;
+          letter-spacing: 0.05em;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s ease;
+        }
+        
+        .tarja-tooltip {
+          position: absolute;
+          top: 150%;
+          left: 0;
+          width: 280px;
+          background: #030712;
+          border: 1px solid #1e293b;
+          padding: 1rem;
+          border-radius: 12px;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+          font-family: 'Regular', sans-serif;
+          font-size: 0.85rem;
+          color: #cbd5e1;
+          font-weight: normal;
+          line-height: 1.5;
+          text-transform: none;
+          letter-spacing: normal;
+        }
+        
+        .tarja-item:hover {
+          color: #f8fafc;
+          transform: scale(1.05);
+        }
+
+        .tarja-item:hover .tarja-tooltip {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(5px);
+        }
+        
+        .tarja-right { display: flex; gap: 1rem; align-items: center; }
+        
+        .tarja-btn {
+          background: rgba(0, 0, 0, 0.15);
+          border: 1px solid rgba(255,255,255,0.3);
+          color: #ffffff;
+          padding: 0.4rem 1rem;
+          border-radius: 999px;
+          font-size: 0.75rem;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .tarja-btn.primary {
+          background: #030712;
+          border-color: #030712;
+          color: #0ea5e9;
+        }
+        
+        .tarja-btn:hover { background: #ffffff; color: #030712; border-color: #ffffff; }
+
+        .tarja-close {
+          background: transparent;
+          border: none;
+          color: #ffffff;
+          cursor: pointer;
+          padding: 0.4rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          border-radius: 50%;
+        }
+
+        .tarja-close:hover {
+          background: rgba(0,0,0,0.2);
+          transform: scale(1.1);
+        }
+
+        body.has-banner nav {
+          top: 50px !important; 
+        }
+
+        @media (max-width: 768px) {
+          .tarja-banner {
+            flex-direction: column;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            height: auto;
+          }
+          .tarja-left { justify-content: center; width: 100%; gap: 1.5rem; }
+          .tarja-right { justify-content: center; width: 100%; }
+          .tarja-tooltip { width: 220px; left: -50px; }
+          body.has-banner nav { top: 95px !important; }
+        }
+        /* ---------------------------------- */
 
         button, a, input, textarea {
           font-family: 'Regular', system-ui, -apple-system, sans-serif;
@@ -740,10 +894,7 @@ export default function Home() {
           font-style: normal;
         }
 
-        p {
-          font-weight: 400;
-          line-height: 1.8;
-        }
+        p { font-weight: 400; line-height: 1.8; }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #030712; }
@@ -753,9 +904,16 @@ export default function Home() {
         h1, h2, h3, h4, h5, h6 { font-family: "Comum", sans-serif !important; color: #ffffff; font-weight: bold; }
 
         .glass-panel { 
-          background: rgba(15, 23, 42, 0.4);
+          background: rgba(15, 23, 42, 0.85);
           border-radius: 16px;
           border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .tatic-slot {
+          z-index: 1;
+        }
+        .tatic-slot:hover {
+          z-index: 50;
         }
         
         .slot-info { 
@@ -763,32 +921,46 @@ export default function Home() {
           visibility: hidden;
           transform: translateY(10px);
           transition: all 0.3s ease; 
+          position: absolute;
+          z-index: 100;
+          pointer-events: none;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
         }
+        
         .tatic-slot:hover .slot-info { 
           opacity: 1; 
           visibility: visible;
           transform: translateY(0);
         }
+        
+        .slot-right { left: calc(50% + 100px); }
+        .slot-left { right: calc(50% + 100px); }
 
         .bio-card {
           display: flex;
           gap: 1rem;
           align-items: center;
-          background: rgba(255,255,255,0.02);
+          background: rgba(15,23,42,0.9);
           border: 1px solid rgba(255,255,255,0.05);
           border-radius: 999px;
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          padding: 0.75rem 1.5rem;
           white-space: nowrap;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
           transition: all 0.3s ease;
         }
         
+        .slot-right .bio-card { flex-direction: row; }
+        .slot-left .bio-card { flex-direction: row-reverse; }
+
+        .bio-text { display: flex; flex-direction: column; }
+        .slot-right .bio-text { text-align: left; }
+        .slot-left .bio-text { text-align: right; }
+
         .bio-card:hover {
-          background: rgba(4, 15, 35, 0.9) !important;
+          background: #060d1a !important;
           border-color: rgba(14,165,233,0.4);
           transform: translateY(-3px);
-          box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
         .zoom-wrapper {
@@ -818,25 +990,6 @@ export default function Home() {
           0% { transform: scale(1); opacity: 0.7; } 
           50% { transform: scale(1.05); opacity: 1; filter: none; } 
           100% { transform: scale(1); opacity: 0.7; } 
-        }
-
-        .stats-grain {
-          position: absolute;
-          inset: 0;
-          opacity: 0.04;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          z-index: 1;
-        }
-        .stats-bg-light {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 800px;
-          height: 800px;
-          background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 60%);
-          filter: blur(60px);
-          z-index: 0;
         }
 
         .section-top-divider {
@@ -880,28 +1033,6 @@ export default function Home() {
 
         .section-container { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
         
-        .leaflet-popup-content-wrapper { background: #ffffff !important; color: #030712 !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; font-weight: 400; }
-        .leaflet-popup-tip { background-color: #ffffff !important; }
-        .leaflet-container { background: #e2e8f0 !important; border-radius: 12px; }
-        .leaflet-layer { filter: none !important; }
-
-        .leaflet-bar {
-          border: none !important;
-          border-radius: 12px !important;
-          overflow: hidden;
-        }
-        .leaflet-touch .leaflet-bar a, .leaflet-bar a {
-          background-color: rgba(15, 23, 42, 0.8) !important;
-          color: #0ea5e9 !important;
-          border: 1px solid rgba(255,255,255,0.05) !important;
-          transition: all 0.3s ease !important;
-          border-radius: 0 !important;
-        }
-        .leaflet-touch .leaflet-bar a:hover, .leaflet-bar a:hover {
-          background-color: #0ea5e9 !important;
-          color: #000 !important;
-        }
-
         .desktop-nav { display: flex; align-items: center; gap: 2rem; }
 
         .nav-link {
@@ -948,11 +1079,6 @@ export default function Home() {
         .reveal-on-scroll { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .reveal-on-scroll.visible { opacity: 1; transform: translateY(0); }
 
-        .modal-body-scroll::-webkit-scrollbar { width: 6px; }
-        .modal-body-scroll::-webkit-scrollbar-track { background: transparent; }
-        .modal-body-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 12px; }
-        .modal-body-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
-
         .platform-btn {
           flex: 1;
           padding: 0.7rem;
@@ -971,18 +1097,9 @@ export default function Home() {
           font-size: 0.85rem;
           text-transform: uppercase;
         }
-        .platform-btn.active {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color: #ffffff;
-        }
-        .platform-btn.active-blue {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color: #ffffff;
-        }
-        .platform-btn:hover:not(.active):not(.active-blue) {
-          background: rgba(255, 255, 255, 0.05);
-          color: #ffffff;
-        }
+        .platform-btn.active { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; }
+        .platform-btn.active-blue { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; }
+        .platform-btn:hover:not(.active):not(.active-blue) { background: rgba(255, 255, 255, 0.05); color: #ffffff; }
 
         .view-toggle-btn {
           background: rgba(255,255,255,0.05);
@@ -998,20 +1115,9 @@ export default function Home() {
           align-items: center;
           gap: 0.5rem;
         }
-        .view-toggle-btn:hover:not(:disabled) {
-          background: rgba(255,255,255,0.1);
-          color: #ffffff;
-        }
-        .view-toggle-btn.active {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
-          color: #ffffff !important;
-          border-color: transparent !important;
-        }
-        .view-toggle-btn.active-blue {
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
-          color: #ffffff !important;
-          border-color: transparent !important;
-        }
+        .view-toggle-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: #ffffff; }
+        .view-toggle-btn.active { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: #ffffff !important; border-color: transparent !important; }
+        .view-toggle-btn.active-blue { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: #ffffff !important; border-color: transparent !important; }
 
         .tab-btn {
           background: rgba(255,255,255,0.02);
@@ -1028,17 +1134,8 @@ export default function Home() {
           align-items: center;
           gap: 0.5rem;
         }
-        .tab-btn:hover {
-          color: #f8fafc;
-          background: rgba(255,255,255,0.05);
-        }
-        .tab-btn:active {
-          transform: scale(0.95);
-        }
-        .tab-btn.active {
-          color: #0ea5e9;
-          background: rgba(14, 165, 233, 0.05);
-        }
+        .tab-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: #0ea5e9; background: rgba(14, 165, 233, 0.05); }
 
         .fs-badge { 
           font-size: 0.85rem; 
@@ -1047,45 +1144,6 @@ export default function Home() {
           border-radius: 6px; 
           font-weight: 500; 
           letter-spacing: 0.05em; 
-        }
-
-        .view-toggle-btn.active-yt {
-          background: #ef4444 !important;
-          border-color: #ef4444 !important;
-          color: #ffffff !important;
-        }
-        .view-toggle-btn.active-yt img {
-          filter: brightness(0) invert(1) !important;
-        }
-
-        .view-toggle-btn.active-tw {
-          background: #9146FF !important;
-          border-color: #9146FF !important;
-          color: #ffffff !important;
-        }
-        .view-toggle-btn.active-tw img {
-          filter: brightness(0) invert(1) !important;
-        }
-        
-        .view-toggle-btn.active-tk {
-          background: #000000 !important;
-          border-color: #ffffff !important;
-          color: #ffffff !important;
-        }
-        .view-toggle-btn.active-tk img {
-          filter: brightness(0) invert(1) !important;
-        }
-        
-        .view-toggle-btn:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-          background: rgba(255,255,255,0.02) !important;
-          color: rgba(255,255,255,0.3) !important;
-          border-color: rgba(255,255,255,0.05) !important;
-        }
-        
-        .view-toggle-btn:disabled img {
-          filter: grayscale(100%) opacity(0.4) !important;
         }
 
         .tb-button {
@@ -1112,20 +1170,11 @@ export default function Home() {
           color: #ffffff;
           border-color: transparent;
         }
-        
-        .tb-button:disabled {
-          background: rgba(255,255,255,0.1);
-          color: rgba(255,255,255,0.3);
-          border-color: transparent;
-          cursor: not-allowed;
-        }
 
         .btn-alistamento {
-          background: rgba(14, 165, 233, 0.15) !important;
-          backdrop-filter: blur(10px) !important;
-          -webkit-backdrop-filter: blur(10px) !important;
+          background: #0f172a !important;
           color: #ffffff !important;
-          border: 1px solid rgba(14, 165, 233, 0.5) !important;
+          border: 1px solid #0ea5e9 !important;
           box-shadow: 0 0 20px rgba(14, 165, 233, 0.2) !important;
           border-radius: 30px !important;
           font-weight: 400 !important;
@@ -1141,94 +1190,28 @@ export default function Home() {
           box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4) !important;
           border-color: #0ea5e9 !important;
         }
-
+        
         .agenda-card {
           border-radius: 16px;
           border: none;
         }
 
-        .cookie-banner {
-          position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-          background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px) saturate(180%);
-          border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 1rem 1.5rem;
-          z-index: 9999; display: flex; align-items: center; gap: 2rem;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.5); width: max-content; max-width: 90%;
-        }
-        .cookie-content { display: flex; align-items: flex-start; gap: 1rem; flex: 1; min-width: 250px; }
-        .cookie-actions { display: flex; gap: 1rem; flex-wrap: nowrap; }
-
-        @media (max-width: 900px) {
-          .desktop-nav { display: none !important; }
-          .mobile-toggle { display: block !important; }
-          .section-container { padding: 4rem 1.5rem !important; }
-          .map-box { height: 400px !important; }
-          .responsive-grid { grid-template-columns: 1fr !important; }
-          .formacao-wrapper {
-             transform: scale(0.65);
-             transform-origin: top center;
-             margin-bottom: -100px;
-          }
-        }
-
-        @media (max-width: 600px) {
-           .formacao-wrapper {
-             transform: scale(0.45);
-             transform-origin: top center;
-             margin-bottom: -180px;
-           }
-        }
-        
-        @media (max-width: 400px) {
-           .formacao-wrapper {
-             transform: scale(0.35);
-             transform-origin: top center;
-             margin-bottom: -220px;
-           }
-        }
-
-        @keyframes dropFade {
-          from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .lang-dropdown-wrapper {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          padding-top: 6px;
-          z-index: 50;
-        }
-
-        .lang-dropdown {
-          background: rgba(15, 23, 42, 0.85);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 12px;
-          min-width: 100px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-          animation: dropFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          overflow: hidden;
-        }
-        
-        .lang-item {
-          padding: 0.6rem 0.8rem;
-          color: #cbd5e1;
-          cursor: pointer;
-          font-size: 0.75rem;
+        .formacao-scroll-container {
+          width: 100%;
+          padding-bottom: 2rem;
           display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s ease;
-          font-weight: 400;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
+          justify-content: center;
+          overflow: visible;
         }
 
-        .lang-item:hover {
-          background: rgba(14, 165, 233, 0.1);
-          color: #0ea5e9;
+        .formacao-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          transform-origin: top center;
+          transition: all 0.3s ease;
         }
-        
+
         .split-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1249,69 +1232,9 @@ export default function Home() {
           margin-right: -50vw;
           max-width: 100vw;
         }
-        
-        @media (min-width: 900px) {
-          .split-grid { grid-template-columns: 1fr 1fr; }
-          .split-grid.reverse { direction: rtl; }
-          .split-grid.reverse > * { direction: ltr; }
-        }
-
-        .bento-grid {
-          display: grid;
-          grid-template-columns: repeat(12, 1fr);
-          gap: 1.5rem;
-          margin-top: 2rem;
-        }
-        
-        .bento-card {
-          background: rgba(15, 23, 42, 0.4);
-          border: none !important;
-          border-radius: 24px;
-          overflow: hidden;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          transition: none; 
-        }
-        
-        .bento-card-img {
-          width: 100%;
-          flex-grow: 1;
-          object-fit: cover;
-          min-height: 200px;
-        }
-        
-        .bento-card-content {
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          background: rgba(2, 6, 23, 0.6);
-          border-top: none;
-        }
-        
-        .bento-card-title {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: #ffffff;
-          margin: 0;
-        }
-        
-        .bento-card-desc {
-          font-size: 0.95rem;
-          color: #94a3b8;
-          line-height: 1.6;
-          margin: 0;
-        }
-        
-        .col-span-12 { grid-column: span 12; }
-        .col-span-8 { grid-column: span 8; }
-        .col-span-6 { grid-column: span 6; }
-        .col-span-4 { grid-column: span 4; }
 
         .slider-arrow-inline {
-          background: rgba(3,7,18,0.3);
-          backdrop-filter: blur(8px);
+          background: rgba(3,7,18,0.8);
           border: 1px solid rgba(255,255,255,0.1);
           color: rgba(255,255,255,0.7);
           width: 50px;
@@ -1324,27 +1247,80 @@ export default function Home() {
           transition: all 0.3s ease;
         }
         .slider-arrow-inline:hover {
-          background: rgba(14,165,233,0.5);
+          background: #0ea5e9;
           color: #fff;
-          border-color: rgba(14,165,233,0.8);
+          border-color: #0ea5e9;
           transform: scale(1.05);
         }
-
+        
+        /* FOOTER STYLES */
         .footer-wrapper { border-top: 1px solid rgba(255,255,255,0.05); padding: 4rem 2rem 2rem; margin-top: 6rem; background: transparent; }
         .footer-grid { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr; gap: 3rem; max-width: 1200px; margin: 0 auto; }
         .footer-heading { font-size: 1.1rem; color: #fff; margin: 0 0 1.5rem 0; letter-spacing: 0.05em; }
         
-        .footer-link { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 0.8rem; display: block; transition: color 0.2s; cursor: pointer; }
+        .footer-link { color: #94a3b8; text-decoration: none; font-size: 0.9rem; margin-bottom: 0.8rem; display: block; transition: color 0.2s; cursor: pointer; }
         .footer-link:hover { color: #0ea5e9; }
         
         .footer-pills { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
         .footer-pill { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.15); padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 500; font-size: 0.95rem; color: #f8fafc; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; text-decoration: none !important; }
         .footer-pill:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
         
-        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4rem; padding-top: 2rem; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); max-width: 1200px; margin-left: auto; margin-right: auto; }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4rem; padding-top: 2rem; display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; max-width: 1200px; margin-left: auto; margin-right: auto; }
         
-        .legal-footer-link { color: var(--text-muted); cursor: pointer; transition: color 0.2s; display: flex; gap: 6px; align-items: center; user-select: none; }
+        .legal-footer-link { color: #94a3b8; cursor: pointer; transition: color 0.2s; display: flex; gap: 6px; align-items: center; user-select: none; }
         .legal-footer-link:hover { color: #0ea5e9; }
+        
+        @media (min-width: 900px) {
+          .split-grid { grid-template-columns: 1fr 1fr; }
+          .split-grid.reverse { direction: rtl; }
+          .split-grid.reverse > * { direction: ltr; }
+        }
+
+        @media (max-width: 900px) {
+           .slot-info {
+              left: 50% !important;
+              right: auto !important;
+              top: 85% !important;
+              transform: translateX(-50%) !important;
+           }
+           .tatic-slot:hover .slot-info {
+              transform: translate(-50%, 15px) !important;
+           }
+           .bio-card {
+              flex-direction: column !important;
+              align-items: center !important;
+              text-align: center !important;
+              padding: 0.75rem 1.25rem !important;
+           }
+           .slot-left .bio-text, .slot-right .bio-text {
+              text-align: center !important;
+           }
+
+          .desktop-nav { display: none !important; }
+          .mobile-toggle { display: block !important; }
+          .section-container { padding: 4rem 1.5rem !important; }
+          .footer-grid { grid-template-columns: 1fr; } 
+          .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+          
+          .formacao-wrapper {
+             transform: scale(0.65);
+             margin-bottom: -100px;
+          }
+        }
+        
+        @media (max-width: 600px) {
+           .formacao-wrapper {
+             transform: scale(0.45);
+             margin-bottom: -180px;
+           }
+        }
+        
+        @media (max-width: 400px) {
+           .formacao-wrapper {
+             transform: scale(0.35);
+             margin-bottom: -220px;
+           }
+        }
 
         .legal-tab { 
           background: transparent; 
@@ -1360,7 +1336,6 @@ export default function Home() {
           transition: all 0.3s ease; 
           font-size: 0.9rem; 
           text-transform: uppercase; 
-          user-select: none;
         }
         .legal-tab:hover { background: rgba(255,255,255,0.05); color: #ffffff; }
         .legal-tab.active { background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; }
@@ -1368,9 +1343,7 @@ export default function Home() {
         .modal-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.85);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+          background: rgba(3,7,18,0.95);
           z-index: 99999;
           display: flex;
           align-items: center;
@@ -1388,9 +1361,7 @@ export default function Home() {
         .bf-action-card {
           display: flex;
           align-items: center;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: #0a1122;
           border: 1px solid rgba(255,255,255,0.1);
           border-radius: 16px;
           min-width: 280px;
@@ -1430,9 +1401,37 @@ export default function Home() {
           letter-spacing: 0.05em;
           margin-top: 2px;
         }
-
-        @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr; } .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; } }
       `}</style>
+
+      {/* NOVA TARJA NO TOPO */}
+      {showTopBanner && (
+        <div className="tarja-banner">
+          <div className="tarja-left">
+            <div className="tarja-item">
+              EDAFS
+              <div className="tarja-tooltip">
+                Esquadrão virtual focado no Microsoft Flight Simulator. Nascidos da paixão pela aviação, buscamos replicar com extrema fidelidade e profissionalismo a doutrina da Esquadrilha da Fumaça.
+              </div>
+            </div>
+            
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.4)' }}></div>
+
+            <div className="tarja-item">
+              EDAV
+              <div className="tarja-tooltip">
+                O mais antigo time de demonstração aérea virtual do mundo (1998). Representante do Brasil no VFAT, recria com precisão as operações oficiais da verdadeira Esquadrilha da Fumaça.
+              </div>
+            </div>
+          </div>
+
+          <div className="tarja-right">
+            <button className="tarja-btn primary" onClick={() => window.open('https://edav.com.br', '_blank')}>IR PARA O EDAV</button>
+            <button className="tarja-close" onClick={handleCloseBanner} aria-label="Fechar banner">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <Header 
         activeSection={activeSection}
@@ -1446,12 +1445,16 @@ export default function Home() {
 
       <div className={`splash-screen ${!isAppLoading ? 'hidden' : ''}`}>
         <img src={logoImage} alt="EDAFS Logo Loading" className="pulse-logo" style={{ width: '120px', height: 'auto', marginBottom: '2rem' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#ffffff', fontSize: '1.2rem', letterSpacing: '0.1em' }}>Aguarde..</span>
+        
+        <div style={{ width: '220px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginTop: '1rem' }}>
+          <div style={{ width: `${loadingProgress}%`, height: '100%', background: '#0ea5e9', transition: 'width 0.1s linear' }} />
         </div>
+        <span style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#94a3b8', fontFamily: '"Regular", sans-serif', letterSpacing: '0.1em' }}>
+          {Math.round(loadingProgress)}%
+        </span>
       </div>
 
-      <section className="hero" style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', paddingTop: '8rem', paddingBottom: '2rem' }}>
+      <section className="hero" style={{ minHeight: '80vh', height: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', paddingTop: '8rem', paddingBottom: '2rem' }}>
         <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(3,7,18,0.3)', pointerEvents: 'none' }} />
         
@@ -1508,7 +1511,6 @@ export default function Home() {
 
       <div style={{ position: 'relative', background: 'transparent' }}>
         <section id="pilotos" className="section-container" style={{ paddingTop: '4rem' }}>
-          <div className="section-glow-left" />
 
           <SectionHeaderApple overline="Equipe" title="Os Nossos Pilotos." subtitle="Conheça os aviadores virtuais que compõem a Esquadrilha da Fumaça Virtual, separados por plataforma." />
 
@@ -1521,21 +1523,23 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="formacao-wrapper noselect reveal-on-scroll" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0rem', marginTop: '2rem', minHeight: '350px', transition: 'all 0.3s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              {renderFormationSlot('1')}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '7rem', marginTop: '-15px' }}>
-              {renderFormationSlot('3')}
-              {renderFormationSlot('2')}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2.5rem', marginTop: '-15px' }}>
-              {renderFormationSlot('5')}
-              {renderFormationSlot('4')}
-              {renderFormationSlot('6')}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-              {renderFormationSlot('7')}
+          <div className="formacao-scroll-container noselect reveal-on-scroll" style={{ marginTop: '2rem', transition: 'all 0.3s ease' }}>
+            <div className="formacao-wrapper">
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                {renderFormationSlot('1')}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '7rem', marginTop: '-15px' }}>
+                {renderFormationSlot('3')}
+                {renderFormationSlot('2')}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '2.5rem', marginTop: '-15px' }}>
+                {renderFormationSlot('5')}
+                {renderFormationSlot('4')}
+                {renderFormationSlot('6')}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                {renderFormationSlot('7')}
+              </div>
             </div>
           </div>
         </section>
@@ -1544,9 +1548,8 @@ export default function Home() {
       <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
         <section id="agenda" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
           <div className="section-top-divider" />
-          <div className="section-glow-right" />
 
-          <SectionHeaderApple overline="Programação" title="Agenda Oficial." subtitle="Acompanhe nossa agenda de demonstrações no Flight Simulator 2020 e Flight Simulator 2024. As demonstrações são feitas com meteorologia e tempo atualizados em tempo real." />
+          <SectionHeaderApple overline="Programação" title="Agenda Oficial." subtitle="Acompanhe nossa agenda de demonstrações. As demonstrações são feitas com meteorologia e tempo atualizados em tempo real." />
           
           <div className="reveal-on-scroll" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             
@@ -1590,20 +1593,6 @@ export default function Home() {
                             <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem', fontSize: '1.05rem' }}>
                               {dem.cidade}
                             </span>
-                            <div style={{ display: 'flex', gap: '4px', marginLeft: '0.5rem' }}>
-                              {(dem.plataforma === 'Ambos') && (
-                                <>
-                                  <span className="fs-badge" style={{color:'#0ea5e9', borderColor:'rgba(14,165,233,0.3)', padding: '3px 8px', fontSize: '0.75rem'}}>MSFS 2020</span>
-                                  <span className="fs-badge" style={{color:'#f59e0b', borderColor:'rgba(245,158,11,0.3)', padding: '3px 8px', fontSize: '0.75rem'}}>MSFS 2024</span>
-                                </>
-                              )}
-                              {(dem.plataforma === '2024') && (
-                                <span className="fs-badge" style={{color:'#f59e0b', borderColor:'rgba(245,158,11,0.3)', padding: '3px 8px', fontSize: '0.75rem'}}>MSFS 2024</span>
-                              )}
-                              {(dem.plataforma === '2020' || !dem.plataforma) && (
-                                <span className="fs-badge" style={{color:'#0ea5e9', borderColor:'rgba(14,165,233,0.3)', padding: '3px 8px', fontSize: '0.75rem'}}>MSFS 2020</span>
-                              )}
-                            </div>
                           </div>
                           <span style={{ color: statusColor, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                             {dem.status === 'Planejamento' ? 'PREVISÃO' : dem.status}
@@ -1637,7 +1626,6 @@ export default function Home() {
         
         <section id="aeronave" style={{ position: 'relative', zIndex: 1, width: '100%', margin: '0 auto', paddingTop: '4rem' }}>
           <div className="section-top-divider" style={{ marginBottom: '1rem' }} />
-          <div className="section-glow-left" />
 
           <div className="section-container reveal-on-scroll" style={{ paddingBottom: '2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'center', alignItems: 'center' }}>
@@ -1741,7 +1729,6 @@ export default function Home() {
         <div style={{ background: 'transparent' }}>
           <section id="noticias" className="section-container" style={{ paddingTop: '4rem' }}>
             <div className="section-top-divider" />
-            <div className="section-glow-right" />
 
             <SectionHeaderApple overline="Comunicação" title="Artigos Recentes." subtitle="Fique a par das últimas novidades da esquadrilha." />
             <div className="responsive-grid reveal-on-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
@@ -1767,7 +1754,6 @@ export default function Home() {
           
           <section id="midias" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
             <div className="section-top-divider" />
-            <div className="section-glow-left" />
 
             <SectionHeaderApple overline="Ao Vivo" title="Transmissões Oficiais." subtitle="Acompanhe as nossas apresentações em tempo real e reveja os melhores momentos nos nossos canais." />
 
@@ -1805,7 +1791,6 @@ export default function Home() {
         
         <section id="sobre" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
           <div className="section-top-divider" />
-          <div className="section-glow-right" />
 
           <SectionHeaderApple overline="Nossa História" title="O Esquadrão e a Jornada." subtitle="Descubra a história e os valores que guiam o nosso esquadrão." />
 
@@ -1834,7 +1819,7 @@ export default function Home() {
               </p>
               
               <blockquote style={{ borderLeft: '3px solid #0ea5e9', paddingLeft: '1.5rem', margin: '1rem 0 0 0', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', lineHeight: '1.7', color: '#94a3b8' }}>
-                "O nosso objetivo não é apenas voar, mas elevar a demonstração aérea no simulador aos mais altos níveis de disciplina, beleza e sincronia. O treinamento nunca termina."
+                "O nosso objetivo não é apenas voar, mas elevating a demonstração aérea no simulador aos mais altos níveis de disciplina, beleza e sincronia. O treinamento nunca termina."
                 <footer style={{ marginTop: '0.5rem', color: '#0ea5e9', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comandante</footer>
               </blockquote>
             </div>
