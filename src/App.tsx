@@ -32,10 +32,8 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* A página principal agora é diretamente a Home */}
         <Route path="/" element={<Home />} />
         
-        {/* Redireciona quem tentar aceder ao antigo /home para a raiz */}
         <Route path="/home" element={<Navigate to="/" replace />} />
         
         <Route path="/login" element={<Login />} />

@@ -23,7 +23,6 @@ interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: n
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; buttonText: string; link: string; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
-interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
 interface Solicitacao { id?: string; cidade: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
 interface Usuario { 
   id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
@@ -92,7 +91,10 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
     return new Date();
   };
   const [viewDate, setViewDate] = useState(parseDate(value));
-  const [selDate, setSelDate] = useState<Date | null>(value ? parseDate(value) : null);
+  
+  // O calendário agora já arranca com o dia atual automaticamente selecionado
+  const [selDate, setSelDate] = useState<Date | null>(value ? parseDate(value) : new Date());
+  
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -145,10 +147,13 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
 
 const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const now = new Date();
+  
+  // Data e hora pré-selecionadas como as atuais caso não haja valor
   const [viewDate, setViewDate] = useState(value ? new Date(value.split('T')[0] + 'T12:00:00') : new Date());
-  const [selDate, setSelDate] = useState<Date | null>(value ? new Date(value.split('T')[0] + 'T12:00:00') : null);
-  const [hour, setHour] = useState(value ? value.split('T')[1].split(':')[0] : '15');
-  const [minute, setMinute] = useState(value ? value.split('T')[1].split(':')[1] : '00');
+  const [selDate, setSelDate] = useState<Date | null>(value ? new Date(value.split('T')[0] + 'T12:00:00') : new Date());
+  const [hour, setHour] = useState(value ? value.split('T')[1].split(':')[0] : String(now.getHours()).padStart(2, '0'));
+  const [minute, setMinute] = useState(value ? value.split('T')[1].split(':')[1] : String(now.getMinutes()).padStart(2, '0'));
 
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
@@ -239,7 +244,6 @@ export default function Workspace() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
-  const [estatisticas, setEstatisticas] = useState<Estatistica[]>([]); 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   
   const [pilotoFilter, setPilotoFilter] = useState<'2020' | '2024' | 'Ambos'>('Ambos');
@@ -255,9 +259,6 @@ export default function Workspace() {
   
   const [discordWebhook, setDiscordWebhook] = useState('');
   const [discordColor, setDiscordColor] = useState('#ed333b');
-  const [discordAuthorName, setDiscordAuthorName] = useState('ESQUADRILHA DA FUMAÇA VIRTUAL');
-  const [discordAuthorIcon, setDiscordAuthorIcon] = useState('https://i.imgur.com/L79pB2z.png');
-  const [discordImageUrl, setDiscordImageUrl] = useState('https://i.imgur.com/mJ2Zl3E.jpeg');
   const [discordFooter, setDiscordFooter] = useState('EDAV MSFS - Sistema de Operações');
 
   const [showForm, setShowForm] = useState(false);
@@ -294,11 +295,6 @@ export default function Workspace() {
   const [notamMensagem, setNotamMensagem] = useState('');
   const [notamData, setNotamData] = useState('');
 
-  const [statIcone, setStatIcone] = useState('');
-  const [statValor, setStatValor] = useState('');
-  const [statRotulo, setStatRotulo] = useState('');
-  const [statOrdem, setStatOrdem] = useState(1);
-  
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
 
@@ -347,10 +343,6 @@ export default function Workspace() {
       onSnapshot(collection(db, 'noticias'), snap => {
         const arr: Noticia[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Noticia)); setNoticias(arr);
       }),
-      onSnapshot(collection(db, 'estatisticas'), snap => {
-        const arr: Estatistica[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Estatistica));
-        arr.sort((a, b) => a.ordem - b.ordem); setEstatisticas(arr.slice(0, 5));
-      }),
       onSnapshot(collection(db, 'notams'), snap => {
         const arr: Notam[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Notam));
         arr.sort((a, b) => {
@@ -379,9 +371,6 @@ export default function Workspace() {
           setTkUrl(d.liveTikTokUrl || '');
           setDiscordWebhook(d.discordWebhook || '');
           setDiscordColor(d.discordColor || '#ed333b');
-          setDiscordAuthorName(d.discordAuthorName || 'ESQUADRILHA DA FUMAÇA VIRTUAL');
-          setDiscordAuthorIcon(d.discordAuthorIcon || 'https://i.imgur.com/L79pB2z.png');
-          setDiscordImageUrl(d.discordImageUrl || 'https://i.imgur.com/mJ2Zl3E.jpeg');
           setDiscordFooter(d.discordFooter || 'EDAV MSFS - Sistema de Operações');
         } 
       })
@@ -392,7 +381,7 @@ export default function Workspace() {
   const checkPermission = (action: string) => {
     if (currentUserInfo?.role === 'admin') return true;
     if (['dashboard', 'notam', 'meteorologia'].includes(action)) return true; 
-    if (['pilotos', 'noticias', 'config', 'estatisticas', 'solicitacoes'].includes(action)) return false; 
+    if (['pilotos', 'noticias', 'config', 'solicitacoes'].includes(action)) return false; 
     return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
   };
 
@@ -407,7 +396,6 @@ export default function Workspace() {
     setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento');
     setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
     setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
-    setStatIcone(''); setStatValor(''); setStatRotulo(''); setStatOrdem(estatisticas.length + 1);
   };
 
   const parsePlatformToString = (p2020: boolean, p2024: boolean) => {
@@ -500,9 +488,6 @@ export default function Workspace() {
         liveTikTokUrl: tkUrl, 
         discordWebhook,
         discordColor,
-        discordAuthorName,
-        discordAuthorIcon,
-        discordImageUrl,
         discordFooter
       }, { merge: true }); 
       showToast("Configurações Salvas!", "success"); 
@@ -537,7 +522,6 @@ export default function Workspace() {
   const handleEditarAgenda = (a: Demonstracao) => { setEditingId(a.id || null); setAgCidade(a.cidade); setAgStatus(a.status); loadPlatformToState(a.plataforma); if (a.dataHora && a.dataHora.includes(' às ')) { const [dPart, hPart] = a.dataHora.split(' às '); setAgDataHoraIso(`${dPart.split('/').reverse().join('-')}T${hPart}`); } else setAgDataHoraIso(''); setShowForm(true); };
   const handleEditarNoticia = (n: Noticia) => { setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo); setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true); };
   const handleEditarNotam = (n: Notam) => { setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); };
-  const handleEditarStat = (s: Estatistica) => { setEditingId(s.id || null); setStatIcone(s.icone); setStatValor(s.valor); setStatRotulo(s.rotulo); setStatOrdem(s.ordem); setShowForm(true); };
 
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); if (!checkPermission('pilotos')) return showToast("Acesso Negado", "error");
@@ -568,47 +552,46 @@ export default function Workspace() {
       
       if (editingId) {
         await updateDoc(doc(db, 'notams', editingId), data); 
+        fecharFormulario(); 
+        showToast("NOTAM Atualizado");
       } else {
         await addDoc(collection(db, 'notams'), data); 
         
-        // INTEGRAÇÃO DISCORD
+        // INTEGRAÇÃO DISCORD - SEM IMAGENS, APENAS TEXTO!
         if (discordWebhook) {
           const hexColorToDec = (hex: string) => parseInt(hex.replace(/^#/, ''), 16) || 15548997;
+          
+          const embedData: any = {
+            title: data.titulo,
+            description: data.mensagem,
+            color: hexColorToDec(discordColor), 
+            fields: [
+              { name: "Emitido em", value: data.data, inline: false }
+            ],
+            footer: { text: discordFooter || "EDAV MSFS - Sistema de Operações" }
+          };
+
           await fetch(discordWebhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               content: "@everyone **NOVO NOTAM PUBLICADO!**",
-              embeds: [{
-                author: {
-                  name: discordAuthorName || "ESQUADRILHA DA FUMAÇA VIRTUAL",
-                  icon_url: discordAuthorIcon || "https://i.imgur.com/L79pB2z.png" 
-                },
-                title: data.titulo,
-                description: data.mensagem,
-                color: hexColorToDec(discordColor), 
-                image: {
-                  url: discordImageUrl || "https://i.imgur.com/mJ2Zl3E.jpeg" 
-                },
-                fields: [
-                  { name: "Emitido em", value: data.data, inline: false }
-                ],
-                footer: { text: discordFooter || "EDAV MSFS - Sistema de Operações" }
-              }]
+              embeds: [embedData]
             })
           }).catch(err => console.error("Erro Discord Webhook:", err));
+          
+          fecharFormulario(); 
+          showToast("NOTAM enviado ao discord", "success");
+        } else {
+          fecharFormulario(); 
+          showToast("NOTAM Publicado"); 
         }
       }
-      
-      fecharFormulario(); 
-      showToast("Publicado"); 
     } catch { 
       showToast("Falha", "error"); 
     } 
   };
   
-  const handleSalvarStat = async (e: React.FormEvent) => { e.preventDefault(); if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado", "error"); if (!editingId && estatisticas.length >= 5) return showToast("Limite é 5", "error"); try { const data = { icone: statIcone, valor: statValor, rotulo: statRotulo, ordem: statOrdem }; if (editingId) await updateDoc(doc(db, 'estatisticas', editingId), data); else await addDoc(collection(db, 'estatisticas'), data); fecharFormulario(); showToast("Salvo"); } catch { showToast("Falha", "error"); } };
-
   const handleMenuClick = (tabName: string) => { setActiveTab(tabName); fecharFormulario(); setMobileSidebarOpen(false); };
 
   const horaAtual = agora.getHours(); let saudacao = 'Boa noite'; if (horaAtual >= 5 && horaAtual < 12) saudacao = 'Bom dia'; else if (horaAtual >= 12 && horaAtual < 18) saudacao = 'Boa tarde';
@@ -828,7 +811,6 @@ export default function Workspace() {
               <ChevronDown size={14} style={{ transform: gerenciaisAberto ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
             </button>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(14, 165, 233, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
-              {currentUserInfo?.role === 'admin' && <button className={`nav-item ${activeTab === 'estatisticas' ? 'active' : ''}`} onClick={() => handleMenuClick('estatisticas')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Activity size={14} /> Estatísticas</button>}
               <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={14} /> Pilotos</button>
               <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={14} /> Agenda</button>
               <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={14} /> Notícias</button>
@@ -885,10 +867,10 @@ export default function Workspace() {
         <div className="main-content" style={{ padding: '1rem 2rem 2rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 500, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>
-              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'estatisticas' ? 'Estatísticas' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
+              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
             </h2>
             
-            {['pilotos', 'agenda', 'noticias', 'estatisticas'].includes(activeTab) && checkPermission(activeTab) && (
+            {['pilotos', 'agenda', 'noticias'].includes(activeTab) && checkPermission(activeTab) && (
               <button onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}><Plus size={16} /> Adicionar Novo</button>
             )}
 
@@ -996,40 +978,6 @@ export default function Workspace() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'estatisticas' && (
-            <div>
-              {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Estatística</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
-                    <form onSubmit={handleSalvarStat} style={{ padding: '1.5rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div><label className="form-label">Classe Ícone</label><input required type="text" value={statIcone} onChange={e => setStatIcone(e.target.value)} className="form-input" placeholder="fa-solid fa-plane" /></div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}><div><label className="form-label">Valor</label><input required type="text" value={statValor} onChange={e => setStatValor(e.target.value)} className="form-input" /></div><div><label className="form-label">Ordem</label><input required type="number" min="1" max="5" value={statOrdem} onChange={e => setStatOrdem(parseInt(e.target.value))} className="form-input" /></div></div>
-                        <div><label className="form-label">Descrição</label><input required type="text" value={statRotulo} onChange={e => setStatRotulo(e.target.value)} className="form-input" /></div>
-                      </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
-                    </form>
-                  </div>
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                {estatisticas.map(stat => (
-                  <div key={stat.id} className="list-row" style={{ gridTemplateColumns: '1fr', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', color: '#0ea5e9', fontSize: '0.65rem', background: 'rgba(14,165,233,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>ORD {stat.ordem}</div>
-                    <div style={{ color: '#0ea5e9', marginBottom: '0.5rem' }}><i className={stat.icone} style={{ fontSize: '1.8rem' }}></i></div>
-                    <span style={{ fontSize: '2rem', color: '#f8fafc', fontWeight: 500 }}>{stat.valor}</span>
-                    <span style={{ color: '#94a3b8', fontSize: '0.75rem', textTransform: 'uppercase' }}>{stat.rotulo}</span>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', width: '100%', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', justifyContent: 'center' }}>
-                      <button onClick={() => handleEditarStat(stat)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button>
-                      <button onClick={() => handleDeletarItem(stat.id!, 'estatisticas', stat.rotulo)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           )}
@@ -1248,7 +1196,7 @@ export default function Workspace() {
                       <input type="url" value={discordWebhook} onChange={e => setDiscordWebhook(e.target.value)} className="form-input" placeholder="https://discord.com/api/webhooks/..." />
                     </div>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
                       <div>
                         <label className="form-label">Cor do Embed (HEX)</label>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -1256,20 +1204,6 @@ export default function Workspace() {
                           <input type="text" value={discordColor} onChange={e => setDiscordColor(e.target.value)} className="form-input" placeholder="#ED333B" />
                         </div>
                       </div>
-                      <div>
-                        <label className="form-label">Nome do Autor (Topo)</label>
-                        <input type="text" value={discordAuthorName} onChange={e => setDiscordAuthorName(e.target.value)} className="form-input" placeholder="Ex: ESQUADRILHA VIRTUAL" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">URL da Imagem do Autor (Logotipo Redondo)</label>
-                      <input type="url" value={discordAuthorIcon} onChange={e => setDiscordAuthorIcon(e.target.value)} className="form-input" placeholder="https://imgur.com/...png" />
-                    </div>
-
-                    <div>
-                      <label className="form-label">URL da Imagem de Capa (Banner Grande)</label>
-                      <input type="url" value={discordImageUrl} onChange={e => setDiscordImageUrl(e.target.value)} className="form-input" placeholder="https://imgur.com/...jpg" />
                     </div>
 
                     <div>

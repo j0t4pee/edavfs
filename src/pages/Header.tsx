@@ -51,7 +51,6 @@ export default function Header({
         top: 0, 
         width: '100%', 
         zIndex: 100, 
-        /* Efeito de Vidro (Glassmorphism) */
         background: scrolled ? 'rgba(15, 23, 42, 0.65)' : 'rgba(15, 23, 42, 0.4)', 
         backdropFilter: 'blur(20px) saturate(180%)', 
         WebkitBackdropFilter: 'blur(20px) saturate(180%)', 
@@ -63,7 +62,7 @@ export default function Header({
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '1rem', cursor: 'pointer' }}>
-              <img src={logoImage} alt="EDAFS Logo" style={{ height: scrolled ? '34px' : '42px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
+              <img src={logoImage} alt="EDAFS Logo" style={{ height: scrolled ? '50px' : '50px', width: 'auto', display: 'block', transition: 'height 0.3s ease' }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', justifyContent: 'center' }}>
                 <span style={{ fontFamily: '"Comum", sans-serif', fontWeight: 500, fontSize: '0.95rem', color: '#f8fafc', letterSpacing: '0.05em', lineHeight: 1.2 }}>
                   ESQUADRILHA DA FUMAÇA VIRTUAL
