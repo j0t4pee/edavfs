@@ -4,17 +4,16 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css'; 
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { 
   Plane, ChevronRight, ChevronLeft, Map as MapIcon, 
-  ShoppingCart, CheckCircle2, Calendar, Newspaper, 
-  ChevronUp, Quote, Download, Menu, X, ShieldCheck, Shield, FileText, AlertTriangle, LayoutGrid, Send, Cookie, ChevronDown,
-  GraduationCap, Crosshair, Award, Globe, Mail, PlaneTakeoff, Radio
+  CheckCircle2, Calendar, Newspaper, 
+  X, ShieldCheck, Shield, FileText, AlertTriangle, Cookie,
+  Crosshair, Radio, PlaneTakeoff
 } from 'lucide-react';
 
 import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore';
@@ -23,14 +22,10 @@ import { db } from '../firebase';
 import Header from './Header';
 import Footer from './Footer';
 
-import headerImage from '../images/tucano.jpg';
-import a29Image from '../images/tucano3.jpg'; 
+import headerImage from '../images/tucano14.png';
 import logoImage from '../images/logo.png';
-import parceiroImage from '../images/parceiro.png';
 import faviconImage from '../images/favicon.png';
-import pilotoImage from '../images/piloto.png';
 import a29icon from '../images/a-29.png';
-import ytLogo from '../images/yt.svg';
 import twLogo from '../images/tw.png';
 import tkLogo from '../images/tk.png';
 import formacaoImage from '../images/formacao.png';
@@ -49,40 +44,10 @@ import tucano11png from '../images/tucano11.png';
 import tucano12png from '../images/tucano12.png';
 import tucano13png from '../images/tucano13.png';
 
-const southAmericaBounds = L.latLngBounds(
-  L.latLng(-60.0, -90.0), 
-  L.latLng(15.0, -30.0)   
-);
-
-const getMarkerIcon = (status: string) => {
-  const color = status === 'Confirmado' ? '#10b981' : status === 'Cancelado' ? '#ef4444' : '#0ea5e9';
-  return new L.DivIcon({
-    className: 'custom-map-marker',
-    html: `
-      <div style="position:relative; width: 24px; height: 24px; display:flex; align-items:center; justify-content:center;">
-        <div style="position:absolute; width:100%; height:100%; border-radius:50%; border: 1px solid ${color}; opacity: 0.4; animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-        <div style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ffffff;"></div>
-      </div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12]
-  });
-};
-
 interface Piloto { id?: string; posicao: string; nome: string; cidade?: string; uf?: string; oculto?: boolean; plataforma?: string; }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; tipo: string; plataforma?: string; }
 interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; link: string; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
-interface Estatistica { id?: string; icone: string; valor: string; rotulo: string; ordem: number; }
-
-const ElegantDivider = () => (
-  <div className="reveal-on-scroll" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 3rem auto', opacity: 0.6 }}>
-    <div style={{ width: '120px', height: '1px', background: 'linear-gradient(90deg, transparent, #0ea5e9)' }} />
-    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0ea5e9', margin: '0 15px', boxShadow: '0 0 10px #0ea5e9' }} />
-    <div style={{ width: '120px', height: '1px', background: 'linear-gradient(90deg, #0ea5e9, transparent)' }} />
-  </div>
-);
 
 const SectionHeaderApple = ({ overline, title, subtitle }: { overline?: string, title: string, subtitle?: string }) => (
   <div className="noselect reveal-on-scroll" style={{ marginBottom: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative', zIndex: 10, maxWidth: '800px', margin: '0 auto 3rem auto', textAlign: 'left' }}>
@@ -102,14 +67,6 @@ const AppleSpecText = ({ value, unit, label }: { value: string, unit?: string, l
   </div>
 );
 
-const StatBox = ({ iconClass, value, label }: { iconClass: string, value: string, label: string }) => (
-  <div className="noselect" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', zIndex: 2, position: 'relative' }}>
-    <div style={{ color: '#0ea5e9', opacity: 0.9 }}><i className={iconClass || 'fa-solid fa-star'} style={{ fontSize: '1.8rem' }}></i></div>
-    <span style={{ fontSize: '3.5rem', fontFamily: '"Regular", Arial, sans-serif', fontWeight: 300, color: '#f8fafc', letterSpacing: '-0.04em', lineHeight: 1, padding: '0 10px' }}>{value}</span>
-    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.15em', textAlign: 'center' }}>{label}</span>
-  </div>
-);
-
 export default function Home() {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -118,6 +75,13 @@ export default function Home() {
       return localStorage.getItem('edafs_banner_closed') !== 'true';
     }
     return true;
+  });
+
+  const [cookiesAccepted, setCookiesAccepted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('edafs_cookies_accepted') === 'true';
+    }
+    return false;
   });
   
   const [activeSection, setActiveSection] = useState('');
@@ -150,7 +114,6 @@ export default function Home() {
   const [dbDemonstracoes, setDbDemonstracoes] = useState<Demonstracao[]>([]);
   const [dbMods, setDbMods] = useState<Mod[]>([]);
   const [dbNoticias, setDbNoticias] = useState<Noticia[]>([]);
-  const [dbEstatisticas, setDbEstatisticas] = useState<Estatistica[]>([]);
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [solicitacaoAberta, setSolicitacaoAberta] = useState(true);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
@@ -164,6 +127,7 @@ export default function Home() {
   const [isBlocked, setIsBlocked] = useState(false); 
 
   const navigate = useNavigate();
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   const [nome, setNome] = useState('');
   const [nickname, setNickname] = useState('');
@@ -181,6 +145,8 @@ export default function Home() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [sliderImages, setSliderImages] = useState<string[]>([]);
+  const [slideProgress, setSlideProgress] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(6);
   
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -188,9 +154,46 @@ export default function Home() {
 
   const minSwipeDistance = 50;
 
+  useEffect(() => {
+    const blockF12 = (e: KeyboardEvent) => {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J'))) {
+        e.preventDefault();
+      }
+    };
+    const blockRightClick = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('keydown', blockF12);
+    window.addEventListener('contextmenu', blockRightClick);
+    
+    return () => {
+      window.removeEventListener('keydown', blockF12);
+      window.removeEventListener('contextmenu', blockRightClick);
+    };
+  }, []);
+
   const handleCloseBanner = () => {
     setShowTopBanner(false);
     localStorage.setItem('edafs_banner_closed', 'true');
+  };
+
+  const aceitarCookies = () => {
+    setCookiesAccepted(true);
+    localStorage.setItem('edafs_cookies_accepted', 'true');
+    setLegalModalOpen(false);
+  };
+
+  const recusarCookies = () => {
+    setCookiesAccepted(false);
+    localStorage.setItem('edafs_cookies_accepted', 'false');
+    setLegalModalOpen(false);
+  };
+
+  const fecharModalClicandoFora = (e: React.MouseEvent) => {
+    if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
+      setLegalModalOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -299,11 +302,26 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % sliderImages.length);
-    }, 6500); 
-    return () => clearInterval(timer);
-  }, [sliderImages.length]);
+    if (sliderImages.length === 0) return;
+    
+    let startTime = Date.now();
+    const duration = 6500; 
+    
+    const update = () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, duration - elapsed);
+      
+      setSlideProgress((elapsed / duration) * 100);
+      setTimeLeft(Math.ceil(remaining / 1000));
+      
+      if (elapsed >= duration) {
+         setCurrentSlide(s => (s + 1) % sliderImages.length);
+      }
+    };
+    
+    const ticker = setInterval(update, 50); 
+    return () => clearInterval(ticker);
+  }, [sliderImages.length, currentSlide]); 
 
   useEffect(() => {
     document.title = "MSFS | Esquadrilha da Fumaça Virtual";
@@ -360,13 +378,6 @@ export default function Home() {
       snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Noticia));
       setDbNoticias(arr);
     });
-    
-    const unsubStats = onSnapshot(collection(db, 'estatisticas'), (snapshot) => {
-      const arr: Estatistica[] = [];
-      snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Estatistica));
-      arr.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-      setDbEstatisticas(arr.slice(0, 5));
-    });
 
     const unsubConfig = onSnapshot(doc(db, 'config', 'geral'), (docSnap) => {
       if (docSnap.exists()) {
@@ -394,7 +405,7 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      unsubPilotos(); unsubAgenda(); unsubMods(); unsubNoticias(); unsubStats(); unsubConfig();
+      unsubPilotos(); unsubAgenda(); unsubMods(); unsubNoticias(); unsubConfig();
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -598,6 +609,11 @@ export default function Home() {
     return acc;
   }, {});
 
+  const getSuperscriptNumber = (num: number) => {
+    const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+    return num.toString().split('').map(char => superscripts[parseInt(char)]).join('');
+  };
+
   const legalContent = {
     privacidade: {
       title: "Política de Privacidade",
@@ -674,7 +690,8 @@ export default function Home() {
       default: role = `Ala ${posicao}`;
     }
 
-    const isLeft = posicao === '3' || posicao === '5';
+    // Posições na direita da formação (2, 6) abrem o tooltip para a esquerda para não cortar o ecrã
+    const opensToLeft = posicao === '2' || posicao === '6';
 
     return (
       <div className="tatic-slot noselect" style={{ display: 'flex', alignItems: 'center', position: 'relative', width: '300px', justifyContent: 'center', height: '180px', cursor: 'default' }}>
@@ -696,7 +713,7 @@ export default function Home() {
           </span>
         </div>
         
-        <div className={`slot-info ${isLeft ? 'slot-left' : 'slot-right'}`}>
+        <div className={`slot-info ${opensToLeft ? 'slot-left' : 'slot-right'}`}>
           {pilotosSlot.length > 0 ? pilotosSlot.map((piloto, idx) => (
             <div key={idx} className="bio-card">
               <div className="bio-text">
@@ -999,18 +1016,6 @@ export default function Home() {
           margin-bottom: 4rem;
         }
 
-        .section-glow-left {
-          position: absolute; top: 10%; left: -10%; width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(14,165,233,0.05) 0%, transparent 70%);
-          filter: blur(80px); z-index: 0; pointer-events: none;
-        }
-        
-        .section-glow-right {
-          position: absolute; top: 10%; right: -10%; width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(14,165,233,0.05) 0%, transparent 70%);
-          filter: blur(80px); z-index: 0; pointer-events: none;
-        }
-
         .modern-input {
           width: 100%;
           background: rgba(255, 255, 255, 0.03);
@@ -1137,15 +1142,6 @@ export default function Home() {
         .tab-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.05); }
         .tab-btn.active { color: #0ea5e9; background: rgba(14, 165, 233, 0.05); }
 
-        .fs-badge { 
-          font-size: 0.85rem; 
-          border: 1px solid var(--border-light); 
-          padding: 4px 10px; 
-          border-radius: 6px; 
-          font-weight: 500; 
-          letter-spacing: 0.05em; 
-        }
-
         .tb-button {
           position: relative;
           background: transparent;
@@ -1175,7 +1171,6 @@ export default function Home() {
           background: #0f172a !important;
           color: #ffffff !important;
           border: 1px solid #0ea5e9 !important;
-          box-shadow: 0 0 20px rgba(14, 165, 233, 0.2) !important;
           border-radius: 30px !important;
           font-weight: 400 !important;
           letter-spacing: 0.1em !important;
@@ -1187,7 +1182,6 @@ export default function Home() {
           background: #0ea5e9 !important;
           color: #030712 !important;
           transform: translateY(-3px) !important;
-          box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4) !important;
           border-color: #0ea5e9 !important;
         }
         
@@ -1198,10 +1192,10 @@ export default function Home() {
 
         .formacao-scroll-container {
           width: 100%;
-          padding-bottom: 2rem;
+          padding-bottom: 6rem !important; 
           display: flex;
           justify-content: center;
-          overflow: visible;
+          overflow: visible !important; /* CORREÇÃO AQUI - Para não cortar as laterais */
         }
 
         .formacao-wrapper {
@@ -1210,6 +1204,9 @@ export default function Home() {
           align-items: center;
           transform-origin: top center;
           transition: all 0.3s ease;
+          width: 750px;
+          flex-shrink: 0;
+          margin: 0 auto;
         }
 
         .split-grid {
@@ -1237,8 +1234,8 @@ export default function Home() {
           background: rgba(3,7,18,0.8);
           border: 1px solid rgba(255,255,255,0.1);
           color: rgba(255,255,255,0.7);
-          width: 50px;
-          height: 50px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -1274,6 +1271,7 @@ export default function Home() {
           .split-grid { grid-template-columns: 1fr 1fr; }
           .split-grid.reverse { direction: rtl; }
           .split-grid.reverse > * { direction: ltr; }
+          .slider-arrow-inline { width: 50px; height: 50px; }
         }
 
         @media (max-width: 900px) {
@@ -1282,6 +1280,8 @@ export default function Home() {
               right: auto !important;
               top: 85% !important;
               transform: translateX(-50%) !important;
+              width: max-content !important;
+              min-width: 180px !important;
            }
            .tatic-slot:hover .slot-info {
               transform: translate(-50%, 15px) !important;
@@ -1290,7 +1290,8 @@ export default function Home() {
               flex-direction: column !important;
               align-items: center !important;
               text-align: center !important;
-              padding: 0.75rem 1.25rem !important;
+              padding: 0.75rem 1rem !important;
+              white-space: normal !important; 
            }
            .slot-left .bio-text, .slot-right .bio-text {
               text-align: center !important;
@@ -1298,27 +1299,27 @@ export default function Home() {
 
           .desktop-nav { display: none !important; }
           .mobile-toggle { display: block !important; }
-          .section-container { padding: 4rem 1.5rem !important; }
+          .section-container { padding: 4rem 1.5rem 0 !important; }
           .footer-grid { grid-template-columns: 1fr; } 
           .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
           
           .formacao-wrapper {
-             transform: scale(0.65);
-             margin-bottom: -100px;
+             transform: scale(0.65) !important;
+             margin-bottom: -150px !important;
           }
         }
         
         @media (max-width: 600px) {
            .formacao-wrapper {
-             transform: scale(0.45);
-             margin-bottom: -180px;
+             transform: scale(0.45) !important;
+             margin-bottom: -220px !important;
            }
         }
         
         @media (max-width: 400px) {
            .formacao-wrapper {
-             transform: scale(0.35);
-             margin-bottom: -220px;
+             transform: scale(0.38) !important;
+             margin-bottom: -250px !important;
            }
         }
 
@@ -1369,6 +1370,7 @@ export default function Home() {
           cursor: pointer;
           overflow: hidden;
           flex: 0 0 auto;
+          position: relative;
         }
         .bf-action-card-icon {
           width: 70px;
@@ -1433,6 +1435,20 @@ export default function Home() {
         </div>
       )}
 
+      {/* AVISO DE COOKIES FIXO NO FUNDO */}
+      {!cookiesAccepted && (
+        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 99999, background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(14, 165, 233, 0.4)', borderRadius: '16px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', width: '90%', maxWidth: '800px', flexDirection: window.innerWidth < 768 ? 'column' : 'row', textAlign: window.innerWidth < 768 ? 'center' : 'left' }}>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start' }}><Cookie size={18} color="#0ea5e9"/> Uso de Cookies</h4>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5 }}>Utilizamos cookies essenciais para garantir o funcionamento do nosso portal. Não usamos trackers ou publicidade.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', width: window.innerWidth < 768 ? '100%' : 'auto' }}>
+            <button onClick={recusarCookies} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500, flex: window.innerWidth < 768 ? 1 : 'none' }}>Recusar</button>
+            <button onClick={aceitarCookies} style={{ background: '#0ea5e9', border: 'none', color: '#030712', padding: '0.6rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', flex: window.innerWidth < 768 ? 1 : 'none' }}>Aceitar</button>
+          </div>
+        </div>
+      )}
+
       <Header 
         activeSection={activeSection}
         alistamentoAberto={alistamentoAberto}
@@ -1492,19 +1508,13 @@ export default function Home() {
               <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Agenda Oficial</span>
               <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos voos</span>
             </div>
+            {/* BALÃO VERMELHO NA AGENDA (HOME HERO) */}
+            {dbDemonstracoes.length > 0 && (
+              <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', minWidth: '20px', height: '20px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
+                {dbDemonstracoes.length}
+              </div>
+            )}
           </div>
-
-          {dbEstatisticas.map((stat, idx) => (
-            <div key={idx} className="bf-action-card" style={{ cursor: 'default' }}>
-              <div className="bf-action-card-icon" style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' }}>
-                <i className={stat.icone} style={{ fontSize: '1.5rem' }}></i>
-              </div>
-              <div className="bf-action-card-content">
-                <span className="bf-action-card-title" style={{ fontSize: '1.1rem', fontFamily: '"Comum", sans-serif' }}>{stat.valor}</span>
-                <span className="bf-action-card-subtitle">{stat.rotulo}</span>
-              </div>
-            </div>
-          ))}
 
         </div>
       </section>
@@ -1547,7 +1557,6 @@ export default function Home() {
 
       <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
         <section id="agenda" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
-          <div className="section-top-divider" />
 
           <SectionHeaderApple overline="Programação" title="Agenda Oficial." subtitle="Acompanhe nossa agenda de demonstrações. As demonstrações são feitas com meteorologia e tempo atualizados em tempo real." />
           
@@ -1625,7 +1634,6 @@ export default function Home() {
       <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent', display: 'flex', alignItems: 'center' }}>
         
         <section id="aeronave" style={{ position: 'relative', zIndex: 1, width: '100%', margin: '0 auto', paddingTop: '4rem' }}>
-          <div className="section-top-divider" style={{ marginBottom: '1rem' }} />
 
           <div className="section-container reveal-on-scroll" style={{ paddingBottom: '2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', textAlign: 'center', alignItems: 'center' }}>
@@ -1662,8 +1670,8 @@ export default function Home() {
             onTouchEnd={onTouchEnd}
             style={{ 
               marginTop: '1rem', 
-              height: '60vh',
-              minHeight: '400px',
+              height: '75vh',
+              minHeight: '450px',
               overflow: 'hidden', 
               cursor: isDragging ? 'grabbing' : 'grab',
               boxShadow: 'inset 0 0 50px rgba(0,0,0,0.5)' 
@@ -1694,7 +1702,7 @@ export default function Home() {
               onClick={() => setCurrentSlide(s => s === 0 ? sliderImages.length - 1 : s - 1)}
               className="slider-arrow-inline"
             >
-              <ChevronLeft size={28} strokeWidth={1.5} />
+              <ChevronLeft size={24} strokeWidth={1.5} />
             </button>
             
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1718,8 +1726,22 @@ export default function Home() {
               onClick={() => setCurrentSlide(s => s === sliderImages.length - 1 ? 0 : s + 1)}
               className="slider-arrow-inline"
             >
-              <ChevronRight size={28} strokeWidth={1.5} />
+              <ChevronRight size={24} strokeWidth={1.5} />
             </button>
+
+            {/* PROGRESSO CIRCULAR DO SLIDER */}
+            <div style={{ position: 'relative', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '1rem' }} title="Tempo para a próxima imagem">
+               <svg width="40" height="40" viewBox="0 0 40 40" style={{ transform: 'rotate(-90deg)', position: 'absolute' }}>
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="#0ea5e9" strokeWidth="2"
+                          strokeDasharray="100.5"
+                          strokeDashoffset={(slideProgress / 100) * 100.5}
+                          style={{ transition: 'stroke-dashoffset 0.05s linear' }} />
+               </svg>
+               <span style={{ fontSize: '0.75rem', color: '#0ea5e9', fontFamily: '"Comum", sans-serif', fontWeight: 'bold', zIndex: 2 }}>
+                 {timeLeft}s
+               </span>
+            </div>
           </div>
 
         </section>
@@ -1728,7 +1750,6 @@ export default function Home() {
       {dbNoticias.length > 0 && (
         <div style={{ background: 'transparent' }}>
           <section id="noticias" className="section-container" style={{ paddingTop: '4rem' }}>
-            <div className="section-top-divider" />
 
             <SectionHeaderApple overline="Comunicação" title="Artigos Recentes." subtitle="Fique a par das últimas novidades da esquadrilha." />
             <div className="responsive-grid reveal-on-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
@@ -1753,7 +1774,6 @@ export default function Home() {
         <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
           
           <section id="midias" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
-            <div className="section-top-divider" />
 
             <SectionHeaderApple overline="Ao Vivo" title="Transmissões Oficiais." subtitle="Acompanhe as nossas apresentações em tempo real e reveja os melhores momentos nos nossos canais." />
 
@@ -1790,7 +1810,6 @@ export default function Home() {
       <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
         
         <section id="sobre" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
-          <div className="section-top-divider" />
 
           <SectionHeaderApple overline="Nossa História" title="O Esquadrão e a Jornada." subtitle="Descubra a história e os valores que guiam o nosso esquadrão." />
 
@@ -1817,11 +1836,6 @@ export default function Home() {
               <p style={{ textAlign: 'justify', fontWeight: 300, fontSize: '1.05rem', lineHeight: '1.8', color: '#cbd5e1', margin: 0 }}>
                 A Esquadrilha da Fumaça Virtual nasce da paixão pela aviação e pelo voo em formação de alta performance. Operando exclusivamente no Microsoft Flight Simulator, o nosso esquadrão busca replicar com extrema fidelidade, precisão e profissionalismo a doutrina da verdadeira Esquadrilha da Fumaça.
               </p>
-              
-              <blockquote style={{ borderLeft: '3px solid #0ea5e9', paddingLeft: '1.5rem', margin: '1rem 0 0 0', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', lineHeight: '1.7', color: '#94a3b8' }}>
-                "O nosso objetivo não é apenas voar, mas elevating a demonstração aérea no simulador aos mais altos níveis de disciplina, beleza e sincronia. O treinamento nunca termina."
-                <footer style={{ marginTop: '0.5rem', color: '#0ea5e9', fontWeight: 600, fontSize: '0.8rem', fontStyle: 'normal', textTransform: 'uppercase', letterSpacing: '0.1em' }}>— Comandante</footer>
-              </blockquote>
             </div>
 
           </div>
@@ -2040,8 +2054,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={`modal-overlay ${legalModalOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content" style={{ padding: 0, background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)', border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: '700px', borderRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+      <div className={`modal-overlay ${legalModalOpen ? 'active' : ''}`} onClick={fecharModalClicandoFora} style={{ zIndex: 9999 }}>
+        <div ref={modalContentRef} className="modal-content" style={{ padding: 0, background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)', border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: '700px', borderRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
           
           <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -2071,6 +2085,13 @@ export default function Home() {
               <AlertTriangle size={16} /> Disclaimer
             </button>
           </div>
+
+          {!cookiesAccepted && activeLegalTab === 'cookies' && (
+            <div style={{ display: 'flex', gap: '1rem', padding: '1.5rem', background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={recusarCookies} style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', padding: '0.8rem', borderRadius: '12px', cursor: 'pointer', fontWeight: 500 }}>Recusar</button>
+              <button onClick={aceitarCookies} style={{ flex: 1, background: '#0ea5e9', border: 'none', color: '#030712', padding: '0.8rem', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Aceitar e Fechar</button>
+            </div>
+          )}
 
         </div>
       </div>

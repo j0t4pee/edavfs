@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import logoImage from '../images/logo.png';
 
 interface HeaderProps {
@@ -23,6 +25,7 @@ export default function Header({
 }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [agendaCount, setAgendaCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +33,14 @@ export default function Header({
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Busca a quantidade de eventos na agenda em tempo real para exibir o balão
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'agenda'), (snapshot) => {
+      setAgendaCount(snapshot.size);
+    });
+    return () => unsub();
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -41,8 +52,26 @@ export default function Header({
     <>
       <style>{`
         .desktop-nav .nav-link, .mobile-menu span {
-          font-family: 'Comum', sans-serif !important;
+          font-family: 'Regular', sans-serif !important;
           letter-spacing: 0.05em !important;
+        }
+        
+        .menu-badge {
+          background: #ef4444;
+          color: #fff;
+          font-size: 0.7rem;
+          font-weight: bold;
+          min-width: 18px;
+          height: 18px;
+          border-radius: 9px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 4px;
+          line-height: 0;
+          padding: 0 4px;
+          position: relative;
+          top: -6px; /* Eleva a bolinha inteira para agir como expoente */
         }
       `}</style>
 
@@ -78,7 +107,9 @@ export default function Header({
 
           <div className="desktop-nav">
             <span onClick={() => scrollToSection('pilotos')} className={`nav-link ${activeSection === 'pilotos' ? 'active' : ''}`}>Pilotos</span>
-            <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`}>Agenda</span>
+            <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center' }}>
+              Agenda {agendaCount > 0 && <span className="menu-badge">{agendaCount}</span>}
+            </span>
             <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</span>
             {hasNoticias && (
               <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
@@ -97,7 +128,9 @@ export default function Header({
 
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
         <span className={activeSection === 'pilotos' ? 'active' : ''} onClick={() => scrollToSection('pilotos')}>Pilotos</span>
-        <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')}>Agenda</span>
+        <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')} style={{ display: 'flex', alignItems: 'center' }}>
+          Agenda {agendaCount > 0 && <span className="menu-badge">{agendaCount}</span>}
+        </span>
         <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>Aeronave</span>
         {hasNoticias && (
           <span className={activeSection === 'noticias' ? 'active' : ''} onClick={() => scrollToSection('noticias')}>Artigos</span>
