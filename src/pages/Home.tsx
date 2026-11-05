@@ -32,7 +32,6 @@ import formacaoImage from '../images/formacao.png';
 import mfLogo from '../images/mf.png';
 import mfLogo24 from '../images/mf24.png';
 
-// Imagens do slider
 import tucano3png from '../images/tucano3.jpg';
 import tucano2png from '../images/tucano2.jpg';
 import tucano4png from '../images/tucano4.jpg';
@@ -1364,11 +1363,10 @@ export default function Home() {
           align-items: center;
           background: #0a1122;
           border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 16px;
+          border-radius: 4px; /* Atualizado para 4px */
           min-width: 280px;
           height: 70px;
           cursor: pointer;
-          overflow: hidden;
           flex: 0 0 auto;
           position: relative;
         }
@@ -1435,7 +1433,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* AVISO DE COOKIES FIXO NO FUNDO */}
       {!cookiesAccepted && (
         <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 99999, background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(14, 165, 233, 0.4)', borderRadius: '16px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', width: '90%', maxWidth: '800px', flexDirection: window.innerWidth < 768 ? 'column' : 'row', textAlign: window.innerWidth < 768 ? 'center' : 'left' }}>
           <div style={{ flex: 1 }}>
@@ -1477,25 +1474,25 @@ export default function Home() {
         <div className="hero-notification-bar reveal-on-scroll" style={{ position: 'relative', zIndex: 20, padding: '0 2rem', maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           
           {alistamentoAberto && (
-            <div className="bf-action-card" onClick={() => setIsFormModalOpen(true)} style={{ border: '1px solid rgba(14, 165, 233, 0.4)' }}>
-              <div className="bf-action-card-icon" style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' }}>
-                <FileText size={28} />
+            <div className="bf-action-card" onClick={() => setIsFormModalOpen(true)} style={{ border: '1px solid rgba(245, 158, 11, 0.4)' }}>
+              <div className="bf-action-card-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <ShieldCheck size={28} />
               </div>
               <div className="bf-action-card-content">
                 <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Alistamento EDAFS</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#0ea5e9' }}>Inscrições Abertas</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#f59e0b' }}>Inscrições Abertas</span>
               </div>
             </div>
           )}
 
           {solicitacaoAberta && (
-            <div className="bf-action-card" onClick={() => setIsDemoModalOpen(true)} style={{ border: '1px solid rgba(16, 185, 129, 0.4)' }}>
-              <div className="bf-action-card-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                <PlaneTakeoff size={28} />
+            <div className="bf-action-card" onClick={() => setIsDemoModalOpen(true)} style={{ border: '1px solid rgba(6, 182, 212, 0.4)' }}>
+              <div className="bf-action-card-icon" style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4' }}>
+                <Radio size={28} />
               </div>
               <div className="bf-action-card-content">
-                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Apresentação</span>
-                <span className="bf-action-card-subtitle" style={{ color: '#10b981' }}>Convide o Esquadrão</span>
+                <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Solicitar Demonstração do EDAFS</span>
+                <span className="bf-action-card-subtitle" style={{ color: '#06b6d4' }}>No Flight Simulator 2020/2024</span>
               </div>
             </div>
           )}
@@ -1506,11 +1503,10 @@ export default function Home() {
             </div>
             <div className="bf-action-card-content">
               <span className="bf-action-card-title" style={{ fontFamily: '"Comum", sans-serif' }}>Agenda Oficial</span>
-              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos voos</span>
+              <span className="bf-action-card-subtitle" style={{ color: '#eab308' }}>Ver próximos eventos</span>
             </div>
-            {/* BALÃO VERMELHO NA AGENDA (HOME HERO) */}
             {dbDemonstracoes.length > 0 && (
-              <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', minWidth: '20px', height: '20px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
+              <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', minWidth: '20px', height: '20px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }}>
                 {dbDemonstracoes.length}
               </div>
             )}
