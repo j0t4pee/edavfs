@@ -459,7 +459,7 @@ export default function Home() {
   }, [showTopBanner]);
 
   useEffect(() => {
-    document.title = "MSFS | Esquadrilha da Fumaça Virtual";
+    document.title = "EDAFS - Esquadrilha da Fumaça FS";
     document.documentElement.setAttribute('data-theme', 'dark');
 
     if (localStorage.getItem('edafs_age_blocked') === 'true') {
@@ -1551,7 +1551,7 @@ export default function Home() {
       </div>
 
       <section className="hero" style={{ minHeight: '80vh', height: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', paddingTop: '8rem', paddingBottom: '2rem' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || img1})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || img5})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(3,7,18,0.3)', pointerEvents: 'none' }} />
         
         <div className="hero-notification-bar reveal-on-scroll" style={{ position: 'relative', zIndex: 20, padding: '0 2rem', maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
