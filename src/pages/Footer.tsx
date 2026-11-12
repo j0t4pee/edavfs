@@ -49,7 +49,7 @@ export default function Footer({ hasNoticias, onOpenLegal }: FooterProps) {
           <a onClick={() => scrollToSection('midias')} className="footer-link">Mídias</a>
 
           {hasNoticias && <a onClick={() => scrollToSection('noticias')} className="footer-link">Artigos</a>}
-          <a onClick={() => scrollToSection('sobre')} className="footer-link">O Esquadrão</a>
+          <a onClick={() => scrollToSection('sobre')} className="footer-link">Sobre</a>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -15,6 +15,8 @@ import Header from './Header';
 import Footer from './Footer';
 
 import logoImage from '../images/logo.png';
+import faviconImage from '../images/favicon.png';
+import pilotoImg from '../images/piloto.png';
 import a29TopDown from '../images/a-29.png'; 
 import mfLogo from '../images/mf.png';
 import mfLogo24 from '../images/mf24.png';
@@ -51,6 +53,7 @@ interface Piloto {
   descricao?: string;
   simulador?: string;
   patente?: string;
+  ocultarSimulador?: boolean;
 }
 
 interface Demonstracao {
@@ -64,13 +67,11 @@ interface Demonstracao {
   dataHora: string;
   tipo: string;
   plataforma?: string;
+  ocultarSimulador?: boolean;
 }
 
-interface Video {
-  id?: string;
-  url: string;
-  ativo?: boolean;
-}
+interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
+interface Video { id?: string; url: string; ativo?: boolean; }
 
 const getPatenteAbbr = (patente?: string) => {
   if (patente === 'Capitão Aviador') return 'Cap. Av.';
@@ -183,22 +184,48 @@ const PilotBioModal = ({ piloto, onClose }: { piloto: Piloto | null; onClose: ()
     <div className="modal-overlay active" style={{ zIndex: 100000 }} onClick={onClose}>
       <div
         className="modal-content glass-panel modal-content-pilot"
-        style={{ padding: '2.5rem', maxWidth: '500px', width: '90%', position: 'relative', overflow: 'hidden', animation: 'scaleIn 0.3s ease' }}
+        style={{ 
+          padding: 0, 
+          maxWidth: '850px', 
+          width: '95%', 
+          position: 'relative', 
+          overflow: 'hidden', 
+          animation: 'scaleIn 0.3s ease',
+          display: 'flex',
+          minHeight: '450px'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: '#0ea5e9', filter: 'blur(80px)', opacity: 0.2, zIndex: 0 }} />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '50%',
+          height: '100%',
+          backgroundImage: `url(${pilotoImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center left',
+          maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+          opacity: 0.6,
+          zIndex: 0,
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '300px', height: '300px', background: '#0ea5e9', filter: 'blur(120px)', opacity: 0.15, zIndex: 0, pointerEvents: 'none' }} />
 
         <button
           onClick={onClose}
-          style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', zIndex: 10, transition: 'color 0.2s' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+          style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s', backdropFilter: 'blur(10px)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
         >
-          <X size={24} />
+          <X size={20} />
         </button>
 
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div className="bio-container-content" style={{ position: 'relative', zIndex: 1, padding: '3.5rem', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginLeft: 'auto', maxWidth: '650px' }}>
+          
+          <div className="bio-header" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
             <div style={{ 
               minWidth: '84px', 
               width: 'auto', 
@@ -227,34 +254,39 @@ const PilotBioModal = ({ piloto, onClose }: { piloto: Piloto | null; onClose: ()
                 {getInitials3(piloto.nome)}
               </span>
             </div>
-            <div style={{ minWidth: 0 }}>
-              <h3 style={{ margin: 0, fontSize: 'clamp(1.4rem, 3vw, 1.8rem)', color: '#ffffff', fontWeight: 'bold', lineHeight: 1.2 }}>{piloto.nome}</h3>
-              <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.8rem', display: 'block', marginTop: '4px' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', minWidth: 0 }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', color: '#ffffff', fontWeight: 'bold', lineHeight: 1.1, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                {piloto.nome}
+              </h3>
+              <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.9rem', display: 'block', marginTop: '6px', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                 {piloto.patente ? `${piloto.patente} • ` : ''}Fumaça {piloto.posicao}
               </span>
             </div>
           </div>
 
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
+          <div style={{ height: '1px', background: 'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%)', marginBottom: '2rem' }} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3rem', textAlign: 'left', marginBottom: '2rem' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Idade</span>
-              <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px' }}>{piloto.idade || '--'} anos</div>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Idade</span>
+              <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px', fontSize: '1.2rem' }}>{piloto.idade || '--'} anos</div>
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Localidade</span>
-              <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px' }}>{piloto.cidade || '--'} {piloto.uf ? `- ${piloto.uf}` : ''}</div>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Localidade</span>
+              <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px', fontSize: '1.2rem' }}>{piloto.cidade || '--'} {piloto.uf ? `- ${piloto.uf}` : ''}</div>
             </div>
-            <div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Simulador Principal</span>
-              <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px' }}>{piloto.simulador || piloto.plataforma || 'MSFS 2020'}</div>
-            </div>
+            {!piloto.ocultarSimulador && (
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Plataforma</span>
+                <div style={{ color: '#f8fafc', fontWeight: 500, marginTop: '4px', fontSize: '1.2rem' }}>{piloto.simulador || piloto.plataforma || 'MSFS 2020'}</div>
+              </div>
+            )}
           </div>
 
-          <div style={{ marginTop: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Sobre</span>
-            <p style={{ margin: '0.5rem 0 0 0', color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6 }}>
+          <div style={{ textAlign: 'left' }}>
+            <span style={{ fontSize: '0.75rem', color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Biografia & Trajetória</span>
+            <p style={{ margin: 0, color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.8, textAlign: 'justify' }}>
               {piloto.descricao || 'Biografia em atualização. Em breve o piloto irá preencher o seu perfil com mais informações acerca da sua trajetória na aviação virtual.'}
             </p>
           </div>
@@ -282,8 +314,10 @@ export default function Home() {
   });
   
   const [activeSection, setActiveSection] = useState('');
+  
   const [pilotoTab, setPilotoTab] = useState<'2020' | '2024'>('2024');
-  const [agendaTab, setAgendaTab] = useState<'2020' | '2024' | 'historico'>('2020');
+  const [agendaTab, setAgendaTab] = useState<'2020' | '2024' | 'historico'>('2024');
+  
   const [midiaTab, setMidiaTab] = useState<'videos' | 'galeria'>('galeria');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   
@@ -292,6 +326,9 @@ export default function Home() {
 
   const [videoPage, setVideoPage] = useState(1);
   const VIDEOS_PER_PAGE = 6;
+
+  const [galeriaPage, setGaleriaPage] = useState(1);
+  const GALERIA_PER_PAGE = 6;
   
   const [legalModalOpen, setLegalModalOpen] = useState(false);
   const [activeLegalTab, setActiveLegalTab] = useState<'privacidade' | 'termos' | 'cookies' | 'disclaimer'>('privacidade');
@@ -313,6 +350,8 @@ export default function Home() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [solicitacaoAberta, setSolicitacaoAberta] = useState(true);
   const [customHeader, setCustomHeader] = useState<string | null>(null);
+  const [mostrarFS20, setMostrarFS20] = useState(true);
+  const [mostrarFS24, setMostrarFS24] = useState(true);
   
   const [plataforma, setPlataforma] = useState('');
   const [simuladorPossui, setSimuladorPossui] = useState('');
@@ -427,27 +466,6 @@ export default function Home() {
       setIsBlocked(true);
     }
 
-    const handleScroll = () => {
-      const sections = ['pilotos', 'agenda', 'midias', 'sobre', 'alistamento'];
-      let current = '';
-      
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 3) {
-            current = section;
-          }
-        }
-      }
-      
-      if (window.scrollY < 100) {
-        current = '';
-      }
-
-      setActiveSection(current);
-    };
-
     const unsubPilotos = onSnapshot(collection(db, 'pilotos'), (snapshot) => {
       const arr: Piloto[] = [];
       snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Piloto));
@@ -477,17 +495,40 @@ export default function Home() {
         const d = docSnap.data();
         setAlistamentoAberto(d.alistamentoAberto || false);
         setSolicitacaoAberta(d.solicitacaoAberta !== undefined ? d.solicitacaoAberta : true);
+        if (d.mostrarFS20 !== undefined) setMostrarFS20(d.mostrarFS20);
+        if (d.mostrarFS24 !== undefined) setMostrarFS24(d.mostrarFS24);
         if (d.headerImageUrl) {
           setCustomHeader(d.headerImageUrl);
         }
       }
     });
 
+    const handleScroll = () => {
+      const sections = ['pilotos', 'agenda', 'midias', 'sobre', 'alistamento'];
+      let current = '';
+      
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= window.innerHeight / 3) {
+            current = section;
+          }
+        }
+      }
+      
+      if (window.scrollY < 100) {
+        current = '';
+      }
+
+      setActiveSection(current);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      unsubPilotos();
-      unsubAgenda();
-      unsubVideos();
+      unsubPilotos(); 
+      unsubAgenda(); 
+      unsubVideos(); 
       unsubConfig();
       window.removeEventListener('scroll', handleScroll);
     };
@@ -507,6 +548,28 @@ export default function Home() {
     
     return () => observer.disconnect();
   }, [dbPilotos, dbDemonstracoes, dbVideos]);
+
+  const hasAgenda2020 = mostrarFS20 && dbDemonstracoes.some(a => a.plataforma === '2020' || a.plataforma === 'Ambos');
+  const hasAgenda2024 = mostrarFS24 && dbDemonstracoes.some(a => a.plataforma === '2024' || a.plataforma === 'Ambos');
+  const hasPiloto2020 = mostrarFS20 && dbPilotos.some(p => p.plataforma === '2020' || p.plataforma === 'Ambos');
+  const hasPiloto2024 = mostrarFS24 && dbPilotos.some(p => p.plataforma === '2024' || p.plataforma === 'Ambos');
+  const hasVideos = dbVideos.length > 0;
+  const hasGaleria = galeriaImagens.length > 0;
+
+  useEffect(() => {
+    if (agendaTab === '2024' && !hasAgenda2024 && hasAgenda2020) setAgendaTab('2020');
+    if (agendaTab === '2020' && !hasAgenda2020 && hasAgenda2024) setAgendaTab('2024');
+  }, [hasAgenda2024, hasAgenda2020, agendaTab]);
+
+  useEffect(() => {
+    if (pilotoTab === '2024' && !hasPiloto2024 && hasPiloto2020) setPilotoTab('2020');
+    if (pilotoTab === '2020' && !hasPiloto2020 && hasPiloto2024) setPilotoTab('2024');
+  }, [hasPiloto2024, hasPiloto2020, pilotoTab]);
+
+  useEffect(() => {
+    if (midiaTab === 'videos' && !hasVideos && hasGaleria) setMidiaTab('galeria');
+    if (midiaTab === 'galeria' && !hasGaleria && hasVideos) setMidiaTab('videos');
+  }, [hasVideos, hasGaleria, midiaTab]);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -570,7 +633,7 @@ export default function Home() {
 
   const submitAlistamento = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormReady) return;
+    if(!isFormReady) return;
     
     setIsSubmitting(true);
 
@@ -600,18 +663,8 @@ export default function Home() {
 
       setIsFormModalOpen(false);
       setModalAlistamento(true);
-      setNome('');
-      setNickname('');
-      setDiscord('');
-      setExperiencia('');
-      setWhatsapp('');
-      setPlataforma('');
-      setSimuladorPossui('');
-      setDataNascimento('');
-      setVooAcrobatico('');
-      setDetalhesVooAcrobatico('');
-      setDisponibilidade('');
-      setMotivoIngresso('');
+      setNome(''); setNickname(''); setDiscord(''); setExperiencia(''); setWhatsapp(''); setPlataforma(''); setSimuladorPossui('');
+      setDataNascimento(''); setVooAcrobatico(''); setDetalhesVooAcrobatico(''); setDisponibilidade(''); setMotivoIngresso('');
       setPossuiA29('');
     } catch (error) {
       alert("Houve um erro ao enviar a sua candidatura. Verifique a sua conexão e tente novamente.");
@@ -648,9 +701,7 @@ export default function Home() {
       localStorage.setItem('lastDemoRequest_edafs', Date.now().toString());
       setIsDemoModalOpen(false);
       setModalDemoSucesso(true);
-      setDemoCidade('');
-      setDemoTransmissao('');
-      setDemoCanal('');
+      setDemoCidade(''); setDemoTransmissao(''); setDemoCanal('');
     } catch (error) {
       console.error(error);
       alert("Houve um erro ao enviar o pedido. Tente novamente.");
@@ -667,7 +718,11 @@ export default function Home() {
     return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]), 23, 59, 59).getTime();
   };
 
-  const filteredPilotos = dbPilotos.filter(p => (p.plataforma || '2020') === pilotoTab || p.plataforma === 'Ambos');
+  const filteredPilotos = dbPilotos.filter(p => {
+    if (pilotoTab === '2024') return (p.plataforma === '2024' || p.plataforma === 'Ambos') && mostrarFS24;
+    if (pilotoTab === '2020') return (p.plataforma === '2020' || p.plataforma === 'Ambos') && mostrarFS20;
+    return false;
+  });
   
   const filteredAgenda = dbDemonstracoes.filter(a => {
     const eventTime = parseEventDate(a.dataHora);
@@ -676,8 +731,10 @@ export default function Home() {
     if (agendaTab === 'historico') {
       return isPast;
     } else {
-      const platMatch = (a.plataforma || '2020') === agendaTab || a.plataforma === 'Ambos';
-      return !isPast && platMatch;
+      if (isPast) return false;
+      if (agendaTab === '2024') return (a.plataforma === '2024' || a.plataforma === 'Ambos') && mostrarFS24;
+      if (agendaTab === '2020') return (a.plataforma === '2020' || a.plataforma === 'Ambos') && mostrarFS20;
+      return false;
     }
   });
 
@@ -707,10 +764,14 @@ export default function Home() {
     return acc;
   }, {});
 
-  const maxVideos = dbVideos.slice(0, 10);
+  const maxVideos = dbVideos.slice(0, 50); 
   const totalVideoPages = Math.ceil(maxVideos.length / VIDEOS_PER_PAGE) || 1;
   const startVideoIndex = (videoPage - 1) * VIDEOS_PER_PAGE;
   const currentVideos = maxVideos.slice(startVideoIndex, startVideoIndex + VIDEOS_PER_PAGE);
+
+  const totalGaleriaPages = Math.ceil(galeriaImagens.length / GALERIA_PER_PAGE) || 1;
+  const startGaleriaIndex = (galeriaPage - 1) * GALERIA_PER_PAGE;
+  const currentGaleria = galeriaImagens.slice(startGaleriaIndex, startGaleriaIndex + GALERIA_PER_PAGE);
 
   const renderFormationSlot = (posicao: string) => {
     const pilotosSlot = filteredPilotos.filter(p => p.posicao === posicao && !p.oculto);
@@ -731,6 +792,7 @@ export default function Home() {
 
     return (
       <div className="tatic-slot noselect" style={{ display: 'flex', alignItems: 'center', position: 'relative', width: '300px', justifyContent: 'center', height: '180px', cursor: 'default' }}>
+        
         <div style={{ position: 'relative', zIndex: 2 }}>
           <img 
             src={a29TopDown} 
@@ -757,7 +819,7 @@ export default function Home() {
                 className="bio-card" 
                 onClick={() => setSelectedPiloto(piloto)} 
                 style={{ cursor: 'pointer' }}
-                title=""
+                title="Clique para ver detalhes"
               >
                 <div className="bio-text">
                   <span style={{ fontSize: '1rem', fontFamily: '"Regular", Arial, sans-serif', fontWeight: 500, color: '#f8fafc' }}>
@@ -777,6 +839,7 @@ export default function Home() {
             </div>
           )}
         </div>
+        
       </div>
     );
   };
@@ -1062,6 +1125,13 @@ export default function Home() {
           100% { transform: scale(1); opacity: 0.7; } 
         }
 
+        .section-top-divider {
+          width: 100%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 50%, transparent);
+          margin-bottom: 4rem;
+        }
+
         .modern-input {
           width: 100%;
           background: rgba(255, 255, 255, 0.03);
@@ -1251,55 +1321,78 @@ export default function Home() {
         
         .legal-footer-link { color: #94a3b8; cursor: pointer; transition: color 0.2s; display: flex; gap: 6px; align-items: center; user-select: none; }
         .legal-footer-link:hover { color: #0ea5e9; }
+        
+        @media (min-width: 900px) {
+          .split-grid { grid-template-columns: 1fr 1fr; }
+          .split-grid.reverse { direction: rtl; }
+          .split-grid.reverse > * { direction: ltr; }
+        }
 
         @media (max-width: 900px) {
-          .slot-info {
-            left: 50% !important;
-            right: auto !important;
-            top: 85% !important;
-            transform: translateX(-50%) !important;
-            width: max-content !important;
-            min-width: 180px !important;
-          }
-          .tatic-slot:hover .slot-info {
-            transform: translate(-50%, 15px) !important;
-          }
-          .bio-card {
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            padding: 0.75rem 1rem !important;
-            white-space: normal !important; 
-          }
-          .slot-left .bio-text, .slot-right .bio-text {
-            text-align: center !important;
-          }
+           .slot-info {
+              left: 50% !important;
+              right: auto !important;
+              top: 85% !important;
+              transform: translateX(-50%) !important;
+              width: max-content !important;
+              min-width: 180px !important;
+           }
+           .tatic-slot:hover .slot-info {
+              transform: translate(-50%, 15px) !important;
+           }
+           .bio-card {
+              flex-direction: column !important;
+              align-items: center !important;
+              text-align: center !important;
+              padding: 0.75rem 1rem !important;
+              white-space: normal !important; 
+           }
+           .slot-left .bio-text, .slot-right .bio-text {
+              text-align: center !important;
+           }
+
           .desktop-nav { display: none !important; }
           .mobile-toggle { display: block !important; }
           .section-container { padding: 4rem 1.5rem 0 !important; }
           .footer-grid { grid-template-columns: 1fr; } 
           .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+          
           .formacao-wrapper {
-            transform: scale(0.65) !important;
-            margin-bottom: -150px !important;
+             transform: scale(0.65) !important;
+             margin-bottom: -150px !important;
           }
+
           .modal-content-pilot {
-            padding: 1.5rem !important;
+             padding: 1.5rem !important;
+          }
+          .bio-container-content {
+            padding: 2rem !important;
+            max-width: 100% !important;
+            align-items: center !important;
+            text-align: center !important;
+          }
+          .bio-header {
+            flex-direction: column !important;
+            text-align: center !important;
+          }
+          .bio-header > div {
+            align-items: center !important;
+            text-align: center !important;
           }
         }
         
         @media (max-width: 600px) {
-          .formacao-wrapper {
-            transform: scale(0.45) !important;
-            margin-bottom: -220px !important;
-          }
+           .formacao-wrapper {
+             transform: scale(0.45) !important;
+             margin-bottom: -220px !important;
+           }
         }
         
         @media (max-width: 400px) {
-          .formacao-wrapper {
-            transform: scale(0.38) !important;
-            margin-bottom: -250px !important;
-          }
+           .formacao-wrapper {
+             transform: scale(0.38) !important;
+             margin-bottom: -250px !important;
+           }
         }
 
         .legal-tab { 
@@ -1400,7 +1493,9 @@ export default function Home() {
                 Esquadrão virtual focado no Microsoft Flight Simulator. Nascidos da paixão pela aviação, buscamos replicar com extrema fidelidade e profissionalismo a doutrina da Esquadrilha da Fumaça.
               </div>
             </div>
-            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.4)' }} />
+            
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.4)' }}></div>
+
             <div className="tarja-item">
               EDAV
               <div className="tarja-tooltip">
@@ -1408,6 +1503,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+
           <div className="tarja-right">
             <button className="tarja-btn primary" onClick={() => window.open('https://edav.com.br', '_blank')}>IR PARA O EDAV</button>
             <button className="tarja-close" onClick={handleCloseBanner} aria-label="Fechar banner">
@@ -1455,7 +1551,7 @@ export default function Home() {
       </div>
 
       <section className="hero" style={{ minHeight: '80vh', height: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', paddingTop: '8rem', paddingBottom: '2rem' }}>
-        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || img5})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${customHeader || img1})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(3,7,18,0.3)', pointerEvents: 'none' }} />
         
         <div className="hero-notification-bar reveal-on-scroll" style={{ position: 'relative', zIndex: 20, padding: '0 2rem', maxWidth: '1400px', width: '100%', margin: '0 auto', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -1479,18 +1575,20 @@ export default function Home() {
             </div>
           )}
 
-          <div className="bf-action-card" onClick={() => scrollToSection('agenda')}>
-            <div className="bf-action-card-icon"><Calendar size={28} /></div>
-            <div className="bf-action-card-content">
-              <span className="bf-action-card-title">Agenda Oficial</span>
-              <span className="bf-action-card-subtitle">Ver próximos eventos</span>
-            </div>
-            {dbDemonstracoes.length > 0 && (
-              <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#0ea5e9', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', minWidth: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.5)' }}>
-                {dbDemonstracoes.length}
+          {hasAgenda2020 || hasAgenda2024 ? (
+            <div className="bf-action-card" onClick={() => scrollToSection('agenda')}>
+              <div className="bf-action-card-icon"><Calendar size={28} /></div>
+              <div className="bf-action-card-content">
+                <span className="bf-action-card-title">Agenda Oficial</span>
+                <span className="bf-action-card-subtitle">Ver próximos eventos</span>
               </div>
-            )}
-          </div>
+              {dbDemonstracoes.length > 0 && (
+                <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#0ea5e9', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', minWidth: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.5)' }}>
+                  {dbDemonstracoes.length}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -1499,12 +1597,16 @@ export default function Home() {
           <SectionHeaderApple overline="Equipe" title="Os Nossos Pilotos." subtitle="Conheça os aviadores virtuais que compõem a Esquadrilha da Fumaça Virtual, separados por plataforma." />
 
           <div className="reveal-on-scroll" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-            <button className={`tab-btn ${pilotoTab === '2024' ? 'active' : ''}`} onClick={() => setPilotoTab('2024')}>
-              <img src={mfLogo24} alt="MSFS" style={{ height: '26px', filter: pilotoTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
-            </button>
-            <button className={`tab-btn ${pilotoTab === '2020' ? 'active' : ''}`} onClick={() => setPilotoTab('2020')}>
-              <img src={mfLogo} alt="MSFS" style={{ height: '16px', filter: pilotoTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
-            </button>
+            {hasPiloto2024 && (
+              <button className={`tab-btn ${pilotoTab === '2024' ? 'active' : ''}`} onClick={() => setPilotoTab('2024')}>
+                <img src={mfLogo24} alt="MSFS 2024" style={{ height: '26px', filter: pilotoTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+              </button>
+            )}
+            {hasPiloto2020 && (
+              <button className={`tab-btn ${pilotoTab === '2020' ? 'active' : ''}`} onClick={() => setPilotoTab('2020')}>
+                <img src={mfLogo} alt="MSFS 2020" style={{ height: '16px', filter: pilotoTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+              </button>
+            )}
           </div>
 
           <div className="formacao-scroll-container noselect reveal-on-scroll" style={{ marginTop: '2rem', transition: 'all 0.3s ease' }}>
@@ -1525,137 +1627,163 @@ export default function Home() {
         </section>
       </div>
 
-      <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
-        <section id="agenda" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
-          <SectionHeaderApple overline="Programação" title="Agenda Oficial." subtitle="Acompanhe nossa agenda de demonstrações. As demonstrações são feitas com meteorologia e tempo atualizados em tempo real." />
-          
-          <div className="reveal-on-scroll" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-              <button className={`tab-btn ${agendaTab === '2020' ? 'active' : ''}`} onClick={() => setAgendaTab('2020')}>
-                <img src={mfLogo} alt="MSFS" style={{ height: '16px', filter: agendaTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} /> 
-              </button>
-              <button className={`tab-btn ${agendaTab === '2024' ? 'active' : ''}`} onClick={() => setAgendaTab('2024')}>
-                <img src={mfLogo24} alt="MSFS" style={{ height: '28px', filter: agendaTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
-              </button>
-              <button className={`tab-btn ${agendaTab === 'historico' ? 'active' : ''}`} onClick={() => setAgendaTab('historico')} style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                <History size={16} /> Histórico
-              </button>
-            </div>
-
-            <div style={{ height: '1px', width: '100%', background: '#334155', marginBottom: '2.5rem' }} />
+      {(hasAgenda2020 || hasAgenda2024) && (
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
+          <section id="agenda" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
+            <SectionHeaderApple overline="Programação" title="Agenda Oficial." subtitle="Acompanhe nossa agenda de demonstrações. As demonstrações são feitas com meteorologia e tempo atualizados em tempo real." />
             
-            {Object.keys(groupedAgenda).length > 0 ? (
-              Object.keys(groupedAgenda).map(month => (
-                <div key={month} style={{ marginBottom: '2.5rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 400, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
-                    {month}
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {groupedAgenda[month].map((dem: Demonstracao, idx: number) => {
-                      let statusColor = '#0ea5e9'; 
-                      if (dem.status === 'Confirmado') statusColor = '#10b981';
-                      if (dem.status === 'Cancelado') statusColor = '#ef4444';
-                      if (agendaTab === 'historico') statusColor = '#64748b';
-
-                      const datePart = dem.dataHora.split(' às ')[0] || dem.dataHora;
-                      const timePart = dem.dataHora.includes('às') ? ` às ${dem.dataHora.split(' às ')[1]}` : '';
-
-                      return (
-                        <div
-                          key={dem.id || idx}
-                          className="agenda-card"
-                          style={{ 
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                            background: `linear-gradient(90deg, ${statusColor}33 0%, rgba(3,7,18,0) 100%)`,
-                            borderLeft: `4px solid ${statusColor}`,
-                            padding: '1rem 1.5rem',
-                            opacity: agendaTab === 'historico' ? 0.7 : 1
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 300 }}>
-                              {datePart}{timePart}
-                            </span>
-                            <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem', fontSize: '1.05rem' }}>
-                              {dem.cidade}
-                            </span>
-                          </div>
-                          <span style={{ color: statusColor, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                            {agendaTab === 'historico' ? 'REALIZADO' : (dem.status === 'Planejamento' ? 'PREVISÃO' : dem.status)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-                <Calendar size={32} color={agendaTab === 'historico' ? "#64748b" : "#0ea5e9"} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-                <p style={{ fontWeight: 300, color: '#64748b' }}>
-                  {agendaTab === 'historico' ? 'Nenhum evento passado encontrado no histórico.' : 'Nenhum evento agendado para esta plataforma.'}
-                </p>
-              </div>
-            )}
-
-            {totalAgendaPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2.5rem' }}>
-                <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer' }}>&lt; ANTERIOR</button>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>PÁG {agendaPage} / {totalAgendaPages}</span>
-                <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer' }}>PRÓXIMA &gt;</button>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
-        <section id="midias" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
-          <SectionHeaderApple overline="Mídias" title="Vídeos e Galeria." subtitle="Acompanhe os nossos melhores momentos em vídeo e fotografia." />
-
-          <div className="reveal-on-scroll" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-            <button className={`tab-btn ${midiaTab === 'galeria' ? 'active' : ''}`} onClick={() => setMidiaTab('galeria')}>
-              <Camera size={18} style={{ marginRight: '6px' }} /> Galeria
-            </button>
-            <button className={`tab-btn ${midiaTab === 'videos' ? 'active' : ''}`} onClick={() => setMidiaTab('videos')}>
-              <Play size={18} style={{ marginRight: '6px' }} /> Vídeos
-            </button>
-          </div>
-
-          {midiaTab === 'videos' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2rem', animation: 'fadeIn 0.5s ease' }}>
-                {currentVideos.length > 0 ? (
-                  currentVideos.map((vid, idx) => (
-                    <div key={vid.id || idx} style={{ position: 'relative', width: '100%', maxWidth: '420px', aspectRatio: '16/9', background: '#000', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                      <iframe width="100%" height="100%" src={vid.url} title={`Video ${idx}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', width: '100%' }}>Nenhum vídeo publicado.</div>
+            <div className="reveal-on-scroll" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                {hasAgenda2024 && (
+                  <button className={`tab-btn ${agendaTab === '2024' ? 'active' : ''}`} onClick={() => setAgendaTab('2024')}>
+                    <img src={mfLogo24} alt="MSFS 2024" style={{ height: '28px', filter: agendaTab === '2024' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} />
+                  </button>
                 )}
+                {hasAgenda2020 && (
+                  <button className={`tab-btn ${agendaTab === '2020' ? 'active' : ''}`} onClick={() => setAgendaTab('2020')}>
+                    <img src={mfLogo} alt="MSFS 2020" style={{ height: '16px', filter: agendaTab === '2020' ? 'none' : 'grayscale(100%) opacity(70%)', transition: 'all 0.3s ease' }} /> 
+                  </button>
+                )}
+                <button className={`tab-btn ${agendaTab === 'historico' ? 'active' : ''}`} onClick={() => setAgendaTab('historico')} style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                  <History size={16} /> Histórico
+                </button>
               </div>
-              {totalVideoPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                  <button onClick={() => setVideoPage(p => Math.max(1, p - 1))} disabled={videoPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: videoPage === 1 ? 'not-allowed' : 'pointer' }}>&lt; ANTERIOR</button>
-                  <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>PÁG {videoPage} / {totalVideoPages}</span>
-                  <button onClick={() => setVideoPage(p => Math.min(totalVideoPages, p + 1))} disabled={videoPage === totalVideoPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: videoPage === totalVideoPages ? 'not-allowed' : 'pointer' }}>PRÓXIMA &gt;</button>
+
+              <div style={{ height: '1px', width: '100%', background: '#334155', marginBottom: '2.5rem' }} />
+              
+              {Object.keys(groupedAgenda).length > 0 ? (
+                Object.keys(groupedAgenda).map(month => (
+                  <div key={month} style={{ marginBottom: '2.5rem' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 400, color: '#f8fafc', textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>
+                      {month}
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {groupedAgenda[month].map((dem: Demonstracao, idx: number) => {
+                        let statusColor = '#0ea5e9'; 
+                        if (dem.status === 'Confirmado') statusColor = '#10b981';
+                        if (dem.status === 'Cancelado') statusColor = '#ef4444';
+                        if (agendaTab === 'historico') statusColor = '#64748b';
+
+                        const datePart = dem.dataHora.split(' às ')[0] || dem.dataHora;
+                        const timePart = dem.dataHora.includes('às') ? ` às ${dem.dataHora.split(' às ')[1]}` : '';
+
+                        return (
+                          <div
+                            key={dem.id || idx}
+                            className="agenda-card"
+                            style={{ 
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                              background: `linear-gradient(90deg, ${statusColor}33 0%, rgba(3,7,18,0) 100%)`,
+                              borderLeft: `4px solid ${statusColor}`,
+                              padding: '1rem 1.5rem',
+                              opacity: agendaTab === 'historico' ? 0.7 : 1
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 300 }}>
+                                {datePart}{timePart}
+                              </span>
+                              <span style={{ color: '#cbd5e1', fontWeight: 300, marginLeft: '0.5rem', fontSize: '1.05rem' }}>
+                                {dem.cidade}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                              {!dem.ocultarSimulador && (dem.plataforma === '2024' || dem.plataforma === 'Ambos') && agendaTab !== 'historico' ? (
+                                <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span>
+                              ) : null}
+                              <span style={{ color: statusColor, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                {agendaTab === 'historico' ? 'REALIZADO' : (dem.status === 'Planejamento' ? 'PREVISÃO' : dem.status)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+                  <Calendar size={32} color={agendaTab === 'historico' ? "#64748b" : "#0ea5e9"} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+                  <p style={{ fontWeight: 300, color: '#64748b' }}>
+                    {agendaTab === 'historico' ? 'Nenhum evento passado encontrado no histórico.' : 'Nenhum evento agendado para esta plataforma.'}
+                  </p>
+                </div>
+              )}
+
+              {totalAgendaPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2.5rem' }}>
+                  <button onClick={() => setAgendaPage(p => Math.max(1, p - 1))} disabled={agendaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: agendaPage === 1 ? 'not-allowed' : 'pointer' }}>&lt; ANTERIOR</button>
+                  <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>PÁG {agendaPage} / {totalAgendaPages}</span>
+                  <button onClick={() => setAgendaPage(p => Math.min(totalAgendaPages, p + 1))} disabled={agendaPage === totalAgendaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: agendaPage === totalAgendaPages ? 'not-allowed' : 'pointer' }}>PRÓXIMA &gt;</button>
                 </div>
               )}
             </div>
-          )}
+          </section>
+        </div>
+      )}
 
-          {midiaTab === 'galeria' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem', animation: 'fadeIn 0.5s ease' }}>
-              {galeriaImagens.map((img, idx) => (
-                <div key={idx} onClick={() => setLightboxIndex(idx)} style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)' }}>
-                  <img src={img} alt={`Galeria ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} />
-                </div>
-              ))}
+      {(hasVideos || hasGaleria) && (
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
+          <section id="midias" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
+            <SectionHeaderApple overline="Mídias" title="Vídeos e Galeria." subtitle="Acompanhe os nossos melhores momentos em vídeo e fotografia." />
+
+            <div className="reveal-on-scroll" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
+              {hasGaleria && (
+                <button className={`tab-btn ${midiaTab === 'galeria' ? 'active' : ''}`} onClick={() => setMidiaTab('galeria')}>
+                  <Camera size={18} style={{ marginRight: '6px' }} /> Galeria
+                </button>
+              )}
+              {hasVideos && (
+                <button className={`tab-btn ${midiaTab === 'videos' ? 'active' : ''}`} onClick={() => setMidiaTab('videos')}>
+                  <Play size={18} style={{ marginRight: '6px' }} /> Vídeos
+                </button>
+              )}
             </div>
-          )}
-        </section>
-      </div>
+
+            {midiaTab === 'videos' && hasVideos && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2rem', animation: 'fadeIn 0.5s ease' }}>
+                  {currentVideos.length > 0 ? (
+                    currentVideos.map((vid, idx) => (
+                      <div key={vid.id || idx} style={{ position: 'relative', width: '100%', maxWidth: '420px', aspectRatio: '16/9', background: '#000', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                        <iframe width="100%" height="100%" src={vid.url} title={`Video ${idx}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', width: '100%' }}>Nenhum vídeo publicado.</div>
+                  )}
+                </div>
+                {totalVideoPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
+                    <button onClick={() => setVideoPage(p => Math.max(1, p - 1))} disabled={videoPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: videoPage === 1 ? 'not-allowed' : 'pointer' }}>&lt; ANTERIOR</button>
+                    <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>PÁG {videoPage} / {totalVideoPages}</span>
+                    <button onClick={() => setVideoPage(p => Math.min(totalVideoPages, p + 1))} disabled={videoPage === totalVideoPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: videoPage === totalVideoPages ? 'not-allowed' : 'pointer' }}>PRÓXIMA &gt;</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {midiaTab === 'galeria' && hasGaleria && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem', animation: 'fadeIn 0.5s ease' }}>
+                  {currentGaleria.map((img, idx) => (
+                    <div key={idx} onClick={() => setLightboxIndex(startGaleriaIndex + idx)} style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)' }}>
+                      <img src={img} alt={`Galeria ${startGaleriaIndex + idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} />
+                    </div>
+                  ))}
+                </div>
+                {totalGaleriaPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
+                    <button onClick={() => setGaleriaPage(p => Math.max(1, p - 1))} disabled={galeriaPage === 1} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: galeriaPage === 1 ? 'not-allowed' : 'pointer' }}>&lt; ANTERIOR</button>
+                    <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>PÁG {galeriaPage} / {totalGaleriaPages}</span>
+                    <button onClick={() => setGaleriaPage(p => Math.min(totalGaleriaPages, p + 1))} disabled={galeriaPage === totalGaleriaPages} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '0.4rem 1rem', borderRadius: '12px', cursor: galeriaPage === totalGaleriaPages ? 'not-allowed' : 'pointer' }}>PRÓXIMA &gt;</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       <div style={{ position: 'relative', overflow: 'hidden', background: 'transparent' }}>
         <section id="sobre" className="section-container" style={{ position: 'relative', zIndex: 1, paddingTop: '4rem' }}>
@@ -1666,7 +1794,7 @@ export default function Home() {
               <div style={{ position: 'absolute', inset: '-15px', border: '1px solid #0ea5e9', borderRadius: '16px', zIndex: 0, opacity: 0.5, transform: 'translate(20px, 20px)' }} />
               <div className="zoom-wrapper">
                 <img src={img2} alt="Formação EDAFS" className="zoom-image" style={{ filter: 'contrast(110%)' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(3,7,18,0.8) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
               </div>
             </div>
 
@@ -1815,9 +1943,9 @@ export default function Home() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-              <Shield size={48} color="var(--text-muted)" style={{ margin: '0 auto 1.5rem', opacity: 0.5 }} />
-              <h3 style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1.25rem' }}>Recrutamento Fechado</h3>
-              <p style={{ color: 'var(--text-muted)', fontWeight: 400, marginTop: '0.5rem' }}>Fique atento aos nossos canais oficiais.</p>
+               <Shield size={48} color="var(--text-muted)" style={{ margin: '0 auto 1.5rem', opacity: 0.5 }} />
+               <h3 style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '1.25rem' }}>Recrutamento Fechado</h3>
+               <p style={{ color: 'var(--text-muted)', fontWeight: 400, marginTop: '0.5rem' }}>Fique atento aos nossos canais oficiais.</p>
             </div>
           )}
         </div>
@@ -1922,7 +2050,7 @@ export default function Home() {
               <FileText size={16} /> Termos
             </button>
             <button onClick={() => setActiveLegalTab('disclaimer')} className={`legal-tab ${activeLegalTab === 'disclaimer' ? 'active' : ''}`}>
-              <AlertTriangle size={16} /> Disclaimer
+              <FileText size={16} /> Aviso Legal
             </button>
           </div>
 

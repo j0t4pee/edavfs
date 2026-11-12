@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 
 import { 
   LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Cookie,
-  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Newspaper, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2
+  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2, Newspaper
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
@@ -258,13 +258,16 @@ export default function Workspace() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [solicitacaoAberta, setSolicitacaoAberta] = useState(true);
   
+  const [mostrarFS20, setMostrarFS20] = useState(true);
+  const [mostrarFS24, setMostrarFS24] = useState(true);
+  
   const [ytUrl, setYtUrl] = useState('');
   const [twUrl, setTwUrl] = useState('');
   const [tkUrl, setTkUrl] = useState('');
   
   const [discordWebhook, setDiscordWebhook] = useState('');
   const [discordColor, setDiscordColor] = useState('#ed333b');
-  const [discordFooter, setDiscordFooter] = useState('EDAV MSFS - Sistema de Operações');
+  const [discordFooter, setDiscordFooter] = useState('EDAFS MSFS - Sistema de Operações');
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -321,7 +324,7 @@ export default function Workspace() {
   }, []);
 
   useEffect(() => {
-    document.title = "Workspace | EDAV";
+    document.title = "Workspace EDAFS";
     document.documentElement.setAttribute('data-theme', 'dark'); 
 
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -378,6 +381,8 @@ export default function Workspace() {
           const d = docSnap.data();
           setAlistamentoAberto(d.alistamentoAberto || false); 
           setSolicitacaoAberta(d.solicitacaoAberta !== undefined ? d.solicitacaoAberta : true);
+          setMostrarFS20(d.mostrarFS20 !== undefined ? d.mostrarFS20 : true);
+          setMostrarFS24(d.mostrarFS24 !== undefined ? d.mostrarFS24 : true);
           setYtUrl(d.liveYouTubeUrl || '');
           setTwUrl(d.liveTwitchUrl || ''); 
           setTkUrl(d.liveTikTokUrl || '');
@@ -407,8 +412,8 @@ export default function Workspace() {
   const fecharFormulario = () => {
     setShowForm(false); setEditingId(null); setUploadProgress(null);
     setNovoPosicao('1'); setNovoNome(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa(''); setPlat2020Ativo(true); setPlat2024Ativo(false);
-    setPiIdade(''); setPiDescricao(''); setPiPatente('');
-    setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento');
+    setPiIdade(''); setPiDescricao(''); setPiPatente(''); 
+    setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento'); 
     setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
     setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
     setVidUrl('');
@@ -495,6 +500,18 @@ export default function Workspace() {
     catch { showToast("Erro", "error"); }
   };
 
+  const handleToggleFS20 = async () => {
+    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    try { await setDoc(doc(db, 'config', 'geral'), { mostrarFS20: !mostrarFS20 }, { merge: true }); showToast(`Atualizado`, "success"); } 
+    catch { showToast("Erro", "error"); }
+  };
+
+  const handleToggleFS24 = async () => {
+    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    try { await setDoc(doc(db, 'config', 'geral'), { mostrarFS24: !mostrarFS24 }, { merge: true }); showToast(`Atualizado`, "success"); } 
+    catch { showToast("Erro", "error"); }
+  };
+
   const handleSalvarConfigsGerais = async (e: React.FormEvent) => {
     e.preventDefault(); if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
     try { 
@@ -564,7 +581,7 @@ export default function Workspace() {
         uf: novaUf, 
         idade: piIdade ? parseInt(piIdade) : null,
         plataforma: parsePlatformToString(plat2020Ativo, plat2024Ativo),
-        descricao: piDescricao 
+        descricao: piDescricao
       }; 
       if (isAdmin) {
         data.posicao = novoPosicao;
@@ -890,6 +907,7 @@ export default function Workspace() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(14, 165, 233, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
               <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={14} /> Pilotos</button>
               <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={14} /> Agenda</button>
+              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={14} /> Notícias</button>
               <button className={`nav-item ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => handleMenuClick('videos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Play size={14} /> Vídeos</button>
               
               {isAdmin && (
@@ -1166,7 +1184,7 @@ export default function Workspace() {
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontWeight: 500, color: '#f8fafc', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           {getPatenteAbbr(p.patente)} {p.nome}
-                          {p.plataforma === '2024' || p.plataforma === 'Ambos' ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null} 
+                          {(p.plataforma === '2024' || p.plataforma === 'Ambos') ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null} 
                           {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', padding: '2px 4px', borderRadius: '4px' }}>RES</span>}
                         </div>
                         {p.oculto && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>{p.justificativa}</span>}
@@ -1242,7 +1260,7 @@ export default function Workspace() {
                 <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('agenda') ? '2.5fr 1fr 1fr' : '2.5fr 1fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Local/Data</span><span>Status</span>{checkPermission('agenda') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
                 {agendas.filter(a => matchesPlatformFilter(a.plataforma, agendaFilter)).map((a) => (
                   <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('agenda') ? '2.5fr 1fr 1fr' : '2.5fr 1fr') : '1fr', padding: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 500 }}>{a.dataHora}</span><span style={{ color: '#f8fafc', fontSize: '1rem', fontWeight: 500, display:'flex', alignItems:'center', gap:'6px' }}>{a.cidade} {a.plataforma === '2024' || a.plataforma === 'Ambos' ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null}</span></div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 500 }}>{a.dataHora}</span><span style={{ color: '#f8fafc', fontSize: '1rem', fontWeight: 500, display:'flex', alignItems:'center', gap:'6px' }}>{a.cidade} {(a.plataforma === '2024' || a.plataforma === 'Ambos') ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null}</span></div>
                     <div><span style={{ background: a.status === 'Confirmado' ? 'rgba(16,185,129,0.1)' : a.status === 'Cancelado' ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)', color: a.status === 'Confirmado' ? '#10b981' : a.status === 'Cancelado' ? '#ef4444' : '#0ea5e9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>{a.status}</span></div>
                     {checkPermission('agenda') && (
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}><button onClick={() => handleEditarAgenda(a)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(a.id, 'agenda', a.cidade)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
@@ -1252,6 +1270,51 @@ export default function Workspace() {
                 {agendas.filter(a => matchesPlatformFilter(a.plataforma, agendaFilter)).length === 0 && (
                   <p style={{ color: '#64748b', padding: '2rem', textAlign: 'center' }}>Nenhuma demonstração para o filtro selecionado.</p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'noticias' && (
+            <div>
+              {showForm && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
+                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Notícia</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
+                    <form onSubmit={handleSalvarNoticia} style={{ padding: '1.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div><label className="form-label">Data</label><CustomDatePicker value={notData} onChange={(val) => setNotData(val)} /></div>
+                        <div><label className="form-label">Título</label><input required type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" /></div>
+                        <div><label className="form-label">Resumo</label><textarea required rows={4} value={notResumo} onChange={e => setNotResumo(e.target.value)} className="form-input" style={{ resize: 'vertical' }} /></div>
+                        <div>
+                          <label className="form-label">Imagem de Capa</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <label style={{ background: 'rgba(0,0,0,0.3)', border: '1px dashed var(--fs-border)', padding: '0.85rem 1.2rem', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0ea5e9', fontSize: '0.9rem', flexGrow: 1, justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(14,165,233,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}>
+                              {uploadProgress !== null ? <><Loader2 size={18} className="spin" /> Enviando {Math.round(uploadProgress)}%</> : <><ImagePlus size={18} /> Escolher Imagem</>}
+                              <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
+                            </label>
+                            {notImagem && <img src={notImagem} alt="Preview" style={{ height: '44px', width: 'auto', borderRadius: '8px', border: '1px solid var(--fs-border)' }} />}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" disabled={uploadProgress !== null} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', opacity: uploadProgress !== null ? 0.5 : 1 }}>Salvar</button></div>
+                    </form>
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                {noticias.map((n) => (
+                  <div key={n.id} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ height: '160px', background: `url(${n.imagem}) center/cover`, borderBottom: '1px solid rgba(255,255,255,0.05)' }}></div>
+                    <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                      <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.5rem' }}>{n.data}</span>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>{n.titulo}</h4>
+                      <p style={{ margin: '0 0 1rem 0', color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5, flexGrow: 1 }}>{n.resumo}</p>
+                      {checkPermission('noticias') && (
+                        <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}><button onClick={() => handleEditarNoticia(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'noticias', n.titulo)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button></div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1374,7 +1437,7 @@ export default function Workspace() {
 
               <div className="fs-card" style={{ padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Recursos Públicos</h4>
-                <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: '#94a3b8' }}>Gira a exibição de botões e formulários no site público.</p>
+                <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: '#94a3b8' }}>Gere a exibição de botões e formulários no site público.</p>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -1385,6 +1448,16 @@ export default function Workspace() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>Solicitar Demo: <span style={{ color: solicitacaoAberta ? '#10b981' : '#94a3b8' }}>{solicitacaoAberta ? 'Visível' : 'Oculto'}</span></span>
                     <div className={`toggle-switch ${solicitacaoAberta ? 'active' : ''}`} onClick={handleToggleSolicitacao} style={{ transform: 'scale(0.9)' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>Aba MSFS 2020: <span style={{ color: mostrarFS20 ? '#10b981' : '#94a3b8' }}>{mostrarFS20 ? 'Visível' : 'Oculto'}</span></span>
+                    <div className={`toggle-switch ${mostrarFS20 ? 'active' : ''}`} onClick={handleToggleFS20} style={{ transform: 'scale(0.9)' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem' }}>Aba MSFS 2024: <span style={{ color: mostrarFS24 ? '#10b981' : '#94a3b8' }}>{mostrarFS24 ? 'Visível' : 'Oculto'}</span></span>
+                    <div className={`toggle-switch ${mostrarFS24 ? 'active' : ''}`} onClick={handleToggleFS24} style={{ transform: 'scale(0.9)' }} />
                   </div>
                 </div>
               </div>
@@ -1411,6 +1484,7 @@ export default function Workspace() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
                         <PermissionToggle label="Gestão de Agenda" active={!!u.permissoes?.agenda} onChange={() => handlePermissao(u.id!, 'agenda', !u.permissoes?.agenda)} />
                         <PermissionToggle label="Gestão de Vídeos" active={!!u.permissoes?.videos} onChange={() => handlePermissao(u.id!, 'videos', !u.permissoes?.videos)} />
+                        <PermissionToggle label="Gestão de Notícias" active={!!u.permissoes?.noticias} onChange={() => handlePermissao(u.id!, 'noticias', !u.permissoes?.noticias)} />
                       </div>
                     </div>
                   ))}
