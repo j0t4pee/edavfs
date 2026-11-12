@@ -1,141 +1,103 @@
-"use client";
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection } from 'firebase/firestore';
-import { auth, googleProvider, db } from '../firebase';
-import { Plane, AlertTriangle, Loader2 } from 'lucide-react';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import logoImage from '../images/logo.png';
-import headerImage from '../images/header.jpg';
-import faviconImage from '../images/favicon.png'; // Importação do favicon adicionada
+import { AlertCircle } from 'lucide-react';
 
 export default function Login() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    document.title = "Login | EDA FS";
-    
-    let linkFavicon = document.querySelector('link[rel="icon"]');
-    if (!linkFavicon) {
-      linkFavicon = document.createElement('link');
-      linkFavicon.setAttribute('rel', 'icon');
-      document.head.appendChild(linkFavicon);
-    }
-    linkFavicon.setAttribute('href', faviconImage);
-    linkFavicon.setAttribute('type', 'image/png');
-    linkFavicon.setAttribute('sizes', '32x32');
-
-    // 3. Listener de sessão
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        navigate('/intranet');
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
     setError('');
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
 
     try {
-      // 1. Abre o Pop-up do Google
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      
+      const docRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(docRef);
 
-      // 2. Verifica se o usuário já existe no banco de dados
-      const userDocRef = doc(db, 'usuarios', user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (!userDocSnap.exists()) {
-        // Se não existe, vamos criá-lo!
-        // Primeiro, vamos ver se é a primeira pessoa a fazer login no sistema inteiro.
-        const usersSnapshot = await getDocs(collection(db, 'usuarios'));
-        const isFirstUser = usersSnapshot.empty;
-
-        // O primeiro a logar vira admin. Os próximos viram 'pendente'.
-        const newRole = isFirstUser ? 'admin' : 'pendente';
-
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          nome: user.displayName || 'Piloto Desconhecido',
-          email: user.email || '',
-          foto: user.photoURL || '',
-          role: newRole,
-          dataCadastro: new Date().toISOString()
+      if (!docSnap.exists()) {
+        await setDoc(docRef, {
+          nome: user.displayName || 'Piloto Sem Nome',
+          email: user.email,
+          role: 'piloto',
+          status: 'ativo',
+          dataCriacao: new Date().toISOString()
         });
       }
-
-      navigate('/intranet');
-
+      
+      await verificarAcesso(user);
     } catch (err: any) {
-      console.error(err);
-      setError('Falha ao iniciar sessão com o Google. Tente novamente.');
+      setError('Falha ao autenticar com o Google.');
+      setLoading(false);
+    }
+  };
+
+  const verificarAcesso = async (user: any) => {
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists() && docSnap.data().status === 'ativo') {
+        
+        // 1. Gera o token de sessão validado pelo Firebase
+        const token = await user.getIdToken();
+        
+        // 2. Grava no cache do navegador para que o App.tsx liberte a rota /intranet
+        localStorage.setItem('edav_auth_token', token);
+        
+        // 3. Redireciona com segurança
+        navigate('/intranet');
+        
+      } else {
+        setError('Conta inativa ou sem permissão de acesso.');
+        await auth.signOut();
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Erro ao ler a base de dados de utilizadores.');
+      await auth.signOut();
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#030712', fontFamily: '"Arial", sans-serif', position: 'relative' }}>
-      {/* Background com imagem e overlay */}
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${headerImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.4 }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(3,7,18,0.95) 0%, rgba(15,23,42,0.8) 100%)', backdropFilter: 'blur(8px)' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#030712', fontFamily: '"Inter", sans-serif' }}>
+      
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: '#0ea5e9', filter: 'blur(150px)', opacity: 0.1, zIndex: 0, pointerEvents: 'none' }} />
 
-      <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '48px 40px', width: '100%', maxWidth: '440px', zIndex: 1, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '32px' }}>
         
-        <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '3rem 2.5rem', width: '100%', maxWidth: '400px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(16px)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          
-          <img src={logoImage} alt="EDAV Logo" style={{ height: '70px', marginBottom: '1.5rem' }} />
-          
-          <h2 style={{ color: '#f8fafc', margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontFamily: '"Quantico", sans-serif', letterSpacing: '0.05em', textAlign: 'center' }}>
-            ACESSO RESTRITO
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2.5rem', textAlign: 'center', lineHeight: 1.5 }}>
-            Faça login com a sua conta Google para acessar o painel de comando do EDAV.
-          </p>
-
-          {error && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', boxSizing: 'border-box', marginBottom: '1.5rem' }}>
-              <AlertTriangle size={16} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <button 
-            onClick={handleGoogleLogin} 
-            disabled={loading}
-            style={{ width: '100%', background: '#f8fafc', color: '#0f172a', border: 'none', padding: '0.85rem', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', cursor: loading ? 'wait' : 'pointer', transition: 'background 0.2s', opacity: loading ? 0.8 : 1 }}
-            onMouseEnter={e => { if(!loading) e.currentTarget.style.background = '#e2e8f0'; }} 
-            onMouseLeave={e => { if(!loading) e.currentTarget.style.background = '#f8fafc'; }}
-          >
-            {loading ? (
-              <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-            ) : (
-              <>
-                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-                Continuar com o Google
-              </>
-            )}
-          </button>
-
-          <button 
-            onClick={() => navigate('/')} 
-            style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '0.85rem', marginTop: '1.5rem', cursor: 'pointer', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#cbd5e1'} 
-            onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
-          >
-             Voltar ao site
-          </button>
-          
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+          <img src={logoImage} alt="EDAFS" style={{ height: '64px' }} />
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>CIOEDAFS Workspace</h2>
+            <p style={{ color: '#94a3b8', margin: '8px 0 0 0', fontSize: '0.9rem' }}>Acesso restrito a membros operacionais</p>
+          </div>
         </div>
+
+        {error && (
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', color: '#ef4444', fontSize: '0.85rem', fontWeight: 500 }}>
+            <AlertCircle size={18} /> {error}
+          </div>
+        )}
+
+        <button 
+          onClick={handleGoogleLogin} 
+          disabled={loading}
+          style={{ width: '100%', padding: '16px', background: '#ffffff', color: '#030712', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'background 0.2s' }}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+          {loading ? 'A autenticar...' : 'Entrar com o Google'}
+        </button>
+
       </div>
     </div>
   );

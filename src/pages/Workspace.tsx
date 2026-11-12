@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable */
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,22 +10,23 @@ import { auth, db, storage } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 import { 
-  LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Newspaper, Link2, ChevronDown, CheckCircle2, ImagePlus, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, Loader2, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check
+  LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Cookie,
+  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Newspaper, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
 import faviconImage from '../images/favicon.png';
 import mfLogo from '../images/mf.png';
 
-interface Piloto { id?: string; posicao: string; nome: string; cidade: string; uf: string; oculto?: boolean; justificativa?: string; plataforma?: string; }
+interface Piloto { id?: string; posicao: string; nome: string; cidade: string; uf: string; oculto?: boolean; justificativa?: string; plataforma?: string; idade?: number; descricao?: string; simulador?: string; patente?: string; }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; plataforma?: string; }
+interface Video { id?: string; url: string; ativo?: boolean; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
-interface Mod { id?: string; titulo: string; desc: string; isMarketplace: boolean; buttonText: string; link: string; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
 interface Solicitacao { id?: string; cidade: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
 interface Usuario { 
   id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
-  permissoes?: { agenda?: boolean; mods?: boolean; alistamento?: boolean; };
+  permissoes?: { agenda?: boolean; videos?: boolean; noticias?: boolean; };
 }
 
 const getPosicaoNome = (num: string) => {
@@ -35,6 +35,14 @@ const getPosicaoNome = (num: string) => {
     case '4': return 'Ferrolho'; case '5': return 'Ala Esq. Externa'; case '6': return 'Ala Dir. Externa'; 
     case '7': return 'Isolado'; default: return 'Não Definido';
   }
+};
+
+const getPatenteAbbr = (patente?: string) => {
+  if (patente === 'Capitão Aviador') return 'Cap. Av.';
+  if (patente === 'Major Aviador') return 'Maj. Av.';
+  if (patente === 'Tenente-Coronel Aviador') return 'Ten. Cel. Av.';
+  if (patente === 'Oficial de Relações Públicas') return 'Of. RP';
+  return '';
 };
 
 const ufsBrasileiros = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => ({ value: uf, label: uf }));
@@ -53,23 +61,23 @@ const SimToggle = ({ label, active, onChange }: { label: string, active: boolean
   </div>
 );
 
-const CustomSelect = ({ value, options, onChange, placeholder, searchable = false, inline = false }: { value: string, options: {value: string, label: string}[], onChange: (val: string) => void, placeholder?: string, searchable?: boolean, inline?: boolean }) => {
+const CustomSelect = ({ value, options, onChange, placeholder, searchable = false, inline = false, disabled = false }: { value: string, options: {value: string, label: string}[], onChange: (val: string) => void, placeholder?: string, searchable?: boolean, inline?: boolean, disabled?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const selectedOption = options.find(o => o.value === value);
   const filteredOptions = searchable && search ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())) : options;
 
   return (
-    <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif' }}>
-      {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
-      <div onClick={() => setIsOpen(true)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 41, transition: 'all 0.2s' }}>
+    <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif', opacity: disabled ? 0.6 : 1 }}>
+      {isOpen && !disabled && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
+      <div onClick={() => !disabled && setIsOpen(true)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: isOpen ? 99999 : 1, transition: 'all 0.2s' }}>
         {searchable && isOpen ? (
           <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem', fontFamily: '"Regular", sans-serif' }} />
         ) : ( <span>{selectedOption ? selectedOption.label : placeholder}</span> )}
         <ChevronDown size={14} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', flexShrink: 0, marginLeft: '0.5rem' }} />
       </div>
-      {isOpen && (
-        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)', padding: 0 }}>
+      {isOpen && !disabled && (
+        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)', padding: 0 }}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map(opt => (
               <div key={opt.value} className="custom-select-option" onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: value === opt.value ? 'var(--fs-blue)' : '#cbd5e1', background: value === opt.value ? 'rgba(59,130,246,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s', borderLeft: value === opt.value ? '3px solid var(--fs-blue)' : '3px solid transparent', fontWeight: value === opt.value ? 600 : 400 }}>
@@ -91,8 +99,6 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
     return new Date();
   };
   const [viewDate, setViewDate] = useState(parseDate(value));
-  
-  // O calendário agora já arranca com o dia atual automaticamente selecionado
   const [selDate, setSelDate] = useState<Date | null>(value ? parseDate(value) : new Date());
   
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -120,12 +126,12 @@ const CustomDatePicker = ({ value, onChange }: { value: string, onChange: (val: 
 
   return (
     <div style={{ position: 'relative', width: '100%', fontFamily: '"Regular", sans-serif' }}>
-      {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
-      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', transition: 'all 0.2s' }}>
+      {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => setIsOpen(false)} />}
+      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: isOpen ? 99999 : 1, position: 'relative', transition: 'all 0.2s' }}>
         {value || "DD/MM/AAAA"} <Calendar size={16} color="#64748b" />
       </div>
       {isOpen && (
-        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 50, padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '260px', maxWidth: '90vw' }}>
+        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', width: '260px', maxWidth: '90vw' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.1)', color:'#cbd5e1', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>&lt;</button>
             <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.85rem', textTransform: 'uppercase' }}>{meses[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
@@ -149,7 +155,6 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
   const [isOpen, setIsOpen] = useState(false);
   const now = new Date();
   
-  // Data e hora pré-selecionadas como as atuais caso não haja valor
   const [viewDate, setViewDate] = useState(value ? new Date(value.split('T')[0] + 'T12:00:00') : new Date());
   const [selDate, setSelDate] = useState<Date | null>(value ? new Date(value.split('T')[0] + 'T12:00:00') : new Date());
   const [hour, setHour] = useState(value ? value.split('T')[1].split(':')[0] : String(now.getHours()).padStart(2, '0'));
@@ -186,12 +191,12 @@ const CustomDateTimePicker = ({ value, onChange }: { value: string, onChange: (v
 
   return (
     <div style={{ position: 'relative', width: '100%', fontFamily: '"Regular", sans-serif' }}>
-      {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />}
-      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 41, position: 'relative', transition: 'all 0.2s' }}>
+      {isOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => setIsOpen(false)} />}
+      <div onClick={() => setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: '0.85rem 1.2rem', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', color: value ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: isOpen ? 99999 : 1, position: 'relative', transition: 'all 0.2s' }}>
         {display} <Calendar size={16} color="#64748b" />
       </div>
       {isOpen && (
-        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 50, padding: '1.25rem', boxShadow: '0 15px 30px rgba(0,0,0,0.5)', display: 'flex', gap: '1.5rem', width: '380px', maxWidth: '90vw' }}>
+        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, padding: '1.25rem', boxShadow: '0 15px 30px rgba(0,0,0,0.5)', display: 'flex', gap: '1.5rem', width: '380px', maxWidth: '90vw' }}>
           <div style={{ flex: 2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <button type="button" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.1)', color:'#cbd5e1', cursor:'pointer', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>&lt;</button>
@@ -242,6 +247,7 @@ export default function Workspace() {
   const [pilotos, setPilotos] = useState<Piloto[]>([]);
   const [agendas, setAgendas] = useState<Demonstracao[]>([]);
   const [noticias, setNoticias] = useState<Noticia[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
@@ -252,7 +258,6 @@ export default function Workspace() {
   const [alistamentoAberto, setAlistamentoAberto] = useState(false);
   const [solicitacaoAberta, setSolicitacaoAberta] = useState(true);
   
-  // Configs Mídias / Discord
   const [ytUrl, setYtUrl] = useState('');
   const [twUrl, setTwUrl] = useState('');
   const [tkUrl, setTkUrl] = useState('');
@@ -271,13 +276,15 @@ export default function Workspace() {
   const [metarData, setMetarData] = useState<any>(null);
   const [metarLoading, setMetarLoading] = useState(false);
 
-  // Form states
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
   const [novaUf, setNovaUf] = useState('');
   const [novoOculto, setNovoOculto] = useState(false);
   const [novoJustificativa, setNovoJustificativa] = useState('');
+  const [piIdade, setPiIdade] = useState('');
+  const [piDescricao, setPiDescricao] = useState('');
+  const [piPatente, setPiPatente] = useState('');
   
   const [plat2020Ativo, setPlat2020Ativo] = useState(true);
   const [plat2024Ativo, setPlat2024Ativo] = useState(false);
@@ -294,6 +301,8 @@ export default function Workspace() {
   const [notamTitulo, setNotamTitulo] = useState('');
   const [notamMensagem, setNotamMensagem] = useState('');
   const [notamData, setNotamData] = useState('');
+  
+  const [vidUrl, setVidUrl] = useState('');
 
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
@@ -324,7 +333,7 @@ export default function Workspace() {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (!user) navigate('/login'); 
       else {
-        onSnapshot(doc(db, 'usuarios', user.uid), (docSnap) => {
+        onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
           if (docSnap.exists()) setCurrentUserInfo(docSnap.data() as Usuario);
         });
       }
@@ -343,6 +352,9 @@ export default function Workspace() {
       onSnapshot(collection(db, 'noticias'), snap => {
         const arr: Noticia[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Noticia)); setNoticias(arr);
       }),
+      onSnapshot(collection(db, 'videos'), snap => {
+        const arr: Video[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Video)); setVideos(arr);
+      }),
       onSnapshot(collection(db, 'notams'), snap => {
         const arr: Notam[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Notam));
         arr.sort((a, b) => {
@@ -352,7 +364,7 @@ export default function Workspace() {
         });
         setNotams(arr);
       }),
-      onSnapshot(collection(db, 'usuarios'), snap => {
+      onSnapshot(collection(db, 'users'), snap => {
         const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
         setUsuarios(arr);
       }),
@@ -381,9 +393,11 @@ export default function Workspace() {
   const checkPermission = (action: string) => {
     if (currentUserInfo?.role === 'admin') return true;
     if (['dashboard', 'notam', 'meteorologia'].includes(action)) return true; 
-    if (['pilotos', 'noticias', 'config', 'solicitacoes'].includes(action)) return false; 
+    if (['pilotos', 'noticias', 'videos', 'config', 'solicitacoes'].includes(action)) return false; 
     return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
   };
+
+  const isAdmin = currentUserInfo?.role === 'admin';
 
   const handleLogout = async () => {
     try { await signOut(auth); sessionStorage.clear(); localStorage.removeItem('edav_auth_token'); window.location.href = '/login'; } 
@@ -393,9 +407,11 @@ export default function Workspace() {
   const fecharFormulario = () => {
     setShowForm(false); setEditingId(null); setUploadProgress(null);
     setNovoPosicao('1'); setNovoNome(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa(''); setPlat2020Ativo(true); setPlat2024Ativo(false);
+    setPiIdade(''); setPiDescricao(''); setPiPatente('');
     setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento');
     setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
     setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
+    setVidUrl('');
   };
 
   const parsePlatformToString = (p2020: boolean, p2024: boolean) => {
@@ -498,13 +514,13 @@ export default function Workspace() {
 
   const handlePermissao = async (userId: string, campo: string, valor: boolean) => {
     if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
-    try { await updateDoc(doc(db, 'usuarios', userId), { [`permissoes.${campo}`]: valor }); showToast("Atualizado!", "success"); } 
+    try { await updateDoc(doc(db, 'users', userId), { [`permissoes.${campo}`]: valor }); showToast("Atualizado!", "success"); } 
     catch { showToast("Falha", "error"); }
   };
 
   const handleMudarCargo = async (userId: string, newRole: string) => {
     if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
-    try { await updateDoc(doc(db, 'usuarios', userId), { role: newRole }); showToast("Cargo atualizado!", "success"); } 
+    try { await updateDoc(doc(db, 'users', userId), { role: newRole }); showToast("Cargo atualizado!", "success"); } 
     catch { showToast("Falha", "error"); }
   };
 
@@ -518,16 +534,51 @@ export default function Workspace() {
     }
   };
 
-  const handleEditarPiloto = (p: Piloto) => { setEditingId(p.id || null); setNovoPosicao(p.posicao); setNovoNome(p.nome); setNovaCidade(p.cidade || ''); setNovaUf(p.uf || ''); setNovoOculto(p.oculto || false); setNovoJustificativa(p.justificativa || ''); loadPlatformToState(p.plataforma); setShowForm(true); };
+  const handleEditarPiloto = (p: Piloto) => { 
+    setEditingId(p.id || null); 
+    setNovoPosicao(p.posicao); 
+    setNovoNome(p.nome); 
+    setNovaCidade(p.cidade || ''); 
+    setNovaUf(p.uf || ''); 
+    setNovoOculto(p.oculto || false); 
+    setNovoJustificativa(p.justificativa || '');
+    setPiIdade(p.idade ? String(p.idade) : '');
+    setPiDescricao(p.descricao || '');
+    setPiPatente(p.patente || '');
+    loadPlatformToState(p.plataforma); 
+    setShowForm(true); 
+  };
   const handleEditarAgenda = (a: Demonstracao) => { setEditingId(a.id || null); setAgCidade(a.cidade); setAgStatus(a.status); loadPlatformToState(a.plataforma); if (a.dataHora && a.dataHora.includes(' às ')) { const [dPart, hPart] = a.dataHora.split(' às '); setAgDataHoraIso(`${dPart.split('/').reverse().join('-')}T${hPart}`); } else setAgDataHoraIso(''); setShowForm(true); };
   const handleEditarNoticia = (n: Noticia) => { setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo); setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true); };
   const handleEditarNotam = (n: Notam) => { setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); };
+  const handleEditarVideo = (v: Video) => { setEditingId(v.id || null); setVidUrl(v.url); setShowForm(true); };
 
   const handleSalvarPiloto = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!checkPermission('pilotos')) return showToast("Acesso Negado", "error");
+    e.preventDefault(); 
+    const isMyPilot = novoNome.trim().toLowerCase() === currentUserInfo?.nome.trim().toLowerCase();
+    if (!isAdmin && !isMyPilot) return showToast("Acesso Negado", "error");
+    
     try { 
-      const data = { posicao: novoPosicao, nome: novoNome, cidade: novaCidade, uf: novaUf, oculto: novoOculto, justificativa: novoOculto ? novoJustificativa : '', plataforma: parsePlatformToString(plat2020Ativo, plat2024Ativo) }; 
-      if (editingId) await updateDoc(doc(db, 'pilotos', editingId), data); else await addDoc(collection(db, 'pilotos'), data); fecharFormulario(); showToast("Salvo"); 
+      const data: any = { 
+        cidade: novaCidade, 
+        uf: novaUf, 
+        idade: piIdade ? parseInt(piIdade) : null,
+        plataforma: parsePlatformToString(plat2020Ativo, plat2024Ativo),
+        descricao: piDescricao 
+      }; 
+      if (isAdmin) {
+        data.posicao = novoPosicao;
+        data.nome = novoNome;
+        data.oculto = novoOculto;
+        data.justificativa = novoOculto ? novoJustificativa : '';
+        data.patente = piPatente;
+      }
+      if (editingId) await updateDoc(doc(db, 'pilotos', editingId), data); 
+      else {
+        if (!isAdmin) return showToast("Apenas admins podem criar", "error");
+        await addDoc(collection(db, 'pilotos'), data); 
+      }
+      fecharFormulario(); showToast("Salvo"); 
     } catch { showToast("Falha", "error"); }
   };
   
@@ -543,6 +594,22 @@ export default function Workspace() {
   
   const handleSalvarNoticia = async (e: React.FormEvent) => { e.preventDefault(); if (!checkPermission('noticias')) return showToast("Acesso Negado", "error"); try { const data = { data: notData, titulo: notTitulo, resumo: notResumo, imagem: notImagem }; if (editingId) await updateDoc(doc(db, 'noticias', editingId), data); else await addDoc(collection(db, 'noticias'), data); fecharFormulario(); showToast("Publicada"); } catch { showToast("Falha", "error"); } };
   
+  const handleSalvarVideo = async (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    if (!checkPermission('videos')) return showToast("Acesso Negado", "error"); 
+    try {
+      let finalUrl = vidUrl;
+      const match = vidUrl.match(/(?:youtu\.be\/|v=)([^&]+)/);
+      if (match && match[1]) {
+        finalUrl = `https://www.youtube.com/embed/${match[1]}`;
+      }
+      const data = { url: finalUrl, ativo: true }; 
+      if (editingId) await updateDoc(doc(db, 'videos', editingId), data); 
+      else await addDoc(collection(db, 'videos'), data); 
+      fecharFormulario(); showToast("Vídeo Salvo"); 
+    } catch { showToast("Falha", "error"); } 
+  };
+
   const handleSalvarNotam = async (e: React.FormEvent) => { 
     e.preventDefault(); 
     if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins", "error"); 
@@ -557,7 +624,6 @@ export default function Workspace() {
       } else {
         await addDoc(collection(db, 'notams'), data); 
         
-        // INTEGRAÇÃO DISCORD - SEM IMAGENS, APENAS TEXTO!
         if (discordWebhook) {
           const hexColorToDec = (hex: string) => parseInt(hex.replace(/^#/, ''), 16) || 15548997;
           
@@ -651,6 +717,17 @@ export default function Workspace() {
         h1, h2, h3, h4, h5, h6 { font-family: 'Comum', sans-serif !important; font-weight: bold; }
 
         body, html { margin: 0; padding: 0; background-color: var(--fs-bg); overflow-x: hidden; }
+        
+        /* Remove arrows from number input */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+        
         input, textarea, button { font-family: 'Regular', system-ui, -apple-system, sans-serif !important; }
         input::placeholder, textarea::placeholder { color: #64748b !important; font-weight: 400; }
         
@@ -756,14 +833,14 @@ export default function Workspace() {
       <div className="hero-glow-blue"></div>
 
       {toast.show && (
-        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999, background: 'rgba(11, 15, 25, 0.95)', backdropFilter: 'blur(8px)', border: '1px solid var(--fs-border)', borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`, padding: '1.2rem 1.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '0.75rem', animation: 'slideIn 0.3s ease-out' }}>
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 99999, background: 'rgba(11, 15, 25, 0.95)', backdropFilter: 'blur(8px)', border: '1px solid var(--fs-border)', borderLeft: `4px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`, padding: '1.2rem 1.5rem', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '0.75rem', animation: 'slideIn 0.3s ease-out' }}>
           {toast.type === 'success' ? <CheckCircle2 color="#10b981" size={20}/> : <AlertTriangle color="#ef4444" size={20}/>}
           <span style={{ color: 'var(--text-main)', fontWeight: 500, fontSize: '0.9rem' }}>{toast.msg}</span>
         </div>
       )}
 
       {modal.isOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="modal-modern fs-card" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: '12px', color: '#ef4444' }}><AlertTriangle size={28} /></div>
@@ -784,7 +861,7 @@ export default function Workspace() {
         <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <img src={logoImage} alt="EDAV" style={{ height: '32px' }} />
-            <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.1rem', color: '#f8fafc', margin: 0, letterSpacing: '0.05em' }}>WORKSPACE</h2>
+            <h2 style={{ fontFamily: '"StratumNo2", sans-serif', fontSize: '1.1rem', color: '#f8fafc', margin: 0, letterSpacing: '0.05em' }}>CIOEDAFS</h2>
           </div>
           <button className="mobile-close-btn" onClick={() => setMobileSidebarOpen(false)} style={{ display: window.innerWidth <= 900 ? 'block' : 'none', background: 'transparent', border: 'none', color: 'var(--fs-muted)' }}><X size={24} /></button>
         </div>
@@ -813,9 +890,9 @@ export default function Workspace() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(14, 165, 233, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
               <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={14} /> Pilotos</button>
               <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={14} /> Agenda</button>
-              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={14} /> Notícias</button>
+              <button className={`nav-item ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => handleMenuClick('videos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Play size={14} /> Vídeos</button>
               
-              {currentUserInfo?.role === 'admin' && (
+              {isAdmin && (
                 <button className={`nav-item ${activeTab === 'solicitacoes' ? 'active' : ''}`} onClick={() => handleMenuClick('solicitacoes')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Inbox size={14} /> Solicitações</div>
                   {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '12px' }}>{solicitacoes.filter(s => s.status === 'Pendente').length}</span>}
@@ -824,7 +901,7 @@ export default function Workspace() {
             </div>
           </div>
 
-          {currentUserInfo?.role === 'admin' && <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')} style={{ marginTop: '0.5rem' }}><Settings size={16} /> Config. e Acessos</button>}
+          {isAdmin && <button className={`nav-item ${activeTab === 'config' ? 'active' : ''}`} onClick={() => handleMenuClick('config')} style={{ marginTop: '0.5rem' }}><Settings size={16} /> Config. e Acessos</button>}
 
           <div style={{ flexGrow: 1 }} />
           <div style={{ height: '1px', background: 'var(--fs-border)', margin: '0.5rem' }} />
@@ -834,7 +911,7 @@ export default function Workspace() {
 
       <main style={{ flex: 1, overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         <div className="mobile-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><img src={logoImage} alt="EDAV" style={{ height: '24px' }} /><h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>WORKSPACE</h1></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><img src={logoImage} alt="EDAV" style={{ height: '24px' }} /><h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>CIOEDAFS</h1></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ position: 'relative' }}>
               <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>{currentUserInfo?.foto ? <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)' }} /> : <UserCircle size={28} color="#f8fafc" />}</div>
@@ -851,7 +928,7 @@ export default function Workspace() {
                 {currentUserInfo?.foto ? <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 32, height: 32, borderRadius: '50%' }} /> : <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0ea5e9' }}><UserCircle size={18}/></div>}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#f8fafc' }}>{saudacao}, {currentUserInfo ? currentUserInfo.nome.split(' ')[0] : 'Comandante'}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 400 }}>{currentUserInfo?.role === 'admin' ? 'Administrador' : 'Piloto'}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 400 }}>{isAdmin ? 'Administrador' : 'Piloto'}</span>
                 </div>
                 <ChevronDown size={14} color="#94a3b8" style={{ marginLeft: '0.5rem' }} />
               </div>
@@ -867,14 +944,14 @@ export default function Workspace() {
         <div className="main-content" style={{ padding: '1rem 2rem 2rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 500, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>
-              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
+              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'videos' ? 'Galeria de Vídeos' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
             </h2>
             
-            {['pilotos', 'agenda', 'noticias'].includes(activeTab) && checkPermission(activeTab) && (
+            {['pilotos', 'agenda', 'noticias', 'videos'].includes(activeTab) && checkPermission(activeTab) && (
               <button onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}><Plus size={16} /> Adicionar Novo</button>
             )}
 
-            {activeTab === 'notam' && currentUserInfo?.role === 'admin' && (
+            {activeTab === 'notam' && isAdmin && (
               <button onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}><AlertOctagon size={16} /> Publicar NOTAM</button>
             )}
           </div>
@@ -916,7 +993,7 @@ export default function Workspace() {
             </div>
           )}
 
-          {activeTab === 'solicitacoes' && currentUserInfo?.role === 'admin' && (
+          {activeTab === 'solicitacoes' && isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '1fr 1.5fr 1fr 1.5fr', padding: '0 1.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>
                 <span>Data do Pedido</span><span>Cidade / Evento</span><span>Transmissão</span><span style={{ textAlign: 'right' }}>Ações / Status</span>
@@ -990,8 +1067,54 @@ export default function Workspace() {
                     <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Piloto</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
                     <form onSubmit={handleSalvarPiloto} style={{ padding: '1.5rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '1rem' }}><div><label className="form-label">Pos</label><input type="number" min="1" max="7" value={novoPosicao} onChange={e => setNovoPosicao(e.target.value)} className="form-input" /></div><div><label className="form-label">Nome Completo</label><input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" /></div></div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '1rem' }}><div><label className="form-label">Cidade</label><input required type="text" value={novaCidade} onChange={e => setNovaCidade(e.target.value)} className="form-input" /></div><div><label className="form-label">UF</label><CustomSelect searchable value={novaUf} onChange={(val) => setNovaUf(val)} options={ufsBrasileiros} placeholder="Sel" /></div></div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '1rem' }}>
+                          <div>
+                            <label className="form-label">Pos {isAdmin ? '*' : '(Fixo)'}</label>
+                            <CustomSelect 
+                              value={novoPosicao} 
+                              onChange={val => setNovoPosicao(val)} 
+                              options={[
+                                {value: '1', label: '1 - Líder'},
+                                {value: '2', label: '2 - Ala Dir.'},
+                                {value: '3', label: '3 - Ala Esq.'},
+                                {value: '4', label: '4 - Ferrolho'},
+                                {value: '5', label: '5 - Ala Esq. Ext'},
+                                {value: '6', label: '6 - Ala Dir. Ext'},
+                                {value: '7', label: '7 - Isolado'}
+                              ]} 
+                              disabled={!isAdmin} 
+                            />
+                          </div>
+                          <div><label className="form-label">Nome Completo {isAdmin ? '*' : '(Fixo)'}</label><input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" disabled={!isAdmin} style={{ opacity: isAdmin ? 1 : 0.6 }} /></div>
+                        </div>
+                        
+                        <div>
+                          <label className="form-label">Patente (Cargo Militar) {isAdmin ? '*' : '(Fixo)'}</label>
+                          <CustomSelect 
+                            value={piPatente} 
+                            onChange={val => setPiPatente(val)} 
+                            disabled={!isAdmin} 
+                            options={[
+                              {value: '', label: 'Nenhuma / Piloto'},
+                              {value: 'Capitão Aviador', label: 'Capitão Aviador'},
+                              {value: 'Major Aviador', label: 'Major Aviador'},
+                              {value: 'Tenente-Coronel Aviador', label: 'Tenente-Coronel Aviador'},
+                              {value: 'Oficial de Relações Públicas', label: 'Oficial de Relações Públicas'}
+                            ]} 
+                          />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px', gap: '1rem' }}>
+                          <div><label className="form-label">Cidade</label><input required type="text" value={novaCidade} onChange={e => setNovaCidade(e.target.value)} className="form-input" /></div>
+                          <div><label className="form-label">UF</label><CustomSelect searchable value={novaUf} onChange={(val) => setNovaUf(val)} options={ufsBrasileiros} placeholder="Sel" /></div>
+                          <div>
+                            <label className="form-label">Idade</label>
+                            <input type="number" min="0" max="99" value={piIdade} onChange={e => {
+                              const val = e.target.value;
+                              if (val === '' || (Number(val) >= 0 && Number(val) <= 99)) setPiIdade(val);
+                            }} className="form-input" placeholder="Anos" />
+                          </div>
+                        </div>
                         
                         <div>
                           <label className="form-label">Exibir Piloto no Simulador:</label>
@@ -1007,10 +1130,17 @@ export default function Workspace() {
                           </div>
                         </div>
 
-                        <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '8px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}><div className={`toggle-switch ${novoOculto ? 'active' : ''}`} onClick={() => setNovoOculto(!novoOculto)} style={{ background: novoOculto ? '#ef4444' : '#334155' }} /> Ocultar (Reserva)</label>
-                          {novoOculto && <div style={{ marginTop: '1rem' }}><label className="form-label" style={{ color: '#ef4444' }}>Motivo</label><input required type="text" value={novoJustificativa} onChange={e => setNovoJustificativa(e.target.value)} className="form-input" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }} /></div>}
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <label className="form-label">Descrição / Biografia Curta</label>
+                          <textarea className="form-input" rows={4} value={piDescricao} onChange={e => setPiDescricao(e.target.value)} placeholder="Fale um pouco sobre a sua experiência na aviação virtual..." style={{ resize: 'vertical' }} />
                         </div>
+
+                        {isAdmin && (
+                          <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '8px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}><div className={`toggle-switch ${novoOculto ? 'active' : ''}`} onClick={() => setNovoOculto(!novoOculto)} style={{ background: novoOculto ? '#ef4444' : '#334155' }} /> Ocultar (Reserva)</label>
+                            {novoOculto && <div style={{ marginTop: '1rem' }}><label className="form-label" style={{ color: '#ef4444' }}>Motivo</label><input required type="text" value={novoJustificativa} onChange={e => setNovoJustificativa(e.target.value)} className="form-input" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }} /></div>}
+                          </div>
+                        )}
                       </div>
                       <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
                     </form>
@@ -1026,16 +1156,31 @@ export default function Workspace() {
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Pos</span><span>Piloto</span><span>Local</span>{checkPermission('pilotos') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
-                {pilotos.filter(p => matchesPlatformFilter(p.plataforma, pilotoFilter)).map((p) => (
-                  <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><span style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#0ea5e9', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '1rem', fontWeight: 600 }}>{p.posicao}</span><span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase' }}>{getPosicaoNome(p.posicao)}</span></div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}><div style={{ fontWeight: 500, color: '#f8fafc', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>{p.nome} {p.plataforma === '2024' || p.plataforma === 'Ambos' ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null} {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', padding: '2px 4px', borderRadius: '4px' }}>RES</span>}</div>{p.oculto && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>{p.justificativa}</span>}</div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}><MapIcon size={14} style={{display:'inline', marginRight:'6px', verticalAlign:'middle'}}/>{p.cidade} {p.uf ? `- ${p.uf}` : ''}</div>
-                    {checkPermission('pilotos') && (
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}><button onClick={() => handleEditarPiloto(p)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(p.id, 'pilotos', p.nome)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
-                    )}
-                  </div>
-                ))}
+                {pilotos.filter(p => matchesPlatformFilter(p.plataforma, pilotoFilter)).map((p) => {
+                  const isMyPilot = p.nome.trim().toLowerCase() === currentUserInfo?.nome.trim().toLowerCase();
+                  const canEdit = isAdmin || isMyPilot;
+                  
+                  return (
+                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') || isMyPilot ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><span style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#0ea5e9', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '1rem', fontWeight: 600 }}>{p.posicao}</span><span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase' }}>{getPosicaoNome(p.posicao)}</span></div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 500, color: '#f8fafc', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {getPatenteAbbr(p.patente)} {p.nome}
+                          {p.plataforma === '2024' || p.plataforma === 'Ambos' ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null} 
+                          {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', padding: '2px 4px', borderRadius: '4px' }}>RES</span>}
+                        </div>
+                        {p.oculto && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>{p.justificativa}</span>}
+                      </div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}><MapIcon size={14} style={{display:'inline', marginRight:'6px', verticalAlign:'middle'}}/>{p.cidade} {p.uf ? `- ${p.uf}` : ''}</div>
+                      {canEdit && (
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
+                          <button onClick={() => handleEditarPiloto(p)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}><Edit2 size={14} /> {isMyPilot ? 'Editar Perfil' : ''}</button>
+                          {isAdmin && !isMyPilot && <button onClick={() => handleDeletarItem(p.id, 'pilotos', p.nome)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 {pilotos.filter(p => matchesPlatformFilter(p.plataforma, pilotoFilter)).length === 0 && (
                   <p style={{ color: '#64748b', padding: '2rem', textAlign: 'center' }}>Nenhum piloto configurado para o filtro selecionado.</p>
                 )}
@@ -1068,7 +1213,18 @@ export default function Workspace() {
                           </div>
                         </div>
 
-                        <div><label className="form-label">Status do Voo</label><CustomSelect value={agStatus} onChange={(val) => setAgStatus(val)} options={[{ value: 'Planejamento', label: 'Planejamento' }, { value: 'Confirmado', label: 'Confirmado' }, { value: 'Cancelado', label: 'Cancelado' }]} /></div>
+                        <div>
+                          <label className="form-label">Status do Voo</label>
+                          <CustomSelect 
+                            value={agStatus} 
+                            onChange={(val) => setAgStatus(val)} 
+                            options={[
+                              { value: 'Planejamento', label: 'Planejamento' }, 
+                              { value: 'Confirmado', label: 'Confirmado' }, 
+                              { value: 'Cancelado', label: 'Cancelado' }
+                            ]} 
+                          />
+                        </div>
                       </div>
                       <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} disabled={loadingGeocode} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" disabled={loadingGeocode} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
                     </form>
@@ -1100,38 +1256,38 @@ export default function Workspace() {
             </div>
           )}
 
-          {activeTab === 'noticias' && (
+          {activeTab === 'videos' && (
             <div>
               {showForm && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Notícia</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
-                    <form onSubmit={handleSalvarNoticia} style={{ padding: '1.5rem' }}>
+                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '500px', margin: 'auto' }}>
+                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Vídeo</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
+                    <form onSubmit={handleSalvarVideo} style={{ padding: '1.5rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '1rem' }}><div><label className="form-label">Data</label><input type="text" value={notData} onChange={e => setNotData(e.target.value)} className="form-input" /></div><div><label className="form-label">Título</label><input type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" /></div></div>
                         <div>
-                          <label className="form-label">Imagem</label>
-                          <label style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px dashed rgba(255,255,255,0.1)', color: '#94a3b8', borderRadius: '8px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-                            {uploadProgress !== null ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }}/> : <ImagePlus size={16}/>} {uploadProgress !== null ? `Enviando... ${Math.round(uploadProgress)}%` : 'Selecionar Imagem'}
-                            <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
-                          </label>
+                          <label className="form-label">Link do YouTube (URL normal)</label>
+                          <input required type="url" value={vidUrl} onChange={e => setVidUrl(e.target.value)} className="form-input" placeholder="https://www.youtube.com/watch?v=..." />
                         </div>
-                        {notImagem && uploadProgress === null && <div style={{ height: '100px', borderRadius: '8px', backgroundImage: `url(${notImagem})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(255,255,255,0.1)' }} />}
-                        <div><label className="form-label">Resumo</label><textarea required value={notResumo} onChange={e => setNotResumo(e.target.value)} rows={3} className="form-input" style={{ resize: 'none' }} /></div>
                       </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" disabled={uploadProgress !== null} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
+                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none' }}>Salvar</button></div>
                     </form>
                   </div>
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
-                {noticias.map((n) => (
-                  <div key={n.id} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    {n.imagem ? <div style={{ height: '120px', backgroundImage: `url(${n.imagem})`, backgroundSize: 'cover', backgroundPosition: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }} /> : <div style={{ height: '120px', background: 'rgba(0,0,0,0.2)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImagePlus size={24} color="#1e293b"/></div>}
-                    <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                      <h4 style={{ margin: '0 0 0.25rem 0', color: '#f8fafc', fontSize: '0.95rem', fontWeight: 500 }}>{n.titulo}</h4><span style={{ color: '#0ea5e9', fontSize: '0.75rem', marginBottom: '0.5rem' }}>{n.data}</span>
-                      <p style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: 1.4, margin: '0 0 1rem 0', flexGrow: 1 }}>{n.resumo}</p>
-                      {checkPermission('noticias') && <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}><button onClick={() => handleEditarNoticia(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'noticias', n.titulo)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button></div>}
+                {videos.map(v => (
+                  <div key={v.id} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
+                      <iframe width="100%" height="100%" src={v.url} title="Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                    </div>
+                    <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <span style={{ color: '#cbd5e1', fontSize: '0.8rem', wordBreak: 'break-all' }}>{v.url}</span>
+                      {checkPermission('videos') && (
+                        <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                          <button onClick={() => { setEditingId(v.id!); setVidUrl(v.url); setShowForm(true); }} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button>
+                          <button onClick={() => handleDeletarItem(v.id, 'videos', 'Vídeo')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1167,7 +1323,7 @@ export default function Workspace() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
                       <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Emitido por: {n.autor}</span>
                       {currentUserInfo?.role === 'admin' && (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => handleEditarNotam(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => { setEditingId(n.id!); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); }} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
                       )}
                     </div>
                   </div>
@@ -1176,7 +1332,7 @@ export default function Workspace() {
             </div>
           )}
 
-          {activeTab === 'config' && currentUserInfo?.role === 'admin' && (
+          {activeTab === 'config' && isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1100px' }}>
               
               <div className="fs-card" style={{ padding: '2rem' }}>
@@ -1240,9 +1396,21 @@ export default function Workspace() {
                   {usuarios.map((u) => (
                     <div key={u.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? '2fr 1fr 1.5fr' : '1fr', gap: '1.5rem', padding: '1.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>{u.foto ? <img src={u.foto} alt="Perfil" style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--fs-border)' }} /> : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fs-blue)' }}><UserCircle size={24}/></div>}<div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, fontFamily: '"Comum", sans-serif', marginBottom: '2px' }}>{u.nome}</span><span style={{ color: 'var(--fs-muted)', fontSize: '0.85rem' }}>{u.email}</span></div></div>
-                      <div><CustomSelect inline value={u.role} onChange={(val) => handleMudarCargo(u.id as string, val)} options={[{ value: 'admin', label: 'Admin (Total)' }, { value: 'piloto', label: 'Piloto' }, { value: 'pendente', label: 'Pendente' }]} /></div>
+                      <div>
+                        <CustomSelect 
+                          inline 
+                          value={u.role} 
+                          onChange={(val) => handleMudarCargo(u.id as string, val)} 
+                          options={[
+                            { value: 'admin', label: 'Admin (Total)' }, 
+                            { value: 'piloto', label: 'Piloto' }, 
+                            { value: 'pendente', label: 'Pendente' }
+                          ]} 
+                        />
+                      </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
                         <PermissionToggle label="Gestão de Agenda" active={!!u.permissoes?.agenda} onChange={() => handlePermissao(u.id!, 'agenda', !u.permissoes?.agenda)} />
+                        <PermissionToggle label="Gestão de Vídeos" active={!!u.permissoes?.videos} onChange={() => handlePermissao(u.id!, 'videos', !u.permissoes?.videos)} />
                       </div>
                     </div>
                   ))}

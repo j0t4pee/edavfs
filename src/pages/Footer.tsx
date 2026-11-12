@@ -46,7 +46,8 @@ export default function Footer({ hasNoticias, onOpenLegal }: FooterProps) {
           <h4 className="footer-heading">Navegação</h4>
           <a onClick={() => scrollToSection('pilotos')} className="footer-link">Pilotos</a>
           <a onClick={() => scrollToSection('agenda')} className="footer-link">Agenda</a>
-          <a onClick={() => scrollToSection('aeronave')} className="footer-link">Aeronave</a>
+          <a onClick={() => scrollToSection('midias')} className="footer-link">Mídias</a>
+
           {hasNoticias && <a onClick={() => scrollToSection('noticias')} className="footer-link">Artigos</a>}
           <a onClick={() => scrollToSection('sobre')} className="footer-link">O Esquadrão</a>
         </div>

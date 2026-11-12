@@ -2,8 +2,11 @@
   "name": "edafs-novo",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
+  "main": "main.js",
   "dependencies": {
     "@geoman-io/leaflet-geoman-free": "^2.20.2",
+    "@livekit/components-react": "^2.9.25",
     "@react-google-maps/api": "^2.20.8",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -16,6 +19,8 @@
     "firebase": "^12.19.0",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
+    "livekit-client": "^2.23.0",
+    "livekit-server-sdk": "^2.19.2",
     "lucide-react": "^1.46.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -29,7 +34,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http-get://127.0.0.1:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "electron:build": "npm run build && electron-builder"
   },
   "eslintConfig": {
     "extends": [
@@ -49,13 +56,35 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "@types/leaflet": "^1.9.22",
-    "@types/leaflet-draw": "^1.0.13",
-    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
-    "@types/mapbox-gl": "^3.4.1",
-    "autoprefixer": "^10.6.0",
-    "postcss": "^8.5.28",
-    "tailwindcss": "^4.3.3"
+  "build": {
+    "extends": null,
+    "appId": "com.edafs.falcon",
+    "productName": "FALCON EDAFS",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      "public/favicon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "FALCON EDAFS",
+      "installerIcon": "public/favicon.ico",
+      "uninstallerIcon": "public/favicon.ico",
+      "installerHeaderIcon": "public/favicon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

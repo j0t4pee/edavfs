@@ -110,7 +110,6 @@ export default function Header({
             <span onClick={() => scrollToSection('agenda')} className={`nav-link ${activeSection === 'agenda' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center' }}>
               Agenda {agendaCount > 0 && <span className="menu-badge">{agendaCount}</span>}
             </span>
-            <span onClick={() => scrollToSection('aeronave')} className={`nav-link ${activeSection === 'aeronave' ? 'active' : ''}`}>Aeronave</span>
             {hasNoticias && (
               <span onClick={() => scrollToSection('noticias')} className={`nav-link ${activeSection === 'noticias' ? 'active' : ''}`}>Artigos</span>
             )}
@@ -131,7 +130,6 @@ export default function Header({
         <span className={activeSection === 'agenda' ? 'active' : ''} onClick={() => scrollToSection('agenda')} style={{ display: 'flex', alignItems: 'center' }}>
           Agenda {agendaCount > 0 && <span className="menu-badge">{agendaCount}</span>}
         </span>
-        <span className={activeSection === 'aeronave' ? 'active' : ''} onClick={() => scrollToSection('aeronave')}>Aeronave</span>
         {hasNoticias && (
           <span className={activeSection === 'noticias' ? 'active' : ''} onClick={() => scrollToSection('noticias')}>Artigos</span>
         )}
