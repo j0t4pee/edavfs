@@ -11,14 +11,29 @@ import { signOut } from 'firebase/auth';
 
 import { 
   LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Cookie,
-  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2, Newspaper
+  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2, Newspaper, UserPlus, UserCheck
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
 import faviconImage from '../images/favicon.png';
 import mfLogo from '../images/mf.png';
 
-interface Piloto { id?: string; posicao: string; nome: string; cidade: string; uf: string; oculto?: boolean; justificativa?: string; plataforma?: string; idade?: number; descricao?: string; simulador?: string; patente?: string; }
+interface Piloto { 
+  id?: string; 
+  userId?: string; 
+  posicao: string; 
+  nome: string; 
+  nomeVisivel?: string; 
+  cidade: string; 
+  uf: string; 
+  oculto?: boolean; 
+  justificativa?: string; 
+  plataforma?: string; 
+  idade?: number | null; 
+  descricao?: string; 
+  simulador?: string; 
+  patente?: string; 
+}
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; plataforma?: string; }
 interface Video { id?: string; url: string; ativo?: boolean; }
 interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
@@ -70,9 +85,9 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
   return (
     <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif', opacity: disabled ? 0.6 : 1 }}>
       {isOpen && !disabled && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
-      <div onClick={() => !disabled && setIsOpen(true)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: isOpen ? 99999 : 1, transition: 'all 0.2s' }}>
+      <div onClick={() => !disabled && setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: isOpen ? 99999 : 1, transition: 'all 0.2s' }}>
         {searchable && isOpen ? (
-          <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem', fontFamily: '"Regular", sans-serif' }} />
+          <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem', fontFamily: '"Regular", sans-serif' }} onClick={e => e.stopPropagation()} />
         ) : ( <span>{selectedOption ? selectedOption.label : placeholder}</span> )}
         <ChevronDown size={14} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', flexShrink: 0, marginLeft: '0.5rem' }} />
       </div>
@@ -80,7 +95,7 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
         <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)', padding: 0 }}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map(opt => (
-              <div key={opt.value} className="custom-select-option" onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: value === opt.value ? 'var(--fs-blue)' : '#cbd5e1', background: value === opt.value ? 'rgba(59,130,246,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s', borderLeft: value === opt.value ? '3px solid var(--fs-blue)' : '3px solid transparent', fontWeight: value === opt.value ? 600 : 400 }}>
+              <div key={opt.value} className="custom-select-option" onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: value === opt.value ? 'var(--fs-blue)' : '#cbd5e1', background: value === opt.value ? 'rgba(59,130,246,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s', borderLeft: value === opt.value ? '3px solid var(--fs-blue)' : '3px solid transparent', fontWeight: value === opt.value ? 600 : 400 }}>
                 {opt.label}
               </div>
             ))
@@ -275,12 +290,17 @@ export default function Workspace() {
   const [currentUserInfo, setCurrentUserInfo] = useState<Usuario | null>(null); 
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [replacePilot, setReplacePilot] = useState<Piloto | null>(null);
+  const [replaceUserId, setReplaceUserId] = useState('');
+
   const [metarIcao, setMetarIcao] = useState('');
   const [metarData, setMetarData] = useState<any>(null);
   const [metarLoading, setMetarLoading] = useState(false);
 
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
+  const [novoNomeVisivel, setNovoNomeVisivel] = useState('');
   const [novaCidade, setNovaCidade] = useState('');
   const [novaUf, setNovaUf] = useState('');
   const [novoOculto, setNovoOculto] = useState(false);
@@ -411,7 +431,7 @@ export default function Workspace() {
 
   const fecharFormulario = () => {
     setShowForm(false); setEditingId(null); setUploadProgress(null);
-    setNovoPosicao('1'); setNovoNome(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa(''); setPlat2020Ativo(true); setPlat2024Ativo(false);
+    setNovoPosicao('1'); setNovoNome(''); setNovoNomeVisivel(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa(''); setPlat2020Ativo(true); setPlat2024Ativo(false);
     setPiIdade(''); setPiDescricao(''); setPiPatente(''); 
     setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento'); 
     setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
@@ -555,6 +575,7 @@ export default function Workspace() {
     setEditingId(p.id || null); 
     setNovoPosicao(p.posicao); 
     setNovoNome(p.nome); 
+    setNovoNomeVisivel(p.nomeVisivel || p.nome);
     setNovaCidade(p.cidade || ''); 
     setNovaUf(p.uf || ''); 
     setNovoOculto(p.oculto || false); 
@@ -565,6 +586,7 @@ export default function Workspace() {
     loadPlatformToState(p.plataforma); 
     setShowForm(true); 
   };
+  
   const handleEditarAgenda = (a: Demonstracao) => { setEditingId(a.id || null); setAgCidade(a.cidade); setAgStatus(a.status); loadPlatformToState(a.plataforma); if (a.dataHora && a.dataHora.includes(' às ')) { const [dPart, hPart] = a.dataHora.split(' às '); setAgDataHoraIso(`${dPart.split('/').reverse().join('-')}T${hPart}`); } else setAgDataHoraIso(''); setShowForm(true); };
   const handleEditarNoticia = (n: Noticia) => { setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo); setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true); };
   const handleEditarNotam = (n: Notam) => { setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); };
@@ -572,11 +594,12 @@ export default function Workspace() {
 
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); 
-    const isMyPilot = novoNome.trim().toLowerCase() === currentUserInfo?.nome.trim().toLowerCase();
+    const isMyPilot = Boolean(editingId && currentUserInfo && pilotos.find(p => p.id === editingId)?.userId === currentUserInfo.uid);
     if (!isAdmin && !isMyPilot) return showToast("Acesso Negado", "error");
     
     try { 
       const data: any = { 
+        nomeVisivel: novoNomeVisivel,
         cidade: novaCidade, 
         uf: novaUf, 
         idade: piIdade ? parseInt(piIdade) : null,
@@ -597,6 +620,37 @@ export default function Workspace() {
       }
       fecharFormulario(); showToast("Salvo"); 
     } catch { showToast("Falha", "error"); }
+  };
+
+  const handleSubstituirPiloto = async () => {
+    if (!replacePilot || !replaceUserId || !isAdmin) return;
+    
+    const userToLink = usuarios.find(u => u.id === replaceUserId);
+    
+    if (!userToLink) {
+      showToast("Erro: Utilizador não encontrado na base de dados.", "error");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'pilotos', replacePilot.id!), {
+        userId: userToLink.id,
+        nome: userToLink.nome,
+        nomeVisivel: userToLink.nome,
+        cidade: '',
+        uf: '',
+        idade: null,
+        descricao: '',
+        plataforma: '2024' // Defaulting to 2024 to force them to configure it
+      });
+      setShowReplaceModal(false);
+      setReplacePilot(null);
+      setReplaceUserId('');
+      showToast("Piloto substituído com sucesso!", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Falha ao substituir. Verifique permissões.", "error");
+    }
   };
   
   const handleSalvarAgenda = async (e: React.FormEvent) => {
@@ -872,6 +926,42 @@ export default function Workspace() {
         </div>
       )}
 
+      {showReplaceModal && replacePilot && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '500px' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><UserCheck size={18} color="#10b981"/> Substituir por Conta</h3>
+              <button onClick={() => setShowReplaceModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              <p style={{ color: 'var(--fs-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                Selecione abaixo um utilizador registado para assumir a posição <strong>{replacePilot.posicao}</strong>. 
+                <br/><br/>
+                <span style={{ color: '#ef4444', fontWeight: 600 }}>Atenção:</span> Todos os dados cadastrados manualmente (idade, cidade, biografia) serão <span style={{ color: '#ef4444', fontWeight: 600 }}>apagados e substituídos</span>, permitindo que o novo piloto gere as suas próprias informações a partir do Workspace.
+              </p>
+              
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Selecionar Utilizador</label>
+                <CustomSelect 
+                  value={replaceUserId}
+                  onChange={setReplaceUserId}
+                  searchable
+                  placeholder="Selecione um membro..."
+                  options={usuarios
+                    .filter(u => !pilotos.some(p => p.userId === u.id))
+                    .map(u => ({ value: u.id!, label: `${u.nome} (${u.email})` }))}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                <button onClick={() => setShowReplaceModal(false)} style={{ background: 'transparent', border: '1px solid #334155', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button>
+                <button onClick={handleSubstituirPiloto} disabled={!replaceUserId} style={{ background: '#ef4444', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', opacity: replaceUserId ? 1 : 0.5 }}>Substituir Piloto</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {mobileSidebarOpen && <div onClick={() => setMobileSidebarOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 35, backdropFilter: 'blur(5px)' }} />}
 
       <aside className={`workspace-sidebar ${mobileSidebarOpen ? 'open' : ''}`}>
@@ -1105,6 +1195,8 @@ export default function Workspace() {
                           </div>
                           <div><label className="form-label">Nome Completo {isAdmin ? '*' : '(Fixo)'}</label><input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" disabled={!isAdmin} style={{ opacity: isAdmin ? 1 : 0.6 }} /></div>
                         </div>
+
+                        <div><label className="form-label">Nome Visível no Site (Apelido)</label><input type="text" value={novoNomeVisivel} onChange={e => setNovoNomeVisivel(e.target.value)} placeholder="Deixe em branco para usar o Nome Completo" className="form-input" /></div>
                         
                         <div>
                           <label className="form-label">Patente (Cargo Militar) {isAdmin ? '*' : '(Fixo)'}</label>
@@ -1173,26 +1265,30 @@ export default function Workspace() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Pos</span><span>Piloto</span><span>Local</span>{checkPermission('pilotos') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Pos</span><span>Piloto</span><span>Local</span>{checkPermission('pilotos') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
                 {pilotos.filter(p => matchesPlatformFilter(p.plataforma, pilotoFilter)).map((p) => {
-                  const isMyPilot = p.nome.trim().toLowerCase() === currentUserInfo?.nome.trim().toLowerCase();
+                  const isMyPilot = Boolean(p.userId && currentUserInfo && p.userId === currentUserInfo.uid);
                   const canEdit = isAdmin || isMyPilot;
                   
                   return (
-                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') || isMyPilot ? '1fr 2.5fr 2fr 1fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
+                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') || isMyPilot ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><span style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#0ea5e9', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '1rem', fontWeight: 600 }}>{p.posicao}</span><span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase' }}>{getPosicaoNome(p.posicao)}</span></div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontWeight: 500, color: '#f8fafc', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {getPatenteAbbr(p.patente)} {p.nome}
+                          {getPatenteAbbr(p.patente)} {p.nomeVisivel || p.nome}
                           {(p.plataforma === '2024' || p.plataforma === 'Ambos') ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null} 
                           {p.oculto && <span style={{ fontSize: '0.65rem', background: '#ef4444', padding: '2px 4px', borderRadius: '4px' }}>RES</span>}
+                          {p.userId && <span style={{ fontSize: '0.65rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '2px 4px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Conta Vinculada"><UserCheck size={10} /> Conta</span>}
                         </div>
-                        {p.oculto && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>{p.justificativa}</span>}
+                        {p.oculto ? <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>{p.justificativa}</span> : (p.nomeVisivel && p.nomeVisivel !== p.nome && <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Real: {p.nome}</span>)}
                       </div>
                       <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}><MapIcon size={14} style={{display:'inline', marginRight:'6px', verticalAlign:'middle'}}/>{p.cidade} {p.uf ? `- ${p.uf}` : ''}</div>
                       {canEdit && (
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
                           <button onClick={() => handleEditarPiloto(p)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}><Edit2 size={14} /> {isMyPilot ? 'Editar Perfil' : ''}</button>
+                          {isAdmin && !isMyPilot && !p.userId && (
+                            <button onClick={() => { setReplacePilot(p); setShowReplaceModal(true); }} style={{ background: 'transparent', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }} title="Substituir por Utilizador"><UserPlus size={16} /></button>
+                          )}
                           {isAdmin && !isMyPilot && <button onClick={() => handleDeletarItem(p.id, 'pilotos', p.nome)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>}
                         </div>
                       )}
