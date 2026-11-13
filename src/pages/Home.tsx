@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../App.css'; 
 import { 
   ChevronRight, ChevronLeft, CheckCircle2, Calendar, 
@@ -297,6 +298,8 @@ const PilotBioModal = ({ piloto, onClose }: { piloto: Piloto | null; onClose: ()
 };
 
 export default function Home() {
+  const navigate = useNavigate();
+
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showTopBanner, setShowTopBanner] = useState(() => {
@@ -334,12 +337,6 @@ export default function Home() {
   const [activeLegalTab, setActiveLegalTab] = useState<'privacidade' | 'termos' | 'cookies' | 'disclaimer'>('privacidade');
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const [demoCidade, setDemoCidade] = useState('');
-  const [demoTransmissao, setDemoTransmissao] = useState<'sim' | 'nao' | ''>('');
-  const [demoCanal, setDemoCanal] = useState('');
-  const [isSubmittingDemo, setIsSubmittingDemo] = useState(false);
-  const [modalDemoSucesso, setModalDemoSucesso] = useState(false);
 
   const [dbPilotos, setDbPilotos] = useState<Piloto[]>([]);
   const [selectedPiloto, setSelectedPiloto] = useState<Piloto | null>(null);
@@ -671,42 +668,6 @@ export default function Home() {
       console.error(error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const submitDemonstracao = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!demoCidade.trim() || !demoTransmissao) return;
-    
-    const lastRequest = localStorage.getItem('lastDemoRequest_edafs');
-    if (lastRequest) {
-      const timeDiff = Date.now() - parseInt(lastRequest);
-      if (timeDiff < 24 * 60 * 60 * 1000) {
-        alert('Apenas uma solicitação por dia é permitida por dispositivo. Tente novamente amanhã.');
-        return;
-      }
-    }
-
-    setIsSubmittingDemo(true);
-
-    try {
-      await addDoc(collection(db, 'solicitacoes'), {
-        cidade: demoCidade,
-        transmissao: demoTransmissao,
-        canal: demoTransmissao === 'sim' ? demoCanal : 'Sem Transmissão',
-        dataSolicitacao: new Date().toISOString(),
-        status: 'Pendente'
-      });
-
-      localStorage.setItem('lastDemoRequest_edafs', Date.now().toString());
-      setIsDemoModalOpen(false);
-      setModalDemoSucesso(true);
-      setDemoCidade(''); setDemoTransmissao(''); setDemoCanal('');
-    } catch (error) {
-      console.error(error);
-      alert("Houve um erro ao enviar o pedido. Tente novamente.");
-    } finally {
-      setIsSubmittingDemo(false);
     }
   };
 
@@ -1535,7 +1496,7 @@ export default function Home() {
         alistamentoAberto={alistamentoAberto}
         solicitacaoAberta={solicitacaoAberta}
         onOpenAlistamento={() => setIsFormModalOpen(true)}
-        onOpenDemo={() => setIsDemoModalOpen(true)}
+        onOpenDemo={() => navigate('/solicitacao')}
         hasLive={true}
         hasNoticias={false}
       />
@@ -1566,7 +1527,7 @@ export default function Home() {
           )}
 
           {solicitacaoAberta && (
-            <div className="bf-action-card" onClick={() => setIsDemoModalOpen(true)}>
+            <div className="bf-action-card" onClick={() => navigate('/solicitacao')}>
               <div className="bf-action-card-icon"><PlaneTakeoff size={28} /></div>
               <div className="bf-action-card-content">
                 <span className="bf-action-card-title">Solicitar Demonstração</span>
@@ -1948,58 +1909,6 @@ export default function Home() {
                <p style={{ color: 'var(--text-muted)', fontWeight: 400, marginTop: '0.5rem' }}>Fique atento aos nossos canais oficiais.</p>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className={`modal-overlay ${isDemoModalOpen ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content glass-panel" style={{ padding: '2.5rem', background: '#0b1121', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '24px', maxWidth: '500px', width: '90%' }}>
-          <button onClick={() => setIsDemoModalOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '44px', height: '44px', borderRadius: '50%' }}>
-            <X size={24} />
-          </button>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '0.75rem', borderRadius: '12px', color: '#10b981' }}><PlaneTakeoff size={24} /></div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1.3rem', margin: 0, fontWeight: 600 }}>Solicitar Demonstração</h3>
-          </div>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '2rem' }}>Preencha os dados abaixo para convidar o EDAFS para o seu evento ou cidade.</p>
-
-          <form onSubmit={submitDemonstracao} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cidade ou Nome do Evento *</label>
-              <input required type="text" className="modern-input" value={demoCidade} onChange={e => setDemoCidade(e.target.value)} placeholder="Ex: São Paulo - SP" />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Haverá Transmissão ao Vivo? *</label>
-              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                <button type="button" onClick={() => setDemoTransmissao('sim')} className={`platform-btn ${demoTransmissao === 'sim' ? 'active' : ''}`} style={{ borderColor: demoTransmissao === 'sim' ? '#10b981' : '', background: demoTransmissao === 'sim' ? 'rgba(16,185,129,0.1)' : '', color: demoTransmissao === 'sim' ? '#10b981' : '' }}>Sim</button>
-                <button type="button" onClick={() => { setDemoTransmissao('nao'); setDemoCanal(''); }} className={`platform-btn ${demoTransmissao === 'nao' ? 'active' : ''}`} style={{ borderColor: demoTransmissao === 'nao' ? '#10b981' : '', background: demoTransmissao === 'nao' ? 'rgba(16,185,129,0.1)' : '', color: demoTransmissao === 'nao' ? '#10b981' : '' }}>Não</button>
-              </div>
-            </div>
-
-            {demoTransmissao === 'sim' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', animation: 'fadeIn 0.3s ease' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Link do Canal (YouTube/Twitch) *</label>
-                <div style={{ position: 'relative' }}>
-                  <Radio size={18} color="#94a3b8" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input required type="url" className="modern-input" value={demoCanal} onChange={e => setDemoCanal(e.target.value)} placeholder="https://youtube.com/..." style={{ paddingLeft: '2.5rem' }} />
-                </div>
-              </div>
-            )}
-
-            <button type="submit" disabled={isSubmittingDemo || !demoCidade.trim() || !demoTransmissao} style={{ width: '100%', marginTop: '1rem', padding: '1rem', fontSize: '0.95rem', background: '#10b981', color: '#030712', border: 'none', borderRadius: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', opacity: (isSubmittingDemo || !demoCidade.trim() || !demoTransmissao) ? 0.5 : 1 }}>
-              {isSubmittingDemo ? 'A Enviar...' : 'Enviar Solicitação'}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className={`modal-overlay ${modalDemoSucesso ? 'active' : ''}`} style={{ zIndex: 9999 }}>
-        <div className="modal-content glass-panel" style={{ padding: '3rem 2.5rem', background: '#0b1121', border: '1px solid #10b981', borderRadius: '24px', maxWidth: '400px', textAlign: 'center' }}>
-          <PlaneTakeoff size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} />
-          <h3 style={{ color: 'var(--text-main)', fontSize: '1.5rem', margin: '1.5rem 0 1rem', fontWeight: 'bold' }}>Solicitação Enviada!</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>O nosso Comando Geral irá analisar o seu pedido e entraremos em contacto em breve.</p>
-          <button type="button" style={{ background: '#10b981', color: '#030712', letterSpacing: '0.1em', padding: '1rem 2rem', width: '100%', borderRadius: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }} onClick={() => setModalDemoSucesso(false)}>CONCLUÍDO</button>
         </div>
       </div>
 

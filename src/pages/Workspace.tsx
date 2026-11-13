@@ -5,13 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { 
   collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc 
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { auth, db, storage } from '../firebase';
+import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 import { 
   LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Cookie,
-  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, ImagePlus, Loader2, Newspaper, UserPlus, UserCheck
+  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, UserPlus, UserCheck
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
@@ -36,12 +35,11 @@ interface Piloto {
 }
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; plataforma?: string; }
 interface Video { id?: string; url: string; ativo?: boolean; }
-interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
 interface Solicitacao { id?: string; cidade: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
 interface Usuario { 
-  id?: string; uid: string; nome: string; email: string; foto: string; role: string; 
-  permissoes?: { agenda?: boolean; videos?: boolean; noticias?: boolean; };
+  id?: string; uid?: string; nome: string; email: string; foto: string; role: string; 
+  permissoes?: { publicarNotam?: boolean; publicarAgenda?: boolean; editarVideo?: boolean; editarUsuarios?: boolean; };
 }
 
 const getPosicaoNome = (num: string) => {
@@ -63,9 +61,9 @@ const getPatenteAbbr = (patente?: string) => {
 const ufsBrasileiros = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => ({ value: uf, label: uf }));
 
 const PermissionToggle = ({ label, active, onChange }: { label: string, active: boolean, onChange: () => void }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
-    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: '"Regular", sans-serif' }}>{label}</span>
-    <div className={`toggle-switch ${active ? 'active' : ''}`} onClick={onChange} style={{ transform: 'scale(0.8)', margin: '-5px -5px -5px 0' }} />
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
+    <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: '"Regular", sans-serif' }}>{label}</span>
+    <div className={`toggle-switch ${active ? 'active' : ''}`} onClick={onChange} style={{ transform: 'scale(0.7)', margin: '-5px -5px -5px 0' }} />
   </div>
 );
 
@@ -79,12 +77,14 @@ const SimToggle = ({ label, active, onChange }: { label: string, active: boolean
 const CustomSelect = ({ value, options, onChange, placeholder, searchable = false, inline = false, disabled = false }: { value: string, options: {value: string, label: string}[], onChange: (val: string) => void, placeholder?: string, searchable?: boolean, inline?: boolean, disabled?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const selectedOption = options.find(o => o.value === value);
+  
+  const safeValue = (value || '').toString().toLowerCase();
+  const selectedOption = options.find(o => o.value.toLowerCase() === safeValue);
   const filteredOptions = searchable && search ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())) : options;
 
   return (
-    <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif', opacity: disabled ? 0.6 : 1 }}>
-      {isOpen && !disabled && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={() => { setIsOpen(false); setSearch(''); }} />}
+    <div style={{ position: 'relative', fontFamily: '"Regular", sans-serif', opacity: disabled ? 0.6 : 1, zIndex: isOpen ? 99999 : 1 }}>
+      {isOpen && !disabled && <div style={{ position: 'fixed', inset: 0, zIndex: 99998 }} onClick={(e) => { e.stopPropagation(); setIsOpen(false); setSearch(''); }} />}
       <div onClick={() => !disabled && setIsOpen(!isOpen)} className="form-input custom-select-box" style={{ padding: inline ? '0.5rem' : '0.85rem 1.2rem', background: inline ? 'transparent' : 'rgba(0,0,0,0.3)', border: inline ? '1px solid rgba(255,255,255,0.1)' : '1px solid var(--fs-border)', color: selectedOption ? '#f8fafc' : '#64748b', borderRadius: '12px', fontSize: inline ? '0.85rem' : '0.9rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: isOpen ? 99999 : 1, transition: 'all 0.2s' }}>
         {searchable && isOpen ? (
           <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', width: '100%', fontSize: '0.9rem', fontFamily: '"Regular", sans-serif' }} onClick={e => e.stopPropagation()} />
@@ -92,10 +92,10 @@ const CustomSelect = ({ value, options, onChange, placeholder, searchable = fals
         <ChevronDown size={14} color="#64748b" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', flexShrink: 0, marginLeft: '0.5rem' }} />
       </div>
       {isOpen && !disabled && (
-        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)', padding: 0 }}>
+        <div className="modal-modern fs-card" style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, minWidth: inline ? '150px' : 'auto', background: '#0b0f19', border: '1px solid var(--fs-border)', borderRadius: '12px', zIndex: 99999, maxHeight: '250px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)', padding: 0 }}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map(opt => (
-              <div key={opt.value} className="custom-select-option" onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: value === opt.value ? 'var(--fs-blue)' : '#cbd5e1', background: value === opt.value ? 'rgba(59,130,246,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s', borderLeft: value === opt.value ? '3px solid var(--fs-blue)' : '3px solid transparent', fontWeight: value === opt.value ? 600 : 400 }}>
+              <div key={opt.value} className="custom-select-option" onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); setSearch(''); }} style={{ padding: '0.75rem 1rem', color: safeValue === opt.value.toLowerCase() ? 'var(--fs-blue)' : '#cbd5e1', background: safeValue === opt.value.toLowerCase() ? 'rgba(59,130,246,0.1)' : 'transparent', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s', borderLeft: safeValue === opt.value.toLowerCase() ? '3px solid var(--fs-blue)' : '3px solid transparent', fontWeight: safeValue === opt.value.toLowerCase() ? 600 : 400 }}>
                 {opt.label}
               </div>
             ))
@@ -261,7 +261,6 @@ export default function Workspace() {
 
   const [pilotos, setPilotos] = useState<Piloto[]>([]);
   const [agendas, setAgendas] = useState<Demonstracao[]>([]);
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
@@ -276,10 +275,6 @@ export default function Workspace() {
   const [mostrarFS20, setMostrarFS20] = useState(true);
   const [mostrarFS24, setMostrarFS24] = useState(true);
   
-  const [ytUrl, setYtUrl] = useState('');
-  const [twUrl, setTwUrl] = useState('');
-  const [tkUrl, setTkUrl] = useState('');
-  
   const [discordWebhook, setDiscordWebhook] = useState('');
   const [discordColor, setDiscordColor] = useState('#ed333b');
   const [discordFooter, setDiscordFooter] = useState('EDAFS MSFS - Sistema de Operações');
@@ -288,7 +283,6 @@ export default function Workspace() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingGeocode, setLoadingGeocode] = useState(false); 
   const [currentUserInfo, setCurrentUserInfo] = useState<Usuario | null>(null); 
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [replacePilot, setReplacePilot] = useState<Piloto | null>(null);
@@ -315,11 +309,6 @@ export default function Workspace() {
   const [agCidade, setAgCidade] = useState('');
   const [agDataHoraIso, setAgDataHoraIso] = useState('');
   const [agStatus, setAgStatus] = useState('Planejamento');
-
-  const [notData, setNotData] = useState('');
-  const [notTitulo, setNotTitulo] = useState('');
-  const [notResumo, setNotResumo] = useState('');
-  const [notImagem, setNotImagem] = useState('');
 
   const [notamTitulo, setNotamTitulo] = useState('');
   const [notamMensagem, setNotamMensagem] = useState('');
@@ -357,7 +346,10 @@ export default function Workspace() {
       if (!user) navigate('/login'); 
       else {
         onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-          if (docSnap.exists()) setCurrentUserInfo(docSnap.data() as Usuario);
+          if (docSnap.exists()) {
+            // CORREÇÃO AQUI: Assegurar que o currentUserInfo tem o id correto
+            setCurrentUserInfo({ id: docSnap.id, uid: docSnap.id, ...docSnap.data() } as Usuario);
+          }
         });
       }
     });
@@ -372,22 +364,25 @@ export default function Workspace() {
         const arr: Demonstracao[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Demonstracao));
         setAgendas(arr);
       }),
-      onSnapshot(collection(db, 'noticias'), snap => {
-        const arr: Noticia[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Noticia)); setNoticias(arr);
-      }),
       onSnapshot(collection(db, 'videos'), snap => {
         const arr: Video[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Video)); setVideos(arr);
       }),
       onSnapshot(collection(db, 'notams'), snap => {
-        const arr: Notam[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Notam));
+        const arr: Notam[] = []; 
+        snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Notam));
         arr.sort((a, b) => {
-          const dateA = a.data.split('/').reverse().join('-');
-          const dateB = b.data.split('/').reverse().join('-');
-          return new Date(dateB).getTime() - new Date(dateA).getTime();
+          try {
+            const timeA = a.data ? new Date(a.data.split('/').reverse().join('-')).getTime() : 0;
+            const timeB = b.data ? new Date(b.data.split('/').reverse().join('-')).getTime() : 0;
+            return (timeB || 0) - (timeA || 0);
+          } catch (e) {
+            return 0; 
+          }
         });
         setNotams(arr);
       }),
       onSnapshot(collection(db, 'users'), snap => {
+        // CORREÇÃO AQUI: Assegurar que cada user traz o seu ID garantido da base de dados
         const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
         setUsuarios(arr);
       }),
@@ -403,9 +398,6 @@ export default function Workspace() {
           setSolicitacaoAberta(d.solicitacaoAberta !== undefined ? d.solicitacaoAberta : true);
           setMostrarFS20(d.mostrarFS20 !== undefined ? d.mostrarFS20 : true);
           setMostrarFS24(d.mostrarFS24 !== undefined ? d.mostrarFS24 : true);
-          setYtUrl(d.liveYouTubeUrl || '');
-          setTwUrl(d.liveTwitchUrl || ''); 
-          setTkUrl(d.liveTikTokUrl || '');
           setDiscordWebhook(d.discordWebhook || '');
           setDiscordColor(d.discordColor || '#ed333b');
           setDiscordFooter(d.discordFooter || 'EDAV MSFS - Sistema de Operações');
@@ -415,14 +407,12 @@ export default function Workspace() {
     return () => unsubs.forEach(u => u()); 
   }, [navigate]);
 
-  const checkPermission = (action: string) => {
-    if (currentUserInfo?.role === 'admin') return true;
-    if (['dashboard', 'notam', 'meteorologia'].includes(action)) return true; 
-    if (['pilotos', 'noticias', 'videos', 'config', 'solicitacoes'].includes(action)) return false; 
-    return !!currentUserInfo?.permissoes?.[action as keyof typeof currentUserInfo.permissoes];
-  };
-
-  const isAdmin = currentUserInfo?.role === 'admin';
+  const isAdmin = currentUserInfo?.role?.toLowerCase() === 'admin';
+  
+  const canEditNotam = isAdmin || !!currentUserInfo?.permissoes?.publicarNotam;
+  const canEditAgenda = isAdmin || !!currentUserInfo?.permissoes?.publicarAgenda;
+  const canEditVideo = isAdmin || !!currentUserInfo?.permissoes?.editarVideo;
+  const canEditPilots = isAdmin || !!currentUserInfo?.permissoes?.editarUsuarios;
 
   const handleLogout = async () => {
     try { await signOut(auth); sessionStorage.clear(); localStorage.removeItem('edav_auth_token'); window.location.href = '/login'; } 
@@ -430,11 +420,10 @@ export default function Workspace() {
   };
 
   const fecharFormulario = () => {
-    setShowForm(false); setEditingId(null); setUploadProgress(null);
+    setShowForm(false); setEditingId(null); 
     setNovoPosicao('1'); setNovoNome(''); setNovoNomeVisivel(''); setNovaCidade(''); setNovaUf(''); setNovoOculto(false); setNovoJustificativa(''); setPlat2020Ativo(true); setPlat2024Ativo(false);
     setPiIdade(''); setPiDescricao(''); setPiPatente(''); 
     setAgCidade(''); setAgDataHoraIso(''); setAgStatus('Planejamento'); 
-    setNotData(''); setNotTitulo(''); setNotResumo(''); setNotImagem('');
     setNotamTitulo(''); setNotamMensagem(''); setNotamData('');
     setVidUrl('');
   };
@@ -485,60 +474,44 @@ export default function Workspace() {
     finally { setMetarLoading(false); }
   };
 
-  const handleImageUploadNoticias = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!checkPermission('noticias')) return showToast("Acesso Negado.", "error");
-    const file = e.target.files?.[0]; if (!file) return;
-    const storageRef = ref(storage, `noticias/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    uploadTask.on('state_changed', 
-      (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100), 
-      () => { showToast("Erro ao enviar", "error"); setUploadProgress(null); }, 
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        setNotImagem(downloadURL); setUploadProgress(null); showToast("Processado!", "success");
-      }
-    );
-  };
-
   const handleDeletarItem = (id: string | undefined, colecao: string, nomeItem: string) => {
     if (!id) return;
+    if (!isAdmin) return showToast("Apenas Administradores podem excluir permanentemente", "error");
+    
     showConfirmModal("Remover Item", `Tem certeza que deseja remover ${nomeItem}?`, async () => {
-      try { await deleteDoc(doc(db, colecao, id)); closeConfirmModal(); showToast("Removido", "success"); } 
-      catch { showToast("Erro", "error"); }
+      try { await deleteDoc(doc(db, colecao, id)); closeConfirmModal(); showToast("Removido com sucesso", "success"); } 
+      catch (error) { console.error(error); showToast("Erro ao excluir no servidor", "error"); }
     });
   };
 
   const handleToggleAlistamento = async () => {
-    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    if (!isAdmin) return showToast("Acesso Negado.", "error");
     try { await setDoc(doc(db, 'config', 'geral'), { alistamentoAberto: !alistamentoAberto }, { merge: true }); showToast(`Atualizado`, "success"); } 
     catch { showToast("Erro", "error"); }
   };
 
   const handleToggleSolicitacao = async () => {
-    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    if (!isAdmin) return showToast("Acesso Negado.", "error");
     try { await setDoc(doc(db, 'config', 'geral'), { solicitacaoAberta: !solicitacaoAberta }, { merge: true }); showToast(`Atualizado`, "success"); } 
     catch { showToast("Erro", "error"); }
   };
 
   const handleToggleFS20 = async () => {
-    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    if (!isAdmin) return showToast("Acesso Negado.", "error");
     try { await setDoc(doc(db, 'config', 'geral'), { mostrarFS20: !mostrarFS20 }, { merge: true }); showToast(`Atualizado`, "success"); } 
     catch { showToast("Erro", "error"); }
   };
 
   const handleToggleFS24 = async () => {
-    if (!checkPermission('config')) return showToast("Acesso Negado.", "error");
+    if (!isAdmin) return showToast("Acesso Negado.", "error");
     try { await setDoc(doc(db, 'config', 'geral'), { mostrarFS24: !mostrarFS24 }, { merge: true }); showToast(`Atualizado`, "success"); } 
     catch { showToast("Erro", "error"); }
   };
 
   const handleSalvarConfigsGerais = async (e: React.FormEvent) => {
-    e.preventDefault(); if (currentUserInfo?.role !== 'admin') return showToast("Acesso Negado.", "error");
+    e.preventDefault(); if (!isAdmin) return showToast("Acesso Negado.", "error");
     try { 
       await setDoc(doc(db, 'config', 'geral'), { 
-        liveYouTubeUrl: ytUrl, 
-        liveTwitchUrl: twUrl, 
-        liveTikTokUrl: tkUrl, 
         discordWebhook,
         discordColor,
         discordFooter
@@ -550,19 +523,30 @@ export default function Workspace() {
   };
 
   const handlePermissao = async (userId: string, campo: string, valor: boolean) => {
-    if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
-    try { await updateDoc(doc(db, 'users', userId), { [`permissoes.${campo}`]: valor }); showToast("Atualizado!", "success"); } 
-    catch { showToast("Falha", "error"); }
+    if (!isAdmin) return showToast("Apenas admins.", "error");
+    try { await updateDoc(doc(db, 'users', userId), { [`permissoes.${campo}`]: valor }); showToast("Permissão Atualizada!", "success"); } 
+    catch (err) { console.error(err); showToast("Falha ao salvar", "error"); }
   };
 
   const handleMudarCargo = async (userId: string, newRole: string) => {
-    if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
-    try { await updateDoc(doc(db, 'users', userId), { role: newRole }); showToast("Cargo atualizado!", "success"); } 
-    catch { showToast("Falha", "error"); }
+    if (!isAdmin) return showToast("Acesso Negado. Apenas administradores.", "error");
+    
+    // CORREÇÃO: Comparar garantindo que usa o ID do documento
+    if (userId === currentUserInfo?.id && newRole !== 'admin') {
+      return showToast("Não pode remover o seu próprio cargo de Admin.", "error");
+    }
+
+    try { 
+      await updateDoc(doc(db, 'users', userId), { role: newRole }); 
+      showToast("Cargo de utilizador atualizado!", "success"); 
+    } catch (err) { 
+      console.error("Erro ao mudar cargo:", err);
+      showToast("Falha. Verifique as permissões de gravação.", "error"); 
+    }
   };
 
   const handleMudarStatusSolicitacao = async (id: string, novoStatus: string) => {
-    if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins.", "error");
+    if (!isAdmin) return showToast("Apenas admins.", "error");
     try {
       await updateDoc(doc(db, 'solicitacoes', id), { status: novoStatus });
       showToast(`Status atualizado com sucesso!`, "success");
@@ -588,14 +572,13 @@ export default function Workspace() {
   };
   
   const handleEditarAgenda = (a: Demonstracao) => { setEditingId(a.id || null); setAgCidade(a.cidade); setAgStatus(a.status); loadPlatformToState(a.plataforma); if (a.dataHora && a.dataHora.includes(' às ')) { const [dPart, hPart] = a.dataHora.split(' às '); setAgDataHoraIso(`${dPart.split('/').reverse().join('-')}T${hPart}`); } else setAgDataHoraIso(''); setShowForm(true); };
-  const handleEditarNoticia = (n: Noticia) => { setEditingId(n.id || null); setNotData(n.data); setNotTitulo(n.titulo); setNotResumo(n.resumo); setNotImagem(n.imagem); setShowForm(true); };
   const handleEditarNotam = (n: Notam) => { setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); };
   const handleEditarVideo = (v: Video) => { setEditingId(v.id || null); setVidUrl(v.url); setShowForm(true); };
 
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); 
     const isMyPilot = Boolean(editingId && currentUserInfo && pilotos.find(p => p.id === editingId)?.userId === currentUserInfo.uid);
-    if (!isAdmin && !isMyPilot) return showToast("Acesso Negado", "error");
+    if (!canEditPilots && !isMyPilot) return showToast("Acesso Negado", "error");
     
     try { 
       const data: any = { 
@@ -606,7 +589,7 @@ export default function Workspace() {
         plataforma: parsePlatformToString(plat2020Ativo, plat2024Ativo),
         descricao: piDescricao
       }; 
-      if (isAdmin) {
+      if (canEditPilots) {
         data.posicao = novoPosicao;
         data.nome = novoNome;
         data.oculto = novoOculto;
@@ -615,15 +598,15 @@ export default function Workspace() {
       }
       if (editingId) await updateDoc(doc(db, 'pilotos', editingId), data); 
       else {
-        if (!isAdmin) return showToast("Apenas admins podem criar", "error");
+        if (!canEditPilots) return showToast("Apenas gestão pode criar pilotos", "error");
         await addDoc(collection(db, 'pilotos'), data); 
       }
-      fecharFormulario(); showToast("Salvo"); 
-    } catch { showToast("Falha", "error"); }
+      fecharFormulario(); showToast("Perfil Salvo com Sucesso!"); 
+    } catch { showToast("Falha ao salvar", "error"); }
   };
 
   const handleSubstituirPiloto = async () => {
-    if (!replacePilot || !replaceUserId || !isAdmin) return;
+    if (!replacePilot || !replaceUserId || !canEditPilots) return;
     
     const userToLink = usuarios.find(u => u.id === replaceUserId);
     
@@ -641,33 +624,31 @@ export default function Workspace() {
         uf: '',
         idade: null,
         descricao: '',
-        plataforma: '2024' // Defaulting to 2024 to force them to configure it
+        plataforma: '2024' 
       });
       setShowReplaceModal(false);
       setReplacePilot(null);
       setReplaceUserId('');
       showToast("Piloto substituído com sucesso!", "success");
     } catch (err) {
-      console.error(err);
-      showToast("Falha ao substituir. Verifique permissões.", "error");
+      console.error("Erro na substituição:", err);
+      showToast("Falha ao substituir. Verifique permissões do Firebase.", "error");
     }
   };
   
   const handleSalvarAgenda = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!checkPermission('agenda')) return showToast("Acesso Negado", "error"); if (!agDataHoraIso) return showToast("Selecione data", "error"); setLoadingGeocode(true);
+    e.preventDefault(); if (!canEditAgenda) return showToast("Acesso Negado", "error"); if (!agDataHoraIso) return showToast("Selecione data", "error"); setLoadingGeocode(true);
     try { 
       let lat = 0; let lng = 0; try { const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(agCidade)}`); const geodata = await res.json(); if (geodata && geodata.length > 0) { lat = parseFloat(geodata[0].lat); lng = parseFloat(geodata[0].lon); } } catch {} 
       const [dPart, tPart] = agDataHoraIso.split('T'); 
       const data = { cidade: agCidade, dataHora: `${dPart.split('-').reverse().join('/')} às ${tPart}`, lat, lng, status: agStatus, cssClass: agStatus === 'Confirmado' ? 'status-ok' : 'status-warn', coordsText: lat !== 0 ? `${lat.toFixed(3)}, ${lng.toFixed(3)}` : 'S/ Coordenadas', tipo: 'M-PREC', plataforma: parsePlatformToString(plat2020Ativo, plat2024Ativo) }; 
-      if (editingId) await updateDoc(doc(db, 'agenda', editingId), data); else await addDoc(collection(db, 'agenda'), data); fecharFormulario(); showToast("Salvo!"); 
-    } catch { showToast("Falha", "error"); } finally { setLoadingGeocode(false); }
+      if (editingId) await updateDoc(doc(db, 'agenda', editingId), data); else await addDoc(collection(db, 'agenda'), data); fecharFormulario(); showToast("Evento Salvo!"); 
+    } catch { showToast("Falha ao salvar evento", "error"); } finally { setLoadingGeocode(false); }
   };
-  
-  const handleSalvarNoticia = async (e: React.FormEvent) => { e.preventDefault(); if (!checkPermission('noticias')) return showToast("Acesso Negado", "error"); try { const data = { data: notData, titulo: notTitulo, resumo: notResumo, imagem: notImagem }; if (editingId) await updateDoc(doc(db, 'noticias', editingId), data); else await addDoc(collection(db, 'noticias'), data); fecharFormulario(); showToast("Publicada"); } catch { showToast("Falha", "error"); } };
   
   const handleSalvarVideo = async (e: React.FormEvent) => { 
     e.preventDefault(); 
-    if (!checkPermission('videos')) return showToast("Acesso Negado", "error"); 
+    if (!canEditVideo) return showToast("Acesso Negado", "error"); 
     try {
       let finalUrl = vidUrl;
       const match = vidUrl.match(/(?:youtu\.be\/|v=)([^&]+)/);
@@ -677,13 +658,14 @@ export default function Workspace() {
       const data = { url: finalUrl, ativo: true }; 
       if (editingId) await updateDoc(doc(db, 'videos', editingId), data); 
       else await addDoc(collection(db, 'videos'), data); 
-      fecharFormulario(); showToast("Vídeo Salvo"); 
-    } catch { showToast("Falha", "error"); } 
+      fecharFormulario(); showToast("Vídeo Adicionado!"); 
+    } catch { showToast("Falha ao salvar vídeo", "error"); } 
   };
 
   const handleSalvarNotam = async (e: React.FormEvent) => { 
     e.preventDefault(); 
-    if (currentUserInfo?.role !== 'admin') return showToast("Apenas admins", "error"); 
+    if (!canEditNotam) return showToast("Acesso Negado. Sem permissão.", "error"); 
+    if (!notamData) return showToast("Por favor, selecione a data do NOTAM.", "error");
     
     try { 
       const data = { data: notamData, titulo: notamTitulo.toUpperCase(), mensagem: notamMensagem, autor: currentUserInfo?.nome || 'Admin' }; 
@@ -718,14 +700,14 @@ export default function Workspace() {
           }).catch(err => console.error("Erro Discord Webhook:", err));
           
           fecharFormulario(); 
-          showToast("NOTAM enviado ao discord", "success");
+          showToast("NOTAM emitido com sucesso", "success");
         } else {
           fecharFormulario(); 
           showToast("NOTAM Publicado"); 
         }
       }
     } catch { 
-      showToast("Falha", "error"); 
+      showToast("Falha ao publicar NOTAM", "error"); 
     } 
   };
   
@@ -746,6 +728,24 @@ export default function Workspace() {
       </div>
     </div>
   );
+
+  if (currentUserInfo && currentUserInfo.role === 'pendente') {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--fs-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', fontFamily: '"Regular", sans-serif' }}>
+        <div className="fs-card" style={{ padding: '3rem 2rem', maxWidth: '450px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(15, 23, 42, 0.9)' }}>
+          <Shield size={64} color="#f59e0b" style={{ marginBottom: '1.5rem' }} />
+          <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontFamily: '"Comum", sans-serif', fontSize: '1.5rem' }}>Acesso Restrito</h2>
+          <p style={{ color: '#94a3b8', lineHeight: 1.6, margin: '0 0 2rem 0', fontSize: '0.95rem' }}>
+            A sua conta Google foi autenticada, mas o acesso ao Workspace ainda não foi libertado. 
+            Aguarde que o Comando Geral valide a sua entrada e lhe atribua o cargo de Piloto.
+          </p>
+          <button onClick={handleLogout} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.8rem 2rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
+            Sair da Conta
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--fs-bg)', color: 'var(--text-main)', position: 'relative' }}>
@@ -789,15 +789,11 @@ export default function Workspace() {
 
         body, html { margin: 0; padding: 0; background-color: var(--fs-bg); overflow-x: hidden; }
         
-        /* Remove arrows from number input */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
+          -webkit-appearance: none; margin: 0; 
         }
-        input[type=number] {
-          -moz-appearance: textfield;
-        }
+        input[type=number] { -moz-appearance: textfield; }
         
         input, textarea, button { font-family: 'Regular', system-ui, -apple-system, sans-serif !important; }
         input::placeholder, textarea::placeholder { color: #64748b !important; font-weight: 400; }
@@ -823,7 +819,6 @@ export default function Workspace() {
           backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
           transition: all 0.4s ease;
         }
-        .fs-card:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
         
         .time-scroll::-webkit-scrollbar { width: 4px; }
         .time-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -852,6 +847,19 @@ export default function Workspace() {
           border-radius: 16px; margin-bottom: 0.75rem; transition: all 0.3s ease;
         }
         .list-row:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+
+        .fs-table {
+          width: 100%; border-collapse: collapse; text-align: left;
+        }
+        .fs-table th {
+          padding: 1.25rem 1rem; color: var(--fs-muted); font-size: 0.75rem; font-weight: 600; 
+          text-transform: uppercase; border-bottom: 1px solid var(--fs-border); letter-spacing: 0.05em;
+        }
+        .fs-table td {
+          padding: 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle;
+        }
+        .fs-table tr:last-child td { border-bottom: none; }
+        .fs-table tr:hover td { background: rgba(255,255,255,0.02); }
 
         .mobile-header { display: none; }
         .desktop-header { display: flex; }
@@ -887,8 +895,6 @@ export default function Workspace() {
         .platform-pill-btn:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); }
         .platform-pill-btn.active { background: rgba(59, 130, 246, 0.15); border-color: var(--fs-blue); color: #fff; font-weight: 600; }
         
-        .fs-badge { font-size: 0.65rem; border: 1px solid var(--fs-border); padding: 2px 6px; border-radius: 6px; font-weight: 600; font-family: 'Regular', sans-serif; }
-
         @media (max-width: 900px) {
           .workspace-sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); }
           .workspace-sidebar.open { transform: translateX(0); }
@@ -896,6 +902,9 @@ export default function Workspace() {
           .desktop-header { display: none !important; }
           .main-content { padding: 1rem !important; }
           .list-row { grid-template-columns: 1fr !important; gap: 0.75rem; padding: 1rem; }
+          .fs-table th, .fs-table td { display: block; width: 100%; }
+          .fs-table tr { display: block; margin-bottom: 2rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid var(--fs-border); padding: 1rem; }
+          .fs-table thead { display: none; }
         }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
       `}</style>
@@ -997,7 +1006,6 @@ export default function Workspace() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.75rem', borderLeft: '2px solid rgba(14, 165, 233, 0.3)', marginLeft: '1rem', marginTop: '0.25rem', overflow: 'hidden', maxHeight: gerenciaisAberto ? '500px' : '0px', opacity: gerenciaisAberto ? 1 : 0, transition: 'all 0.3s' }}>
               <button className={`nav-item ${activeTab === 'pilotos' ? 'active' : ''}`} onClick={() => handleMenuClick('pilotos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Users size={14} /> Pilotos</button>
               <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => handleMenuClick('agenda')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><CalendarCheck2 size={14} /> Agenda</button>
-              <button className={`nav-item ${activeTab === 'noticias' ? 'active' : ''}`} onClick={() => handleMenuClick('noticias')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Newspaper size={14} /> Notícias</button>
               <button className={`nav-item ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => handleMenuClick('videos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Play size={14} /> Vídeos</button>
               
               {isAdmin && (
@@ -1052,14 +1060,14 @@ export default function Workspace() {
         <div className="main-content" style={{ padding: '1rem 2rem 2rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 500, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>
-              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'noticias' ? 'Notícias' : activeTab === 'videos' ? 'Galeria de Vídeos' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
+              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'videos' ? 'Galeria de Vídeos' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
             </h2>
             
-            {['pilotos', 'agenda', 'noticias', 'videos'].includes(activeTab) && checkPermission(activeTab) && (
+            {(activeTab === 'pilotos' && canEditPilots) || (activeTab === 'agenda' && canEditAgenda) || (activeTab === 'videos' && canEditVideo) ? (
               <button onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}><Plus size={16} /> Adicionar Novo</button>
-            )}
+            ) : null}
 
-            {activeTab === 'notam' && isAdmin && (
+            {activeTab === 'notam' && canEditNotam && (
               <button onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.85rem' }}><AlertOctagon size={16} /> Publicar NOTAM</button>
             )}
           </div>
@@ -1177,7 +1185,7 @@ export default function Workspace() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '1rem' }}>
                           <div>
-                            <label className="form-label">Pos {isAdmin ? '*' : '(Fixo)'}</label>
+                            <label className="form-label">Pos {canEditPilots ? '*' : '(Fixo)'}</label>
                             <CustomSelect 
                               value={novoPosicao} 
                               onChange={val => setNovoPosicao(val)} 
@@ -1190,20 +1198,20 @@ export default function Workspace() {
                                 {value: '6', label: '6 - Ala Dir. Ext'},
                                 {value: '7', label: '7 - Isolado'}
                               ]} 
-                              disabled={!isAdmin} 
+                              disabled={!canEditPilots} 
                             />
                           </div>
-                          <div><label className="form-label">Nome Completo {isAdmin ? '*' : '(Fixo)'}</label><input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" disabled={!isAdmin} style={{ opacity: isAdmin ? 1 : 0.6 }} /></div>
+                          <div><label className="form-label">Nome Completo {canEditPilots ? '*' : '(Fixo)'}</label><input required type="text" value={novoNome} onChange={e => setNovoNome(e.target.value)} className="form-input" disabled={!canEditPilots} style={{ opacity: canEditPilots ? 1 : 0.6 }} /></div>
                         </div>
 
                         <div><label className="form-label">Nome Visível no Site (Apelido)</label><input type="text" value={novoNomeVisivel} onChange={e => setNovoNomeVisivel(e.target.value)} placeholder="Deixe em branco para usar o Nome Completo" className="form-input" /></div>
                         
                         <div>
-                          <label className="form-label">Patente (Cargo Militar) {isAdmin ? '*' : '(Fixo)'}</label>
+                          <label className="form-label">Patente (Cargo Militar) {canEditPilots ? '*' : '(Fixo)'}</label>
                           <CustomSelect 
                             value={piPatente} 
                             onChange={val => setPiPatente(val)} 
-                            disabled={!isAdmin} 
+                            disabled={!canEditPilots} 
                             options={[
                               {value: '', label: 'Nenhuma / Piloto'},
                               {value: 'Capitão Aviador', label: 'Capitão Aviador'},
@@ -1245,7 +1253,7 @@ export default function Workspace() {
                           <textarea className="form-input" rows={4} value={piDescricao} onChange={e => setPiDescricao(e.target.value)} placeholder="Fale um pouco sobre a sua experiência na aviação virtual..." style={{ resize: 'vertical' }} />
                         </div>
 
-                        {isAdmin && (
+                        {canEditPilots && (
                           <div style={{ marginTop: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '8px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}><div className={`toggle-switch ${novoOculto ? 'active' : ''}`} onClick={() => setNovoOculto(!novoOculto)} style={{ background: novoOculto ? '#ef4444' : '#334155' }} /> Ocultar (Reserva)</label>
                             {novoOculto && <div style={{ marginTop: '1rem' }}><label className="form-label" style={{ color: '#ef4444' }}>Motivo</label><input required type="text" value={novoJustificativa} onChange={e => setNovoJustificativa(e.target.value)} className="form-input" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }} /></div>}
@@ -1265,13 +1273,13 @@ export default function Workspace() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('pilotos') ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Pos</span><span>Piloto</span><span>Local</span>{checkPermission('pilotos') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: canEditPilots ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Pos</span><span>Piloto</span><span>Local</span>{canEditPilots && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
                 {pilotos.filter(p => matchesPlatformFilter(p.plataforma, pilotoFilter)).map((p) => {
                   const isMyPilot = Boolean(p.userId && currentUserInfo && p.userId === currentUserInfo.uid);
-                  const canEdit = isAdmin || isMyPilot;
+                  const canEdit = canEditPilots || isMyPilot;
                   
                   return (
-                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('pilotos') || isMyPilot ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
+                    <div key={p.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (canEditPilots || isMyPilot ? '1fr 2.5fr 2fr 1.5fr' : '1fr 2.5fr 2fr') : '1fr', opacity: p.oculto ? 0.5 : 1, padding: '1rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><span style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#0ea5e9', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '1rem', fontWeight: 600 }}>{p.posicao}</span><span style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase' }}>{getPosicaoNome(p.posicao)}</span></div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <div style={{ fontWeight: 500, color: '#f8fafc', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1286,7 +1294,7 @@ export default function Workspace() {
                       {canEdit && (
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
                           <button onClick={() => handleEditarPiloto(p)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}><Edit2 size={14} /> {isMyPilot ? 'Editar Perfil' : ''}</button>
-                          {isAdmin && !isMyPilot && !p.userId && (
+                          {canEditPilots && !isMyPilot && !p.userId && (
                             <button onClick={() => { setReplacePilot(p); setShowReplaceModal(true); }} style={{ background: 'transparent', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }} title="Substituir por Utilizador"><UserPlus size={16} /></button>
                           )}
                           {isAdmin && !isMyPilot && <button onClick={() => handleDeletarItem(p.id, 'pilotos', p.nome)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>}
@@ -1353,64 +1361,19 @@ export default function Workspace() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: checkPermission('agenda') ? '2.5fr 1fr 1fr' : '2.5fr 1fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Local/Data</span><span>Status</span>{checkPermission('agenda') && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
+                <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: canEditAgenda ? '2.5fr 1fr 1fr' : '2.5fr 1fr', padding: '0 1rem 0.5rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}><span>Local/Data</span><span>Status</span>{canEditAgenda && <span style={{ textAlign: 'right' }}>Ações</span>}</div>
                 {agendas.filter(a => matchesPlatformFilter(a.plataforma, agendaFilter)).map((a) => (
-                  <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (checkPermission('agenda') ? '2.5fr 1fr 1fr' : '2.5fr 1fr') : '1fr', padding: '1rem' }}>
+                  <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? (canEditAgenda ? '2.5fr 1fr 1fr' : '2.5fr 1fr') : '1fr', padding: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 500 }}>{a.dataHora}</span><span style={{ color: '#f8fafc', fontSize: '1rem', fontWeight: 500, display:'flex', alignItems:'center', gap:'6px' }}>{a.cidade} {(a.plataforma === '2024' || a.plataforma === 'Ambos') ? <span style={{fontSize:'0.6rem', color:'#f59e0b', border:'1px solid #f59e0b', padding:'1px 4px', borderRadius:'4px'}}>2024</span> : null}</span></div>
                     <div><span style={{ background: a.status === 'Confirmado' ? 'rgba(16,185,129,0.1)' : a.status === 'Cancelado' ? 'rgba(239,68,68,0.1)' : 'rgba(14,165,233,0.1)', color: a.status === 'Confirmado' ? '#10b981' : a.status === 'Cancelado' ? '#ef4444' : '#0ea5e9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>{a.status}</span></div>
-                    {checkPermission('agenda') && (
-                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}><button onClick={() => handleEditarAgenda(a)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(a.id, 'agenda', a.cidade)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
+                    {canEditAgenda && (
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}><button onClick={() => handleEditarAgenda(a)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button>{isAdmin && <button onClick={() => handleDeletarItem(a.id, 'agenda', a.cidade)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>}</div>
                     )}
                   </div>
                 ))}
                 {agendas.filter(a => matchesPlatformFilter(a.plataforma, agendaFilter)).length === 0 && (
                   <p style={{ color: '#64748b', padding: '2rem', textAlign: 'center' }}>Nenhuma demonstração para o filtro selecionado.</p>
                 )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'noticias' && (
-            <div>
-              {showForm && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9990, backgroundColor: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-                  <div className="form-modal-content modal-modern" style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: 'auto' }}>
-                    <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>Notícia</h3><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><X size={20} /></button></div>
-                    <form onSubmit={handleSalvarNoticia} style={{ padding: '1.5rem' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div><label className="form-label">Data</label><CustomDatePicker value={notData} onChange={(val) => setNotData(val)} /></div>
-                        <div><label className="form-label">Título</label><input required type="text" value={notTitulo} onChange={e => setNotTitulo(e.target.value)} className="form-input" /></div>
-                        <div><label className="form-label">Resumo</label><textarea required rows={4} value={notResumo} onChange={e => setNotResumo(e.target.value)} className="form-input" style={{ resize: 'vertical' }} /></div>
-                        <div>
-                          <label className="form-label">Imagem de Capa</label>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <label style={{ background: 'rgba(0,0,0,0.3)', border: '1px dashed var(--fs-border)', padding: '0.85rem 1.2rem', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0ea5e9', fontSize: '0.9rem', flexGrow: 1, justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(14,165,233,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.3)'}>
-                              {uploadProgress !== null ? <><Loader2 size={18} className="spin" /> Enviando {Math.round(uploadProgress)}%</> : <><ImagePlus size={18} /> Escolher Imagem</>}
-                              <input type="file" accept="image/*" onChange={handleImageUploadNoticias} style={{ display: 'none' }} disabled={uploadProgress !== null} />
-                            </label>
-                            {notImagem && <img src={notImagem} alt="Preview" style={{ height: '44px', width: 'auto', borderRadius: '8px', border: '1px solid var(--fs-border)' }} />}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="action-buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}><button type="button" onClick={fecharFormulario} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '0.5rem 1rem', borderRadius: '6px' }}>Cancelar</button><button type="submit" disabled={uploadProgress !== null} style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', opacity: uploadProgress !== null ? 0.5 : 1 }}>Salvar</button></div>
-                    </form>
-                  </div>
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {noticias.map((n) => (
-                  <div key={n.id} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ height: '160px', background: `url(${n.imagem}) center/cover`, borderBottom: '1px solid rgba(255,255,255,0.05)' }}></div>
-                    <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                      <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.5rem' }}>{n.data}</span>
-                      <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc', fontSize: '1.1rem', fontWeight: 500 }}>{n.titulo}</h4>
-                      <p style={{ margin: '0 0 1rem 0', color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5, flexGrow: 1 }}>{n.resumo}</p>
-                      {checkPermission('noticias') && (
-                        <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}><button onClick={() => handleEditarNoticia(n)} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'noticias', n.titulo)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button></div>
-                      )}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           )}
@@ -1441,10 +1404,10 @@ export default function Workspace() {
                     </div>
                     <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <span style={{ color: '#cbd5e1', fontSize: '0.8rem', wordBreak: 'break-all' }}>{v.url}</span>
-                      {checkPermission('videos') && (
+                      {canEditVideo && (
                         <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
                           <button onClick={() => { setEditingId(v.id!); setVidUrl(v.url); setShowForm(true); }} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer', flexGrow: 1 }}><Edit2 size={14} /></button>
-                          <button onClick={() => handleDeletarItem(v.id, 'videos', 'Vídeo')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button>
+                          {isAdmin && <button onClick={() => handleDeletarItem(v.id, 'videos', 'Vídeo')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', flexGrow: 1 }}><Trash2 size={14} /></button>}
                         </div>
                       )}
                     </div>
@@ -1481,8 +1444,8 @@ export default function Workspace() {
                     <p style={{ color: '#cbd5e1', margin: '0 0 1.5rem 0', lineHeight: 1.5, fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{n.mensagem}</p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
                       <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Emitido por: {n.autor}</span>
-                      {currentUserInfo?.role === 'admin' && (
-                        <div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => { setEditingId(n.id!); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); }} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button><button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button></div>
+                      {canEditNotam && (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}><button onClick={() => { setEditingId(n.id!); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); }} style={{ background: 'transparent', border: 'none', color: '#0ea5e9', cursor: 'pointer' }}><Edit2 size={14} /></button>{isAdmin && <button onClick={() => handleDeletarItem(n.id, 'notams', 'NOTAM')} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14} /></button>}</div>
                       )}
                     </div>
                   </div>
@@ -1495,15 +1458,10 @@ export default function Workspace() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1100px' }}>
               
               <div className="fs-card" style={{ padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Mídias Sociais & Integrações</h4>
+                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Integração Discord</h4>
                 <form onSubmit={handleSalvarConfigsGerais} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '600px' }}>
                   
-                  <div><label className="form-label">YouTube Link (Stream)</label><input type="text" value={ytUrl} onChange={e => setYtUrl(e.target.value)} className="form-input" /></div>
-                  <div><label className="form-label">Twitch Link (Stream)</label><input type="text" value={twUrl} onChange={e => setTwUrl(e.target.value)} className="form-input" /></div>
-                  <div><label className="form-label">TikTok Link (Stream)</label><input type="text" value={tkUrl} onChange={e => setTkUrl(e.target.value)} className="form-input" /></div>
-                  
-                  <div style={{ borderTop: '1px solid var(--fs-border)', paddingTop: '1.5rem', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <h5 style={{ margin: 0, color: '#f8fafc', fontSize: '1rem', fontWeight: 600 }}>Configuração do Webhook Discord</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                     <p style={{ margin: 0, color: 'var(--fs-muted)', fontSize: '0.85rem' }}>Preencha os dados abaixo para formatar o alerta automático enviado para o Discord quando publica um novo NOTAM.</p>
                     
                     <div>
@@ -1561,29 +1519,63 @@ export default function Workspace() {
               <div className="fs-card" style={{ padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Gestão de Acessos</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
-                  <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '2fr 1fr 1.5fr', padding: '0 1.5rem 0.75rem', color: 'var(--fs-muted)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}><span>Utilizador Registado</span><span>Cargo Atribuído</span><span style={{ textAlign: 'center' }}>Permissões Modulares</span></div>
-                  {usuarios.map((u) => (
-                    <div key={u.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? '2fr 1fr 1.5fr' : '1fr', gap: '1.5rem', padding: '1.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>{u.foto ? <img src={u.foto} alt="Perfil" style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--fs-border)' }} /> : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fs-blue)' }}><UserCircle size={24}/></div>}<div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, fontFamily: '"Comum", sans-serif', marginBottom: '2px' }}>{u.nome}</span><span style={{ color: 'var(--fs-muted)', fontSize: '0.85rem' }}>{u.email}</span></div></div>
-                      <div>
-                        <CustomSelect 
-                          inline 
-                          value={u.role} 
-                          onChange={(val) => handleMudarCargo(u.id as string, val)} 
-                          options={[
-                            { value: 'admin', label: 'Admin (Total)' }, 
-                            { value: 'piloto', label: 'Piloto' }, 
-                            { value: 'pendente', label: 'Pendente' }
-                          ]} 
-                        />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
-                        <PermissionToggle label="Gestão de Agenda" active={!!u.permissoes?.agenda} onChange={() => handlePermissao(u.id!, 'agenda', !u.permissoes?.agenda)} />
-                        <PermissionToggle label="Gestão de Vídeos" active={!!u.permissoes?.videos} onChange={() => handlePermissao(u.id!, 'videos', !u.permissoes?.videos)} />
-                        <PermissionToggle label="Gestão de Notícias" active={!!u.permissoes?.noticias} onChange={() => handlePermissao(u.id!, 'noticias', !u.permissoes?.noticias)} />
-                      </div>
-                    </div>
-                  ))}
+                  
+                  <div style={{ overflowX: 'visible', background: 'rgba(15,23,42,0.4)', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
+                    <table className="fs-table">
+                      <thead>
+                        <tr>
+                          <th>Utilizador Registado</th>
+                          <th>Cargo Atribuído</th>
+                          <th>Permissões Modulares</th>
+                          <th style={{ textAlign: 'center' }}>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {usuarios.map(u => (
+                          <tr key={u.id}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                {u.foto ? <img src={u.foto} alt="Perfil" style={{ width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--fs-border)' }} /> : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--fs-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fs-blue)' }}><UserCircle size={24}/></div>}
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 600, fontFamily: '"Comum", sans-serif', marginBottom: '2px' }}>{u.nome}</span>
+                                  <span style={{ color: 'var(--fs-muted)', fontSize: '0.8rem' }}>{u.email}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <CustomSelect 
+                                inline 
+                                value={u.role?.toLowerCase()} 
+                                onChange={(val) => handleMudarCargo(u.id as string, val)} 
+                                options={[
+                                  { value: 'admin', label: 'Admin (Total)' }, 
+                                  { value: 'piloto', label: 'Piloto' }, 
+                                  { value: 'pendente', label: 'Pendente' }
+                                ]} 
+                                disabled={u.id === currentUserInfo?.id}
+                              />
+                            </td>
+                            <td>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--fs-border)', minWidth: '320px' }}>
+                                <PermissionToggle label="Pub. NOTAM" active={!!u.permissoes?.publicarNotam} onChange={() => handlePermissao(u.id!, 'publicarNotam', !u.permissoes?.publicarNotam)} />
+                                <PermissionToggle label="Pub. Agenda" active={!!u.permissoes?.publicarAgenda} onChange={() => handlePermissao(u.id!, 'publicarAgenda', !u.permissoes?.publicarAgenda)} />
+                                <PermissionToggle label="Ed. Vídeos" active={!!u.permissoes?.editarVideo} onChange={() => handlePermissao(u.id!, 'editarVideo', !u.permissoes?.editarVideo)} />
+                                <PermissionToggle label="Ed. Utiliz." active={!!u.permissoes?.editarUsuarios} onChange={() => handlePermissao(u.id!, 'editarUsuarios', !u.permissoes?.editarUsuarios)} />
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              {u.id !== currentUserInfo?.id && (
+                                <button onClick={() => handleDeletarItem(u.id, 'users', u.nome)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', display: 'inline-flex' }} title="Excluir Utilizador">
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
                 </div>
               </div>
             </div>
