@@ -10,7 +10,7 @@ import { signOut } from 'firebase/auth';
 
 import { 
   LayoutDashboard, Users, CalendarCheck2, Settings, LogOut, Plus, Trash2, Edit2, ShieldCheck, X, AlertTriangle, Cookie,
-  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, UserPlus, UserCheck
+  Link2, ChevronDown, CheckCircle2, UserCircle, Menu, Calendar, Globe, Shield, Clock, ChevronRight, BellRing, AlertOctagon, Info, EyeOff, Cloud, Search, Wind, Thermometer, Gauge, Briefcase, Activity, Map as MapIcon, Inbox, Check, Play, Video, Radio, PlaneTakeoff, UserPlus, UserCheck, FileText, Eye, Phone, MessageSquare
 } from 'lucide-react';
 
 import logoImage from '../images/logo.png';
@@ -36,11 +36,12 @@ interface Piloto {
 interface Demonstracao { id?: string; cidade: string; coordsText: string; lat: number; lng: number; status: string; cssClass: string; dataHora: string; plataforma?: string; }
 interface Video { id?: string; url: string; ativo?: boolean; }
 interface Notam { id?: string; data: string; titulo: string; mensagem: string; autor: string; }
-interface Solicitacao { id?: string; cidade: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
+interface Solicitacao { id?: string; solicitante?: string; cidade: string; icao?: string; dataDesejada?: string; transmissao: string; canal: string; dataSolicitacao: string; status: string; }
 interface Usuario { 
-  id?: string; uid?: string; nome: string; email: string; foto: string; role: string; 
+  id?: string; uid?: string; nome: string; email: string; foto: string; role: string; status?: string;
   permissoes?: { publicarNotam?: boolean; publicarAgenda?: boolean; editarVideo?: boolean; editarUsuarios?: boolean; };
 }
+interface Alistamento { id?: string; nome: string; nickname: string; discord: string; whatsapp: string; dataNascimento: string; experiencia: string; plataforma: string; simulador: string; possuiA29: string; vooAcrobatico: string; disponibilidade: string; motivoIngresso: string; status: string; dataEnvio: string; }
 
 const getPosicaoNome = (num: string) => {
   switch (num) {
@@ -72,6 +73,33 @@ const SimToggle = ({ label, active, onChange }: { label: string, active: boolean
     <div className={`toggle-switch ${active ? 'active' : ''}`} style={{ transform: 'scale(0.7)', margin: '-5px 0' }} />
     {label}
   </div>
+);
+
+const PlatformFilterBtn = ({ label, active, onClick, icon }: { label: string, active: boolean, onClick: () => void, icon?: React.ReactNode }) => (
+  <button 
+    type="button"
+    onClick={onClick} 
+    style={{
+      background: active ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.03)',
+      color: active ? '#ffffff' : '#94a3b8',
+      border: active ? '1px solid var(--fs-blue)' : '1px solid rgba(255,255,255,0.05)',
+      padding: '0.6rem 1.25rem',
+      borderRadius: '10px',
+      fontSize: '0.85rem',
+      fontWeight: active ? 600 : 500,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      transition: 'all 0.2s ease',
+      fontFamily: '"Regular", sans-serif'
+    }}
+    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+  >
+    {icon}
+    {label}
+  </button>
 );
 
 const CustomSelect = ({ value, options, onChange, placeholder, searchable = false, inline = false, disabled = false }: { value: string, options: {value: string, label: string}[], onChange: (val: string) => void, placeholder?: string, searchable?: boolean, inline?: boolean, disabled?: boolean }) => {
@@ -265,6 +293,10 @@ export default function Workspace() {
   const [notams, setNotams] = useState<Notam[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]); 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
+  const [alistamentos, setAlistamentos] = useState<Alistamento[]>([]);
+  
+  const [selectedAlistamento, setSelectedAlistamento] = useState<Alistamento | null>(null);
+  const [filtroAlistamento, setFiltroAlistamento] = useState<'Todos' | 'Pendente' | 'Aprovado' | 'Recusado'>('Todos');
   
   const [pilotoFilter, setPilotoFilter] = useState<'2020' | '2024' | 'Ambos'>('Ambos');
   const [agendaFilter, setAgendaFilter] = useState<'2020' | '2024' | 'Ambos'>('Ambos');
@@ -274,10 +306,6 @@ export default function Workspace() {
   
   const [mostrarFS20, setMostrarFS20] = useState(true);
   const [mostrarFS24, setMostrarFS24] = useState(true);
-  
-  const [discordWebhook, setDiscordWebhook] = useState('');
-  const [discordColor, setDiscordColor] = useState('#ed333b');
-  const [discordFooter, setDiscordFooter] = useState('EDAFS MSFS - Sistema de Operações');
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -292,6 +320,7 @@ export default function Workspace() {
   const [metarData, setMetarData] = useState<any>(null);
   const [metarLoading, setMetarLoading] = useState(false);
 
+  // Form Pilotos
   const [novoPosicao, setNovoPosicao] = useState('1');
   const [novoNome, setNovoNome] = useState('');
   const [novoNomeVisivel, setNovoNomeVisivel] = useState('');
@@ -306,14 +335,17 @@ export default function Workspace() {
   const [plat2020Ativo, setPlat2020Ativo] = useState(true);
   const [plat2024Ativo, setPlat2024Ativo] = useState(false);
 
+  // Form Agenda
   const [agCidade, setAgCidade] = useState('');
   const [agDataHoraIso, setAgDataHoraIso] = useState('');
   const [agStatus, setAgStatus] = useState('Planejamento');
 
+  // Form NOTAM
   const [notamTitulo, setNotamTitulo] = useState('');
   const [notamMensagem, setNotamMensagem] = useState('');
   const [notamData, setNotamData] = useState('');
   
+  // Form Vídeo
   const [vidUrl, setVidUrl] = useState('');
 
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
@@ -332,6 +364,7 @@ export default function Workspace() {
     return () => clearInterval(timer);
   }, []);
 
+  // F-01 & F-02: Autenticação individual primeiro
   useEffect(() => {
     document.title = "Workspace EDAFS";
     document.documentElement.setAttribute('data-theme', 'dark'); 
@@ -342,20 +375,36 @@ export default function Workspace() {
     }
     link.href = faviconImage;
 
+    let unsubUserDoc = () => {};
+
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      if (!user) navigate('/login'); 
-      else {
-        onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+      unsubUserDoc();
+      if (!user) {
+        navigate('/login'); 
+      } else {
+        unsubUserDoc = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
           if (docSnap.exists()) {
-            // CORREÇÃO AQUI: Assegurar que o currentUserInfo tem o id correto
             setCurrentUserInfo({ id: docSnap.id, uid: docSnap.id, ...docSnap.data() } as Usuario);
+          } else {
+            navigate('/login');
           }
         });
       }
     });
 
+    return () => {
+      unsubUserDoc();
+      unsubscribeAuth();
+    };
+  }, [navigate]);
+
+  // F-02: Listeners registrados apenas após autorização confirmada
+  useEffect(() => {
+    if (!currentUserInfo || currentUserInfo.role === 'pendente' || currentUserInfo.role === 'recusado') {
+      return;
+    }
+
     const unsubs = [
-      unsubscribeAuth,
       onSnapshot(collection(db, 'pilotos'), snap => {
         const arr: Piloto[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Piloto));
         arr.sort((a, b) => parseInt(a.posicao) - parseInt(b.posicao)); setPilotos(arr);
@@ -375,21 +424,11 @@ export default function Workspace() {
             const timeA = a.data ? new Date(a.data.split('/').reverse().join('-')).getTime() : 0;
             const timeB = b.data ? new Date(b.data.split('/').reverse().join('-')).getTime() : 0;
             return (timeB || 0) - (timeA || 0);
-          } catch (e) {
+          } catch {
             return 0; 
           }
         });
         setNotams(arr);
-      }),
-      onSnapshot(collection(db, 'users'), snap => {
-        // CORREÇÃO AQUI: Assegurar que cada user traz o seu ID garantido da base de dados
-        const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
-        setUsuarios(arr);
-      }),
-      onSnapshot(collection(db, 'solicitacoes'), snap => {
-        const arr: Solicitacao[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Solicitacao));
-        arr.sort((a, b) => new Date(b.dataSolicitacao).getTime() - new Date(a.dataSolicitacao).getTime());
-        setSolicitacoes(arr);
       }),
       onSnapshot(doc(db, 'config', 'geral'), docSnap => { 
         if (docSnap.exists()) {
@@ -398,14 +437,31 @@ export default function Workspace() {
           setSolicitacaoAberta(d.solicitacaoAberta !== undefined ? d.solicitacaoAberta : true);
           setMostrarFS20(d.mostrarFS20 !== undefined ? d.mostrarFS20 : true);
           setMostrarFS24(d.mostrarFS24 !== undefined ? d.mostrarFS24 : true);
-          setDiscordWebhook(d.discordWebhook || '');
-          setDiscordColor(d.discordColor || '#ed333b');
-          setDiscordFooter(d.discordFooter || 'EDAV MSFS - Sistema de Operações');
         } 
       })
     ];
+
+    if (currentUserInfo.role?.toLowerCase() === 'admin') {
+      unsubs.push(
+        onSnapshot(collection(db, 'users'), snap => {
+          const arr: Usuario[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Usuario));
+          setUsuarios(arr);
+        }),
+        onSnapshot(collection(db, 'solicitacoes'), snap => {
+          const arr: Solicitacao[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Solicitacao));
+          arr.sort((a, b) => new Date(b.dataSolicitacao).getTime() - new Date(a.dataSolicitacao).getTime());
+          setSolicitacoes(arr);
+        }),
+        onSnapshot(collection(db, 'alistamentos'), snap => {
+          const arr: Alistamento[] = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() } as Alistamento));
+          arr.sort((a, b) => new Date(b.dataEnvio).getTime() - new Date(a.dataEnvio).getTime());
+          setAlistamentos(arr);
+        })
+      );
+    }
+
     return () => unsubs.forEach(u => u()); 
-  }, [navigate]);
+  }, [currentUserInfo]);
 
   const isAdmin = currentUserInfo?.role?.toLowerCase() === 'admin';
   
@@ -470,7 +526,7 @@ export default function Workspace() {
         temp: temp !== "N/A" ? parseInt(temp) : null, wdir: wdir !== "N/A" ? wdir : null,
         wspd: wspd !== "N/A" ? parseInt(wspd) : null, altim: altim !== "N/A" ? altim : null,
       });
-    } catch (err) { setMetarData({ error: 'Falha ao conectar com o serviço.' }); } 
+    } catch { setMetarData({ error: 'Falha ao conectar com o serviço.' }); } 
     finally { setMetarLoading(false); }
   };
 
@@ -508,20 +564,6 @@ export default function Workspace() {
     catch { showToast("Erro", "error"); }
   };
 
-  const handleSalvarConfigsGerais = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!isAdmin) return showToast("Acesso Negado.", "error");
-    try { 
-      await setDoc(doc(db, 'config', 'geral'), { 
-        discordWebhook,
-        discordColor,
-        discordFooter
-      }, { merge: true }); 
-      showToast("Configurações Salvas!", "success"); 
-    } catch { 
-      showToast("Erro ao salvar.", "error"); 
-    }
-  };
-
   const handlePermissao = async (userId: string, campo: string, valor: boolean) => {
     if (!isAdmin) return showToast("Apenas admins.", "error");
     try { await updateDoc(doc(db, 'users', userId), { [`permissoes.${campo}`]: valor }); showToast("Permissão Atualizada!", "success"); } 
@@ -531,13 +573,14 @@ export default function Workspace() {
   const handleMudarCargo = async (userId: string, newRole: string) => {
     if (!isAdmin) return showToast("Acesso Negado. Apenas administradores.", "error");
     
-    // CORREÇÃO: Comparar garantindo que usa o ID do documento
     if (userId === currentUserInfo?.id && newRole !== 'admin') {
       return showToast("Não pode remover o seu próprio cargo de Admin.", "error");
     }
 
+    const newStatus = (newRole === 'pendente' || newRole === 'recusado') ? newRole : 'ativo';
+
     try { 
-      await updateDoc(doc(db, 'users', userId), { role: newRole }); 
+      await updateDoc(doc(db, 'users', userId), { role: newRole, status: newStatus }); 
       showToast("Cargo de utilizador atualizado!", "success"); 
     } catch (err) { 
       console.error("Erro ao mudar cargo:", err);
@@ -545,10 +588,13 @@ export default function Workspace() {
     }
   };
 
-  const handleMudarStatusSolicitacao = async (id: string, novoStatus: string) => {
+  const handleMudarStatusDocumento = async (colecao: string, id: string, novoStatus: string) => {
     if (!isAdmin) return showToast("Apenas admins.", "error");
     try {
-      await updateDoc(doc(db, 'solicitacoes', id), { status: novoStatus });
+      await updateDoc(doc(db, colecao, id), { status: novoStatus });
+      if (selectedAlistamento && selectedAlistamento.id === id) {
+        setSelectedAlistamento({ ...selectedAlistamento, status: novoStatus });
+      }
       showToast(`Status atualizado com sucesso!`, "success");
     } catch {
       showToast("Erro ao atualizar status.", "error");
@@ -572,8 +618,6 @@ export default function Workspace() {
   };
   
   const handleEditarAgenda = (a: Demonstracao) => { setEditingId(a.id || null); setAgCidade(a.cidade); setAgStatus(a.status); loadPlatformToState(a.plataforma); if (a.dataHora && a.dataHora.includes(' às ')) { const [dPart, hPart] = a.dataHora.split(' às '); setAgDataHoraIso(`${dPart.split('/').reverse().join('-')}T${hPart}`); } else setAgDataHoraIso(''); setShowForm(true); };
-  const handleEditarNotam = (n: Notam) => { setEditingId(n.id || null); setNotamTitulo(n.titulo); setNotamMensagem(n.mensagem); setNotamData(n.data); setShowForm(true); };
-  const handleEditarVideo = (v: Video) => { setEditingId(v.id || null); setVidUrl(v.url); setShowForm(true); };
 
   const handleSalvarPiloto = async (e: React.FormEvent) => {
     e.preventDefault(); 
@@ -676,35 +720,8 @@ export default function Workspace() {
         showToast("NOTAM Atualizado");
       } else {
         await addDoc(collection(db, 'notams'), data); 
-        
-        if (discordWebhook) {
-          const hexColorToDec = (hex: string) => parseInt(hex.replace(/^#/, ''), 16) || 15548997;
-          
-          const embedData: any = {
-            title: data.titulo,
-            description: data.mensagem,
-            color: hexColorToDec(discordColor), 
-            fields: [
-              { name: "Emitido em", value: data.data, inline: false }
-            ],
-            footer: { text: discordFooter || "EDAV MSFS - Sistema de Operações" }
-          };
-
-          await fetch(discordWebhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content: "@everyone **NOVO NOTAM PUBLICADO!**",
-              embeds: [embedData]
-            })
-          }).catch(err => console.error("Erro Discord Webhook:", err));
-          
-          fecharFormulario(); 
-          showToast("NOTAM emitido com sucesso", "success");
-        } else {
-          fecharFormulario(); 
-          showToast("NOTAM Publicado"); 
-        }
+        fecharFormulario(); 
+        showToast("NOTAM Publicado"); 
       }
     } catch { 
       showToast("Falha ao publicar NOTAM", "error"); 
@@ -729,23 +746,22 @@ export default function Workspace() {
     </div>
   );
 
-  if (currentUserInfo && currentUserInfo.role === 'pendente') {
+  if (currentUserInfo && (currentUserInfo.status !== 'ativo' || currentUserInfo.role === 'pendente' || currentUserInfo.role === 'recusado')) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--fs-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', fontFamily: '"Regular", sans-serif' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#0b0f19', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
         <div className="fs-card" style={{ padding: '3rem 2rem', maxWidth: '450px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(15, 23, 42, 0.9)' }}>
           <Shield size={64} color="#f59e0b" style={{ marginBottom: '1.5rem' }} />
-          <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontFamily: '"Comum", sans-serif', fontSize: '1.5rem' }}>Acesso Restrito</h2>
-          <p style={{ color: '#94a3b8', lineHeight: 1.6, margin: '0 0 2rem 0', fontSize: '0.95rem' }}>
-            A sua conta Google foi autenticada, mas o acesso ao Workspace ainda não foi libertado. 
-            Aguarde que o Comando Geral valide a sua entrada e lhe atribua o cargo de Piloto.
-          </p>
-          <button onClick={handleLogout} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.8rem 2rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
-            Sair da Conta
-          </button>
+          <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '1.5rem' }}>Acesso Restrito</h2>
+          <p style={{ color: '#94a3b8', lineHeight: 1.6, margin: '0 0 2rem 0', fontSize: '0.95rem' }}>A sua conta ainda não foi aprovada pelo Comando Geral. Aguarde a liberação de acesso.</p>
+          <button onClick={handleLogout} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.8rem 2rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Sair da Conta</button>
         </div>
       </div>
     );
   }
+
+  const alistamentosFiltrados = alistamentos.filter(a => filtroAlistamento === 'Todos' ? true : a.status === filtroAlistamento);
+  const pendentesAlistamentoCount = alistamentos.filter(a => a.status === 'Pendente').length;
+  const pendentesSolicitacaoCount = solicitacoes.filter(s => s.status === 'Pendente').length;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--fs-bg)', color: 'var(--text-main)', position: 'relative' }}>
@@ -888,12 +904,6 @@ export default function Workspace() {
 
         @keyframes modalEnter { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
         .modal-modern { animation: modalEnter 0.2s ease-out forwards; }
-
-        .platform-pill-btn {
-          background: rgba(255,255,255,0.03); color: var(--fs-muted); border: 1px solid var(--fs-border); padding: 0.6rem 1.2rem; border-radius: 12px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; font-family: '"Regular", sans-serif'; backdrop-filter: blur(10px);
-        }
-        .platform-pill-btn:hover { color: var(--text-main); border-color: rgba(255,255,255,0.2); }
-        .platform-pill-btn.active { background: rgba(59, 130, 246, 0.15); border-color: var(--fs-blue); color: #fff; font-weight: 600; }
         
         @media (max-width: 900px) {
           .workspace-sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); }
@@ -930,6 +940,44 @@ export default function Workspace() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
               <button onClick={closeConfirmModal} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--fs-border)', color: 'var(--text-main)', padding: '0.8rem 1.5rem', borderRadius: '12px', cursor: 'pointer', fontWeight: 500, transition: 'all 0.2s', flexGrow: 1, fontFamily: '"Comum", sans-serif' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}>Cancelar</button>
               <button onClick={() => { modal.onConfirm(); closeConfirmModal(); }} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '12px', cursor: 'pointer', fontWeight: 500, flexGrow: 1, transition: 'all 0.2s', fontFamily: '"Comum", sans-serif' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DOSSIÊ DE ALISTAMENTO */}
+      {selectedAlistamento && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(3,7,18,0.9)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setSelectedAlistamento(null)}>
+          <div className="fs-card modal-modern" style={{ background: '#0f172a', padding: '2.25rem', maxWidth: '620px', width: '100%', maxHeight: '90vh', overflowY: 'auto', position: 'relative', border: '1px solid rgba(14,165,233,0.3)' }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedAlistamento(null)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18}/></button>
+            
+            <span style={{ color: '#0ea5e9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ficha de Recrutamento</span>
+            <h3 style={{ fontSize: '1.5rem', color: '#fff', margin: '0.25rem 0 1.5rem' }}>{selectedAlistamento.nome}</h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(0,0,0,0.25)', padding: '1.25rem', borderRadius: '14px', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>NICKNAME</span><strong style={{ color: '#f8fafc' }}>{selectedAlistamento.nickname}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>NASCIMENTO</span><strong style={{ color: '#f8fafc' }}>{selectedAlistamento.dataNascimento}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>DISCORD</span><strong style={{ color: '#0ea5e9', display: 'flex', alignItems: 'center', gap: '4px' }}><MessageSquare size={13}/> {selectedAlistamento.discord}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>WHATSAPP</span><strong style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={13}/> {selectedAlistamento.whatsapp}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>PLATAFORMA / SIMULADOR</span><strong style={{ color: '#f8fafc' }}>{selectedAlistamento.plataforma} • MSFS {selectedAlistamento.simulador}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>POSSUI A-29 RP SIM</span><strong style={{ color: selectedAlistamento.possuiA29 === 'Sim' ? '#10b981' : '#ef4444' }}>{selectedAlistamento.possuiA29}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>HORAS DE VOO</span><strong style={{ color: '#f8fafc' }}>{selectedAlistamento.experiencia}</strong></div>
+              <div><span style={{ color: '#64748b', display: 'block', fontSize: '0.7rem' }}>EXP. ACROBÁTICA</span><strong style={{ color: '#f8fafc' }}>{selectedAlistamento.vooAcrobatico}</strong></div>
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Disponibilidade Informada</span>
+              <p style={{ margin: '0.35rem 0 0', background: 'rgba(255,255,255,0.03)', padding: '0.85rem', borderRadius: '10px', color: '#e2e8f0', fontSize: '0.9rem' }}>{selectedAlistamento.disponibilidade}</p>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Motivação para Ingressar</span>
+              <p style={{ margin: '0.35rem 0 0', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{selectedAlistamento.motivoIngresso}</p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={() => handleMudarStatusDocumento('alistamentos', selectedAlistamento.id!, 'Aprovado')} style={{ flex: 1, padding: '0.85rem', borderRadius: '10px', background: '#10b981', color: '#030712', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Aprovar Candidato</button>
+              <button onClick={() => handleMudarStatusDocumento('alistamentos', selectedAlistamento.id!, 'Recusado')} style={{ flex: 1, padding: '0.85rem', borderRadius: '10px', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', fontWeight: 'bold', cursor: 'pointer' }}>Recusar</button>
             </div>
           </div>
         </div>
@@ -1009,10 +1057,16 @@ export default function Workspace() {
               <button className={`nav-item ${activeTab === 'videos' ? 'active' : ''}`} onClick={() => handleMenuClick('videos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}><Play size={14} /> Vídeos</button>
               
               {isAdmin && (
-                <button className={`nav-item ${activeTab === 'solicitacoes' ? 'active' : ''}`} onClick={() => handleMenuClick('solicitacoes')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Inbox size={14} /> Solicitações</div>
-                  {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '12px' }}>{solicitacoes.filter(s => s.status === 'Pendente').length}</span>}
-                </button>
+                <>
+                  <button className={`nav-item ${activeTab === 'alistamentos' ? 'active' : ''}`} onClick={() => handleMenuClick('alistamentos')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><FileText size={14} /> Monitor Alistamento</div>
+                    {alistamentos.filter(a => a.status === 'Pendente').length > 0 && <span style={{ background: '#0ea5e9', color: '#fff', fontSize: '0.6rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '12px' }}>{alistamentos.filter(a => a.status === 'Pendente').length}</span>}
+                  </button>
+                  <button className={`nav-item ${activeTab === 'solicitacoes' ? 'active' : ''}`} onClick={() => handleMenuClick('solicitacoes')} style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><PlaneTakeoff size={14} /> Solicitações de Demonstração</div>
+                    {solicitacoes.filter(s => s.status === 'Pendente').length > 0 && <span style={{ background: '#f59e0b', color: '#030712', fontSize: '0.65rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '12px' }}>{solicitacoes.filter(s => s.status === 'Pendente').length}</span>}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -1025,9 +1079,9 @@ export default function Workspace() {
         </nav>
       </aside>
 
-      <main style={{ flex: 1, overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
         <div className="mobile-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><img src={logoImage} alt="EDAV" style={{ height: '24px' }} /><h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontWeight: 600, fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>CIOEDAFS</h1></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><img src={logoImage} alt="EDAFS" style={{ height: '24px' }} /><h1 style={{ fontSize: '1rem', margin: 0, color: '#f8fafc', fontFamily: '"StratumNo2", sans-serif', letterSpacing: '0.05em' }}>CIOEDAFS</h1></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ position: 'relative' }}>
               <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>{currentUserInfo?.foto ? <img src={currentUserInfo.foto} alt="Perfil" style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)' }} /> : <UserCircle size={28} color="#f8fafc" />}</div>
@@ -1058,9 +1112,9 @@ export default function Workspace() {
         </header>
 
         <div className="main-content" style={{ padding: '1rem 2rem 2rem', position: 'relative', zIndex: 10, flexGrow: 1, maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 500, color: '#f8fafc', letterSpacing: '0.05em', fontFamily: '"StratumNo2", sans-serif', textTransform: 'uppercase' }}>
-              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'videos' ? 'Galeria de Vídeos' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : 'Config. e Acessos'}
+              {activeTab === 'dashboard' ? 'Painel Geral' : activeTab === 'notam' ? 'Avisos (NOTAM)' : activeTab === 'meteorologia' ? 'Meteorologia' : activeTab === 'pilotos' ? 'Pilotos' : activeTab === 'agenda' ? 'Agenda' : activeTab === 'videos' ? 'Galeria de Vídeos' : activeTab === 'solicitacoes' ? 'Solicitações de Eventos' : activeTab === 'alistamentos' ? 'Monitor de Alistamento' : 'Config. e Acessos'}
             </h2>
             
             {(activeTab === 'pilotos' && canEditPilots) || (activeTab === 'agenda' && canEditAgenda) || (activeTab === 'videos' && canEditVideo) ? (
@@ -1078,7 +1132,11 @@ export default function Workspace() {
                 <DashboardCard title="Pilotos Ativos" value={pilotos.filter(p => !p.oculto).length} icon={<Users size={24} />} color="#0ea5e9" />
                 <DashboardCard title="Próximos Eventos" value={agendas.length} icon={<CalendarCheck2 size={24} />} color="#10b981" />
                 <DashboardCard title="Avisos NOTAM" value={notams.length} icon={<BellRing size={24} />} color="#ef4444" />
-                <DashboardCard title="Solicitações" value={solicitacoes.filter(s => s.status === 'Pendente').length} icon={<Inbox size={24} />} color="#f59e0b" />
+                {isAdmin && (
+                  <div onClick={() => handleMenuClick('alistamentos')} style={{ cursor: 'pointer' }}>
+                    <DashboardCard title="Alistamentos" value={alistamentos.filter(a => a.status === 'Pendente').length} icon={<FileText size={24} />} color="#f59e0b" />
+                  </div>
+                )}
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '2fr 1fr' : '1fr', gap: '1.5rem' }}>
@@ -1109,22 +1167,86 @@ export default function Workspace() {
             </div>
           )}
 
+          {activeTab === 'alistamentos' && isAdmin && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {(['Todos', 'Pendente', 'Aprovado', 'Recusado'] as const).map(st => (
+                    <PlatformFilterBtn 
+                      key={st} 
+                      label={`${st} (${st === 'Todos' ? alistamentos.length : alistamentos.filter(a => a.status === st).length})`} 
+                      active={filtroAlistamento === st} 
+                      onClick={() => setFiltroAlistamento(st)} 
+                    />
+                  ))}
+                </div>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Status do formulário público: <strong style={{ color: alistamentoAberto ? '#10b981' : '#ef4444' }}>{alistamentoAberto ? 'ABERTO' : 'FECHADO'}</strong>
+                </span>
+              </div>
+
+              {alistamentos.filter(a => filtroAlistamento === 'Todos' ? true : a.status === filtroAlistamento).length === 0 ? (
+                <div className="fs-card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+                  <FileText size={36} color="#64748b" style={{ margin: '0 auto 1rem', opacity: 0.4 }} />
+                  <p style={{ color: '#64748b', margin: 0 }}>Nenhuma ficha de alistamento encontrada neste filtro.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {alistamentos.filter(a => filtroAlistamento === 'Todos' ? true : a.status === filtroAlistamento).map((a) => (
+                    <div key={a.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? '110px 2fr 1.5fr 1fr 180px' : '1fr', gap: '1rem' }}>
+                      <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
+                        {a.dataEnvio ? new Date(a.dataEnvio).toLocaleDateString('pt-BR') : '--/--/----'}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.95rem' }}>{a.nome} <span style={{ color: '#64748b', fontWeight: 400 }}>({a.nickname})</span></span>
+                        <span style={{ color: '#0ea5e9', fontSize: '0.75rem' }}>
+                          {a.plataforma} • MSFS {a.simulador} • A-29: {a.possuiA29}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                        <span>Discord: <strong>{a.discord}</strong></span>
+                        <span style={{ color: '#94a3b8' }}>WhatsApp: {a.whatsapp}</span>
+                      </div>
+                      <div>
+                        <span style={{
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
+                          background: a.status === 'Aprovado' ? 'rgba(16,185,129,0.12)' : a.status === 'Recusado' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
+                          color: a.status === 'Aprovado' ? '#10b981' : a.status === 'Recusado' ? '#ef4444' : '#f59e0b'
+                        }}>
+                          {a.status}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
+                        <button onClick={() => setSelectedAlistamento(a)} title="Ver Ficha Completa" style={{ background: 'rgba(14,165,233,0.12)', color: '#0ea5e9', border: 'none', padding: '0.45rem 0.75rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                          <Eye size={14} /> Dossiê
+                        </button>
+                        {a.status === 'Pendente' && (
+                          <>
+                            <button onClick={() => handleMudarStatusDocumento('alistamentos', a.id!, 'Aprovado')} title="Aprovar" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: 'none', padding: '0.45rem', borderRadius: '8px', cursor: 'pointer' }}><Check size={15}/></button>
+                            <button onClick={() => handleMudarStatusDocumento('alistamentos', a.id!, 'Recusado')} title="Recusar" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: 'none', padding: '0.45rem', borderRadius: '8px', cursor: 'pointer' }}><X size={15}/></button>
+                          </>
+                        )}
+                        <button onClick={() => handleDeletarItem(a.id, 'alistamentos', `ficha de ${a.nome}`)} title="Excluir" style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.45rem' }}><Trash2 size={15} /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'solicitacoes' && isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: window.innerWidth > 900 ? 'grid' : 'none', gridTemplateColumns: '1fr 1.5fr 1fr 1.5fr', padding: '0 1.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>
                 <span>Data do Pedido</span><span>Cidade / Evento</span><span>Transmissão</span><span style={{ textAlign: 'right' }}>Ações / Status</span>
               </div>
-              
               {solicitacoes.length === 0 ? (
-                <div style={{ padding: '4rem 2rem', textAlign: 'center', background: 'rgba(15,23,42,0.6)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <Inbox size={48} color="#64748b" style={{ margin: '0 auto 1.5rem', opacity: 0.3 }} />
-                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.95rem' }}>Não existem solicitações pendentes no sistema.</p>
-                </div>
+                <div style={{ padding: '4rem 2rem', textAlign: 'center', background: 'rgba(15,23,42,0.6)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}><Inbox size={48} color="#64748b" style={{ margin: '0 auto 1.5rem', opacity: 0.3 }} /><p style={{ color: '#64748b', margin: 0, fontSize: '0.95rem' }}>Não existem solicitações pendentes no sistema.</p></div>
               ) : (
                 solicitacoes.map((s) => (
                   <div key={s.id} className="list-row" style={{ gridTemplateColumns: window.innerWidth > 900 ? '1fr 1.5fr 1fr 1.5fr' : '1fr', opacity: s.status !== 'Pendente' ? 0.6 : 1, padding: '1.25rem' }}>
-                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{new Date(s.dataSolicitacao).toLocaleDateString('pt-BR')} <br/> <span style={{ fontSize: '0.7rem' }}>{new Date(s.dataSolicitacao).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span></div>
-                    <div style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.95rem' }}>{s.cidade}</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{s.dataDesejada || new Date(s.dataSolicitacao).toLocaleDateString('pt-BR')} <br/> <span style={{ fontSize: '0.7rem' }}>Pedido em: {new Date(s.dataSolicitacao).toLocaleDateString('pt-BR')}</span></div>
+                    <div style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.95rem' }}>{s.cidade} {s.icao ? `(${s.icao})` : ''} {s.solicitante && <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8' }}>Org: {s.solicitante}</span>}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <span style={{ color: s.transmissao === 'sim' ? '#10b981' : '#ef4444', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase' }}>{s.transmissao === 'sim' ? 'Com Transmissão' : 'Sem Transmissão'}</span>
                       {s.transmissao === 'sim' && <a href={s.canal} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', fontSize: '0.75rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}><Link2 size={12}/> Acessar Canal</a>}
@@ -1132,8 +1254,8 @@ export default function Workspace() {
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: window.innerWidth > 900 ? 'flex-end' : 'flex-start' }}>
                       {s.status === 'Pendente' ? (
                         <>
-                          <button onClick={() => handleMudarStatusSolicitacao(s.id!, 'Aprovado')} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><Check size={14}/> Aprovar</button>
-                          <button onClick={() => handleMudarStatusSolicitacao(s.id!, 'Recusado')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><X size={14}/> Recusar</button>
+                          <button onClick={() => handleMudarStatusDocumento('solicitacoes', s.id!, 'Aprovado')} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><Check size={14}/> Aprovar</button>
+                          <button onClick={() => handleMudarStatusDocumento('solicitacoes', s.id!, 'Recusado')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.75rem' }}><X size={14}/> Recusar</button>
                         </>
                       ) : (
                         <span style={{ color: s.status === 'Aprovado' ? '#10b981' : '#ef4444', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', padding: '0.3rem 0.8rem', background: s.status === 'Aprovado' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: '6px' }}>{s.status}</span>
@@ -1266,10 +1388,10 @@ export default function Workspace() {
                 </div>
               )}
               
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', width: 'max-content' }}>
-                <button className={`platform-pill-btn ${pilotoFilter === 'Ambos' ? 'active' : ''}`} onClick={() => setPilotoFilter('Ambos')}>Todos</button>
-                <button className={`platform-pill-btn ${pilotoFilter === '2020' ? 'active' : ''}`} onClick={() => setPilotoFilter('2020')}><img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: pilotoFilter === '2020' ? 'none' : 'grayscale(100%) opacity(60%)' }}/> MSFS 2020</button>
-                <button className={`platform-pill-btn ${pilotoFilter === '2024' ? 'active' : ''}`} onClick={() => setPilotoFilter('2024')}><img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: pilotoFilter === '2024' ? 'none' : 'grayscale(100%) opacity(60%)' }}/> MSFS 2024</button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', width: 'max-content' }}>
+                <PlatformFilterBtn label="Todos" active={pilotoFilter === 'Ambos'} onClick={() => setPilotoFilter('Ambos')} />
+                <PlatformFilterBtn label="MSFS 2020" active={pilotoFilter === '2020'} onClick={() => setPilotoFilter('2020')} icon={<img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: pilotoFilter === '2020' ? 'none' : 'grayscale(100%) opacity(60%)' }}/>} />
+                <PlatformFilterBtn label="MSFS 2024" active={pilotoFilter === '2024'} onClick={() => setPilotoFilter('2024')} icon={<img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: pilotoFilter === '2024' ? 'none' : 'grayscale(100%) opacity(60%)' }}/>} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1354,10 +1476,10 @@ export default function Workspace() {
                 </div>
               )}
               
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', width: 'max-content' }}>
-                <button className={`platform-pill-btn ${agendaFilter === 'Ambos' ? 'active' : ''}`} onClick={() => setAgendaFilter('Ambos')}>Todos</button>
-                <button className={`platform-pill-btn ${agendaFilter === '2020' ? 'active' : ''}`} onClick={() => setAgendaFilter('2020')}><img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: agendaFilter === '2020' ? 'none' : 'grayscale(100%) opacity(60%)' }}/> MSFS 2020</button>
-                <button className={`platform-pill-btn ${agendaFilter === '2024' ? 'active' : ''}`} onClick={() => setAgendaFilter('2024')}><img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: agendaFilter === '2024' ? 'none' : 'grayscale(100%) opacity(60%)' }}/> MSFS 2024</button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', width: 'max-content' }}>
+                <PlatformFilterBtn label="Todos" active={agendaFilter === 'Ambos'} onClick={() => setAgendaFilter('Ambos')} />
+                <PlatformFilterBtn label="MSFS 2020" active={agendaFilter === '2020'} onClick={() => setAgendaFilter('2020')} icon={<img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: agendaFilter === '2020' ? 'none' : 'grayscale(100%) opacity(60%)' }}/>} />
+                <PlatformFilterBtn label="MSFS 2024" active={agendaFilter === '2024'} onClick={() => setAgendaFilter('2024')} icon={<img src={mfLogo} alt="MSFS" style={{ height: '14px', filter: agendaFilter === '2024' ? 'none' : 'grayscale(100%) opacity(60%)' }}/>} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1453,42 +1575,10 @@ export default function Workspace() {
               </div>
             </div>
           )}
-
+          
           {activeTab === 'config' && isAdmin && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1100px' }}>
               
-              <div className="fs-card" style={{ padding: '2rem' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Integração Discord</h4>
-                <form onSubmit={handleSalvarConfigsGerais} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '600px' }}>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <p style={{ margin: 0, color: 'var(--fs-muted)', fontSize: '0.85rem' }}>Preencha os dados abaixo para formatar o alerta automático enviado para o Discord quando publica um novo NOTAM.</p>
-                    
-                    <div>
-                      <label className="form-label" style={{ color: '#0ea5e9' }}>URL do Webhook</label>
-                      <input type="url" value={discordWebhook} onChange={e => setDiscordWebhook(e.target.value)} className="form-input" placeholder="https://discord.com/api/webhooks/..." />
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                      <div>
-                        <label className="form-label">Cor do Embed (HEX)</label>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          <input type="color" value={discordColor} onChange={e => setDiscordColor(e.target.value)} style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', background: 'transparent' }} />
-                          <input type="text" value={discordColor} onChange={e => setDiscordColor(e.target.value)} className="form-input" placeholder="#ED333B" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">Texto do Rodapé (Footer)</label>
-                      <input type="text" value={discordFooter} onChange={e => setDiscordFooter(e.target.value)} className="form-input" placeholder="EDAV MSFS - Sistema de Operações" />
-                    </div>
-                  </div>
-
-                  <button type="submit" style={{ background: 'var(--fs-blue)', color: '#fff', border: 'none', padding: '0.8rem', borderRadius: '12px', fontWeight: 600, cursor: 'pointer', marginTop: '1rem' }}>Salvar Configurações</button>
-                </form>
-              </div>
-
               <div className="fs-card" style={{ padding: '2rem' }}>
                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Recursos Públicos</h4>
                 <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: '#94a3b8' }}>Gere a exibição de botões e formulários no site público.</p>
@@ -1520,8 +1610,8 @@ export default function Workspace() {
                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-main)', fontSize: '1.2rem', fontFamily: '"Comum", sans-serif' }}>Gestão de Acessos</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
                   
-                  <div style={{ overflowX: 'visible', background: 'rgba(15,23,42,0.4)', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
-                    <table className="fs-table">
+                  <div style={{ overflowX: 'auto', background: 'rgba(15,23,42,0.4)', borderRadius: '12px', border: '1px solid var(--fs-border)' }}>
+                    <table className="fs-table" style={{ minWidth: '800px' }}>
                       <thead>
                         <tr>
                           <th>Utilizador Registado</th>
@@ -1580,7 +1670,6 @@ export default function Workspace() {
               </div>
             </div>
           )}
-
         </div>
       </main>
     </div>

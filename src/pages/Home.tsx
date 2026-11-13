@@ -6,10 +6,10 @@ import '../App.css';
 import { 
   ChevronRight, ChevronLeft, CheckCircle2, Calendar, 
   X, ShieldCheck, Shield, FileText, AlertTriangle, Cookie,
-  Radio, PlaneTakeoff, Play, Camera, History, Plus, Users
+  PlaneTakeoff, Play, Camera, History, Plus, Users
 } from 'lucide-react';
 
-import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 import Header from './Header';
@@ -71,7 +71,6 @@ interface Demonstracao {
   ocultarSimulador?: boolean;
 }
 
-interface Noticia { id?: string; data: string; titulo: string; resumo: string; imagem: string; }
 interface Video { id?: string; url: string; ativo?: boolean; }
 
 const getPatenteAbbr = (patente?: string) => {
@@ -197,21 +196,7 @@ const PilotBioModal = ({ piloto, onClose }: { piloto: Piloto | null; onClose: ()
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '50%',
-          height: '100%',
-          backgroundImage: `url(${pilotoImg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center left',
-          maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
-          opacity: 0.6,
-          zIndex: 0,
-          pointerEvents: 'none'
-        }} />
+        <div className="pilot-bg-img" style={{ backgroundImage: `url(${pilotoImg})` }} />
 
         <div style={{ position: 'absolute', bottom: '-100px', right: '-100px', width: '300px', height: '300px', background: '#0ea5e9', filter: 'blur(120px)', opacity: 0.15, zIndex: 0, pointerEvents: 'none' }} />
 
@@ -226,36 +211,24 @@ const PilotBioModal = ({ piloto, onClose }: { piloto: Piloto | null; onClose: ()
 
         <div className="bio-container-content" style={{ position: 'relative', zIndex: 1, padding: '3.5rem', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginLeft: 'auto', maxWidth: '650px' }}>
           
-          <div className="bio-header" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ 
-              minWidth: '84px', 
-              width: 'auto', 
-              height: '80px', 
-              padding: '0 1rem',
-              borderRadius: '20px', 
-              background: 'rgba(255,255,255,0.05)', 
-              border: '1px solid rgba(255,255,255,0.1)', 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              flexShrink: 0 
-            }}>
-              <span style={{ 
-                fontSize: '2.2rem', 
-                fontFamily: '"PosicaoFont", sans-serif', 
-                background: 'linear-gradient(135deg, #fde047 0%, #d97706 100%)', 
-                WebkitBackgroundClip: 'text', 
-                WebkitTextFillColor: 'transparent', 
-                color: 'transparent', 
-                lineHeight: 1, 
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.02em',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' 
-              }}>
-                {getInitials3(piloto.nome)}
-              </span>
-            </div>
+          <div className="bio-header" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '2rem' }}>
             
+            <span style={{ 
+              fontSize: '2.5rem', 
+              fontFamily: '"PosicaoFont", sans-serif', 
+              background: 'linear-gradient(135deg, #fde047 0%, #d97706 100%)', 
+              WebkitBackgroundClip: 'text', 
+              WebkitTextFillColor: 'transparent', 
+              color: 'transparent', 
+              lineHeight: 1, 
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.05em',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+              flexShrink: 0
+            }}>
+              {getInitials3(piloto.nome)}
+            </span>
+
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', minWidth: 0 }}>
               <h3 style={{ margin: 0, fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', color: '#ffffff', fontWeight: 'bold', lineHeight: 1.1, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                 {piloto.nome}
@@ -463,22 +436,22 @@ export default function Home() {
       setIsBlocked(true);
     }
 
-    const unsubPilotos = onSnapshot(collection(db, 'pilotos'), (snapshot) => {
+    const unsubPilotos = onSnapshot(collection(db, 'pilotos'), (snapshot: any) => {
       const arr: Piloto[] = [];
-      snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Piloto));
+      snapshot.forEach((doc: any) => arr.push({ id: doc.id, ...doc.data() } as unknown as Piloto));
       arr.sort((a, b) => parseInt(a.posicao) - parseInt(b.posicao));
       setDbPilotos(arr);
     });
 
-    const unsubAgenda = onSnapshot(collection(db, 'agenda'), (snapshot) => {
+    const unsubAgenda = onSnapshot(collection(db, 'agenda'), (snapshot: any) => {
       const arr: Demonstracao[] = [];
-      snapshot.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as unknown as Demonstracao));
+      snapshot.forEach((doc: any) => arr.push({ id: doc.id, ...doc.data() } as unknown as Demonstracao));
       setDbDemonstracoes(arr);
     });
 
-    const unsubVideos = onSnapshot(collection(db, 'videos'), (snapshot) => {
+    const unsubVideos = onSnapshot(collection(db, 'videos'), (snapshot: any) => {
       const arr: Video[] = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach((doc: any) => {
         const data = doc.data();
         if (data.ativo !== false) {
           arr.push({ id: doc.id, ...data } as unknown as Video);
@@ -487,7 +460,7 @@ export default function Home() {
       setDbVideos(arr);
     });
 
-    const unsubConfig = onSnapshot(doc(db, 'config', 'geral'), (docSnap) => {
+    const unsubConfig = onSnapshot(doc(db, 'config', 'geral'), (docSnap: any) => {
       if (docSnap.exists()) {
         const d = docSnap.data();
         setAlistamentoAberto(d.alistamentoAberto || false);
@@ -635,27 +608,21 @@ export default function Home() {
     setIsSubmitting(true);
 
     try {
-      await fetch("https://formsubmit.co/ajax/fumacavirtualmfs@gmail.com", {
-        method: "POST",
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          _subject: "Novo Alistamento Recebido - EDAFS MSFS",
-          Nome: nome,
-          Nickname: nickname,
-          "Data de Nascimento": dataNascimento,
-          WhatsApp: whatsapp,
-          Discord: discord,
-          Experiencia: experiencia,
-          Plataforma: plataforma,
-          Simulador: simuladorPossui,
-          "Possui A-29 RP Simulations": possuiA29 === 'sim' ? 'Sim' : 'Não',
-          "Experiência Acrobática": vooAcrobatico === 'sim' ? detalhesVooAcrobatico : 'Não',
-          "Disponibilidade": disponibilidade,
-          "Motivação": motivoIngresso
-        })
+      await addDoc(collection(db, 'alistamentos'), {
+        nome,
+        nickname,
+        dataNascimento,
+        whatsapp,
+        discord,
+        experiencia,
+        plataforma,
+        simulador: simuladorPossui,
+        possuiA29: possuiA29 === 'sim' ? 'Sim' : 'Não',
+        vooAcrobatico: vooAcrobatico === 'sim' ? detalhesVooAcrobatico : 'Não',
+        disponibilidade,
+        motivoIngresso,
+        dataEnvio: new Date().toISOString(),
+        status: 'Pendente'
       });
 
       setIsFormModalOpen(false);
@@ -664,7 +631,7 @@ export default function Home() {
       setDataNascimento(''); setVooAcrobatico(''); setDetalhesVooAcrobatico(''); setDisponibilidade(''); setMotivoIngresso('');
       setPossuiA29('');
     } catch (error) {
-      alert("Houve um erro ao enviar a sua candidatura. Verifique a sua conexão e tente novamente.");
+      alert("Houve um erro ao enviar a sua candidatura. Verifique a sua conexão.");
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -1282,6 +1249,21 @@ export default function Home() {
         
         .legal-footer-link { color: #94a3b8; cursor: pointer; transition: color 0.2s; display: flex; gap: 6px; align-items: center; user-select: none; }
         .legal-footer-link:hover { color: #0ea5e9; }
+
+        .pilot-bg-img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 50%;
+          height: 100%;
+          background-size: cover;
+          background-position: center left;
+          mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+          -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+          opacity: 0.6;
+          z-index: 0;
+          pointer-events: none;
+        }
         
         @media (min-width: 900px) {
           .split-grid { grid-template-columns: 1fr 1fr; }
@@ -1323,22 +1305,32 @@ export default function Home() {
              margin-bottom: -150px !important;
           }
 
+          .pilot-bg-img {
+            width: 100% !important;
+            height: 100% !important;
+            opacity: 0.15 !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+          }
           .modal-content-pilot {
-             padding: 1.5rem !important;
+             padding: 0 !important; 
           }
           .bio-container-content {
-            padding: 2rem !important;
-            max-width: 100% !important;
-            align-items: center !important;
-            text-align: center !important;
+             padding: 2.5rem 1.5rem !important;
+             margin-left: 0 !important;
+             width: 100% !important;
+             align-items: flex-start !important;
+             text-align: left !important;
           }
           .bio-header {
             flex-direction: column !important;
-            text-align: center !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+            gap: 0.5rem !important;
           }
           .bio-header > div {
-            align-items: center !important;
-            text-align: center !important;
+            align-items: flex-start !important;
+            text-align: left !important;
           }
         }
         
