@@ -7,7 +7,7 @@ import { db } from '../firebase';
 
 import { 
   PlaneTakeoff, ShieldCheck, MapPin, 
-  CheckCircle2, Radio, Globe, Activity, Clock, Inbox, AlertTriangle, CalendarCheck2
+  CheckCircle2, Radio, Globe, Activity, Clock, AlertTriangle, CalendarCheck2
 } from 'lucide-react';
 
 // Importação das 5 imagens para o Slide
@@ -81,8 +81,6 @@ export default function SolicitacaoPage() {
     setMetaTag('og:title', 'Solicitar Demonstração Aérea | EDAFS Virtual', true);
     setMetaTag('og:description', 'Convide a Esquadrilha da Fumaça Virtual (EDAFS) para o seu evento no MSFS.', true);
     setMetaTag('og:type', 'website', true);
-    
-    document.body.style.overflow = 'hidden';
 
     const unsubscribe = onSnapshot(collection(db, 'solicitacoes'), (snap) => {
       const arr: Solicitacao[] = [];
@@ -92,7 +90,6 @@ export default function SolicitacaoPage() {
     });
 
     return () => {
-      document.body.style.overflow = 'auto'; // Restaura ao sair
       unsubscribe();
     };
   }, []);
@@ -157,7 +154,7 @@ export default function SolicitacaoPage() {
   };
 
   return (
-    <div style={{ backgroundColor: '#030712', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', color: '#e2e8f0', position: 'relative', overflow: 'hidden' }}>
+    <div className="root-wrapper">
       <style>{`
         @font-face { font-family: 'Regular'; src: url('/fonts/regular.otf') format('opentype'); font-weight: normal; font-style: normal; font-display: swap; }
         @font-face { font-family: 'Comum'; src: url('/fonts/comum.otf') format('opentype'); font-weight: normal; font-style: normal; }
@@ -165,6 +162,76 @@ export default function SolicitacaoPage() {
         * { font-family: 'Regular', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Comum', sans-serif !important; margin: 0; }
 
+        /* Estrutura Base */
+        .root-wrapper {
+          background-color: #030712;
+          height: 100vh;
+          width: 100vw;
+          display: flex;
+          flex-direction: column;
+          color: #e2e8f0;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .main-container {
+          position: relative;
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 0 2rem;
+          z-index: 10;
+          height: calc(100vh - 80px);
+          overflow: hidden;
+        }
+
+        .grid-layout {
+          display: grid;
+          grid-template-columns: 1.25fr 1fr;
+          gap: 4rem;
+          width: 100%;
+          max-width: 1300px;
+          height: 100%;
+          max-height: 850px;
+          align-items: stretch;
+        }
+        
+        .left-column {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          height: 100%;
+          overflow: hidden;
+          animation: fadeIn 0.6s ease;
+        }
+
+        .form-column {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          height: 100%;
+        }
+
+        .termos-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(255,255,255,0.05);
+          padding: 1rem;
+          border-radius: 12px;
+          margin-bottom: 1.5rem;
+          flex-shrink: 0;
+        }
+
+        .form-row-2 {
+          display: grid;
+          grid-template-columns: 1fr 100px;
+          gap: 0.75rem;
+        }
+
+        /* Elementos UI */
         .modern-input {
           width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.08); outline: none; padding: 0.75rem 1rem; color: #ffffff; border-radius: 10px; font-size: 0.9rem; font-weight: 300; transition: all 0.3s ease; box-sizing: border-box; backdrop-filter: blur(4px);
         }
@@ -177,7 +244,6 @@ export default function SolicitacaoPage() {
         .platform-btn:hover { background: rgba(255,255,255,0.08); color: #f8fafc; border-color: rgba(255,255,255,0.15); }
         .platform-btn.active { background: rgba(14, 165, 233, 0.15); border-color: #0ea5e9; color: #0ea5e9; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); }
         
-        /* TIMELINE COM MAIOR DESTAQUE */
         .timeline-step { display: flex; gap: 1.5rem; position: relative; padding-bottom: 2.5rem; }
         .timeline-step:last-child { padding-bottom: 0; }
         .timeline-step::before { content: ''; position: absolute; left: 23px; top: 48px; bottom: 0; width: 2px; background: linear-gradient(to bottom, #0ea5e9, rgba(14,165,233,0.05)); }
@@ -194,24 +260,72 @@ export default function SolicitacaoPage() {
           background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 0.5rem;
         }
 
-        /* Custom Scrollbar for internal lists */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Mobile Fallback: Permite scroll no celular */
-        @media (max-width: 900px) {
-          body { overflow: auto !important; }
-          .main-container { height: auto !important; overflow: visible !important; display: block !important; padding-bottom: 2rem; }
-          .grid-layout { grid-template-columns: 1fr !important; gap: 2rem !important; height: auto !important; }
-          .left-column { overflow: visible !important; }
+        /* RESPONSIVIDADE MOBILE ABSOLUTA */
+        @media (max-width: 1000px) {
+          .root-wrapper {
+            height: auto !important;
+            min-height: 100vh;
+            overflow: auto !important;
+            overflow-x: hidden !important;
+          }
+          .main-container {
+            height: auto !important;
+            display: block !important;
+            padding: 1rem 1.5rem 3rem 1.5rem !important;
+            overflow: visible !important;
+          }
+          .grid-layout {
+            grid-template-columns: 1fr !important;
+            gap: 2.5rem !important;
+            height: auto !important;
+            max-height: none !important;
+          }
+          .left-column {
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .form-column {
+            height: auto !important;
+          }
+          .glass-panel {
+            padding: 1.5rem !important;
+          }
+          .timeline-step {
+            gap: 1rem;
+            padding-bottom: 2rem;
+          }
+          .timeline-step::before {
+             left: 20px;
+             top: 40px;
+          }
+          .timeline-icon {
+             width: 40px;
+             height: 40px;
+          }
+          .timeline-icon svg {
+             width: 20px;
+             height: 20px;
+          }
+          .termos-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .form-row-2 {
+             grid-template-columns: 1fr !important;
+          }
+          .quadro-scroll-area {
+            max-height: 350px !important;
+          }
         }
       `}</style>
 
       {/* --- SISTEMA DE SLIDE DE FUNDO --- */}
-      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         {imagensFundo.map((img, index) => (
           <div
             key={index}
@@ -261,12 +375,12 @@ export default function SolicitacaoPage() {
         </a>
       </header>
 
-      {/* --- CONTEÚDO CENTRAL (NO-SCROLL LAYOUT) --- */}
-      <main className="main-container" style={{ position: 'relative', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0 2rem', zIndex: 10, height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
-        <div className="grid-layout" style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '4rem', width: '100%', maxWidth: '1300px', height: '100%', maxHeight: '850px', alignItems: 'stretch' }}>
+      {/* --- CONTEÚDO CENTRAL --- */}
+      <main className="main-container">
+        <div className="grid-layout">
           
-          {/* LADO ESQUERDO: Textos e Timeline BEM EXPLICADA */}
-          <section className="left-column" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', overflow: 'hidden', animation: 'fadeIn 0.6s ease' }}>
+          {/* LADO ESQUERDO: Textos e Timeline */}
+          <section className="left-column">
             
             {/* Título e Info */}
             <header style={{ flexShrink: 0, marginBottom: '2.5rem' }}>
@@ -279,14 +393,14 @@ export default function SolicitacaoPage() {
               </p>
             </header>
 
-            {/* TIMELINE VERTICAL - AMPLIADA E BEM EXPLICADA */}
+            {/* TIMELINE VERTICAL */}
             <article style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, marginBottom: '2rem' }}>
               
               <div className="timeline-step">
                 <div className="timeline-icon"><ShieldCheck size={24} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.25rem' }}>1. Análise de Comando</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>1. Análise de Comando</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
                     Sua solicitação é recebida de imediato pela seção de Operações da EDAFS. O Comando Geral avaliará a natureza do evento, relevância para a simulação e viabilidade da data.
                   </p>
                 </div>
@@ -295,8 +409,8 @@ export default function SolicitacaoPage() {
               <div className="timeline-step">
                 <div className="timeline-icon"><MapPin size={24} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.25rem' }}>2. Missão Precursora (Logística)</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>2. Missão Precursora (Logística)</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
                     Uma equipe realiza o reconhecimento técnico do local no simulador. <strong style={{ color: '#cbd5e1' }}>É obrigatória</strong> a existência de um aeródromo homologado a no máximo 80 km de distância do evento, para apoio logístico.
                   </p>
                 </div>
@@ -305,8 +419,8 @@ export default function SolicitacaoPage() {
               <div className="timeline-step">
                 <div className="timeline-icon"><CalendarCheck2 size={24} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.25rem' }}>3. Aprovação e Alinhamento</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>3. Aprovação e Alinhamento</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
                     Sendo viável, o pedido é aprovado e a equipe fará uma reunião de alinhamento. <strong>Atenção:</strong> a aprovação da solicitação não confirma 100% que o evento ocorrerá. Aguarde a publicação oficial na agenda do site.
                   </p>
                 </div>
@@ -314,8 +428,8 @@ export default function SolicitacaoPage() {
 
             </article>
 
-            {/* Termos de Execução - Muito compactos, agora com 4 itens (2x2) */}
-            <article style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+            {/* Termos de Execução */}
+            <article className="termos-grid">
               <div>
                 <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><ShieldCheck size={14} aria-hidden="true"/> 1. Apoio Logístico</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>O local do evento requer um aeródromo homologado (ICAO) a no máximo 80 km de distância.</p>
@@ -334,7 +448,7 @@ export default function SolicitacaoPage() {
               </div>
             </article>
 
-            {/* Quadro de Solicitações - Renderiza APENAS se houver itens e a altura permitir */}
+            {/* Quadro de Solicitações */}
             {listaSolicitacoes.length > 0 && (
               <article className="glass-panel" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '1rem 1.5rem' }}>
                 <header style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexShrink: 0 }}>
@@ -342,9 +456,9 @@ export default function SolicitacaoPage() {
                   <h2 style={{ margin: 0, fontSize: '1rem', color: '#f8fafc' }}>Quadro de Solicitações</h2>
                 </header>
                 
-                <div className="custom-scroll" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.5rem' }}>
+                <div className="custom-scroll quadro-scroll-area" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.5rem' }}>
                   {listaSolicitacoes.map(s => (
-                    <div key={s.id} className="list-row" style={{ padding: '0.5rem 1rem' }}>
+                    <div key={s.id} className="list-row">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#94a3b8', fontSize: '0.75rem' }}>
                         <Clock size={12} aria-hidden="true" /> <time dateTime={s.dataDesejada}>{s.dataDesejada || 'A definir'}</time>
                       </div>
@@ -367,8 +481,8 @@ export default function SolicitacaoPage() {
             )}
           </section>
 
-          {/* LADO DIREITO: Formulário Glassmorphism Centrado Verticalmente */}
-          <section aria-label="Formulário de Solicitação" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+          {/* LADO DIREITO: Formulário Glassmorphism */}
+          <section className="form-column" aria-label="Formulário de Solicitação">
             <div className="glass-panel" style={{ padding: '2rem', animation: 'fadeIn 0.8s ease' }}>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 
@@ -377,7 +491,7 @@ export default function SolicitacaoPage() {
                   <input id="nome" required type="text" className="modern-input" value={nome} onChange={e => setNome(e.target.value)} placeholder="Quem está organizando?" />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '0.75rem' }}>
+                <div className="form-row-2">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                     <label htmlFor="cidade" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cidade ou Evento *</label>
                     <input id="cidade" required type="text" className="modern-input" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Ex: Rio de Janeiro - RJ" />
