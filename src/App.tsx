@@ -7,7 +7,9 @@ import { auth, db } from './firebase';
 import Home from './pages/Home';
 import Intranet from './pages/Workspace';
 import Login from './pages/Login';
-import Solicitacao from './pages/Solicitacao'; // <-- Importação da nova página
+import Solicitacao from './pages/Solicitacao';
+import A29 from './pages/A29'; 
+import Studio from './pages/Studio';
 
 const RotaProtegida = ({ children }: { children: React.ReactNode }) => {
   const [carregando, setCarregando] = useState(true);
@@ -19,8 +21,6 @@ const RotaProtegida = ({ children }: { children: React.ReactNode }) => {
         const docRef = doc(db, 'users', user.uid);
         const docSnap = await getDoc(docRef);
         
-        // Verifica se o documento existe. (Nota: no Workspace atual a verificação é feita por 'role', 
-        // se usar 'status' certifique-se que as contas têm esse campo)
         if (docSnap.exists() && docSnap.data().status === 'ativo') {
           setAutenticado(true);
         } else {
@@ -45,8 +45,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Navigate to="/" replace />} />
         
-        {/* Nova Rota Pública para Solicitações */}
+        {/* Rotas Públicas */}
         <Route path="/solicitacao" element={<Solicitacao />} />
+        <Route path="/a29" element={<A29 />} />
+
+        <Route path="/intranet" element={<RotaProtegida><Intranet /></RotaProtegida>} />
+        <Route path="/studio" element={<RotaProtegida><Studio /></RotaProtegida>} />
         
         <Route path="/login" element={<Login />} />
         <Route path="/intranet" element={<RotaProtegida><Intranet /></RotaProtegida>} />
