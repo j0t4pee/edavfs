@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
-import { 
-  PlaneTakeoff, ShieldCheck, MapPin, 
-  CheckCircle2, Globe, Activity, Clock, AlertTriangle, CalendarCheck2, RefreshCw, ShieldAlert
+import {
+  PlaneTakeoff, ShieldCheck, MapPin, CheckCircle2, Globe,
+  Activity, Calendar, AlertTriangle, CalendarCheck2, RefreshCw, ShieldAlert, Plane
 } from 'lucide-react';
 
 import bg1 from '../images/1.png';
@@ -27,6 +27,8 @@ interface Solicitacao {
   dataSolicitacao: string;
 }
 
+type FiltroStatus = 'Todos' | 'Aprovado' | 'Pendente' | 'Recusado';
+
 const InstagramIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -39,9 +41,10 @@ export default function SolicitacaoPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
-  
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [listaSolicitacoes, setListaSolicitacoes] = useState<Solicitacao[]>([]);
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('Todos');
 
   // Campos do Formulário
   const [cidade, setCidade] = useState('');
@@ -78,7 +81,7 @@ export default function SolicitacaoPage() {
 
   useEffect(() => {
     document.title = "Solicitar Demonstração Aérea | EDAFS Virtual";
-    
+
     const setMetaTag = (name: string, content: string, isProperty = false) => {
       const attr = isProperty ? 'property' : 'name';
       let meta = document.querySelector(`meta[${attr}="${name}"]`);
@@ -98,7 +101,7 @@ export default function SolicitacaoPage() {
 
     const unsubscribe = onSnapshot(collection(db, 'solicitacoes'), (snap) => {
       const arr: Solicitacao[] = [];
-      snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() } as Solicitacao));
+      snap.forEach((doc) => arr.push({ id: doc.id, ...doc.data() } as Solicitacao));
       arr.sort((a, b) => new Date(b.dataSolicitacao).getTime() - new Date(a.dataSolicitacao).getTime());
       setListaSolicitacoes(arr);
     });
@@ -107,6 +110,30 @@ export default function SolicitacaoPage() {
       unsubscribe();
     };
   }, []);
+
+  const contadores = useMemo(() => {
+    return {
+      Todos: listaSolicitacoes.length,
+      Aprovado: listaSolicitacoes.filter((s) => s.status === 'Aprovado').length,
+      Pendente: listaSolicitacoes.filter((s) => s.status !== 'Aprovado' && s.status !== 'Recusado').length,
+      Recusado: listaSolicitacoes.filter((s) => s.status === 'Recusado').length,
+    };
+  }, [listaSolicitacoes]);
+
+  const solicitacoesFiltradas = useMemo(() => {
+    if (filtroStatus === 'Todos') return listaSolicitacoes;
+    if (filtroStatus === 'Pendente') {
+      return listaSolicitacoes.filter((s) => s.status !== 'Aprovado' && s.status !== 'Recusado');
+    }
+    return listaSolicitacoes.filter((s) => s.status === filtroStatus);
+  }, [listaSolicitacoes, filtroStatus]);
+
+  const formatarDataEnvio = (iso?: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +174,7 @@ export default function SolicitacaoPage() {
 
       localStorage.setItem('lastDemoRequest_edafs', Date.now().toString());
       setModalSucesso(true);
-      
+
       setCidade('');
       setDataDesejada('');
       setIcao('');
@@ -195,71 +222,69 @@ export default function SolicitacaoPage() {
         * { font-family: 'Regular', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Comum', sans-serif !important; margin: 0; }
 
+        html, body {
+          background-color: #030712 !important;
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          scroll-behavior: smooth;
+        }
+
         .root-wrapper {
           background-color: #030712;
-          height: 100vh;
-          width: 100vw;
+          min-height: 100vh;
+          width: 100%;
           display: flex;
           flex-direction: column;
           color: #e2e8f0;
           position: relative;
-          overflow: hidden;
         }
 
         .main-container {
           position: relative;
-          flex: 1;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 0 2rem;
           z-index: 10;
-          height: calc(100vh - 80px);
-          overflow: hidden;
+          width: 100%;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 1.5rem 2rem 5rem 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 4rem;
         }
 
-        .grid-layout {
+        .top-grid {
           display: grid;
-          grid-template-columns: 1.25fr 1fr;
+          grid-template-columns: 1.2fr 0.95fr;
           gap: 3.5rem;
-          width: 100%;
-          max-width: 1300px;
-          height: 100%;
-          max-height: 860px;
-          align-items: stretch;
+          align-items: start;
         }
-        
+
         .left-column {
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          height: 100%;
-          overflow: hidden;
           animation: fadeIn 0.6s ease;
         }
 
         .form-column {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          height: 100%;
+          position: sticky;
+          top: 1.5rem;
         }
 
         .termos-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.9rem;
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.06);
-          padding: 1rem;
-          border-radius: 14px;
-          margin-bottom: 1.25rem;
-          flex-shrink: 0;
+          gap: 1rem;
+          background: rgba(15, 23, 42, 0.45);
+          border: 1px solid rgba(255,255,255,0.08);
+          padding: 1.25rem;
+          border-radius: 16px;
+          backdrop-filter: blur(12px);
         }
 
         .form-row-2 {
           display: grid;
-          grid-template-columns: 1fr 115px;
+          grid-template-columns: 1fr 120px;
           gap: 0.75rem;
         }
 
@@ -268,7 +293,7 @@ export default function SolicitacaoPage() {
           background: rgba(0, 0, 0, 0.42);
           border: 1px solid rgba(255,255,255,0.09);
           outline: none;
-          padding: 0.8rem 1rem;
+          padding: 0.82rem 1rem;
           color: #ffffff;
           border-radius: 11px;
           font-size: 0.9rem;
@@ -282,84 +307,20 @@ export default function SolicitacaoPage() {
           box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
         }
         .modern-input::placeholder { color: #64748b !important; opacity: 0.7 !important; }
-        
-        .timeline-step { display: flex; gap: 1.25rem; position: relative; padding-bottom: 1.75rem; }
+
+        .timeline-step { display: flex; gap: 1.25rem; position: relative; padding-bottom: 2rem; }
         .timeline-step:last-child { padding-bottom: 0; }
         .timeline-step::before { content: ''; position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: linear-gradient(to bottom, #0ea5e9, rgba(14,165,233,0.05)); }
         .timeline-step:last-child::before { display: none; }
         .timeline-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); display: flex; align-items: center; justify-content: center; color: #0ea5e9; flex-shrink: 0; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
-        
+
         .glass-panel {
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(15, 23, 42, 0.52);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
+          border-radius: 22px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.1);
-        }
-
-        /* NOVO LAYOUT DO QUADRO DE DEMONSTRAÇÕES */
-        .demo-card-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1.25rem;
-          padding: 0.8rem 1rem;
-          background: rgba(3, 7, 18, 0.45);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          margin-bottom: 0.55rem;
-          transition: all 0.2s ease;
-        }
-        .demo-card-row:last-child { margin-bottom: 0; }
-        .demo-card-row:hover {
-          background: rgba(15, 23, 42, 0.7);
-          border-color: rgba(14, 165, 233, 0.25);
-        }
-
-        .demo-date-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          padding: 0.38rem 0.7rem;
-          border-radius: 8px;
-          background: rgba(14, 165, 233, 0.1);
-          border: 1px solid rgba(14, 165, 233, 0.22);
-          color: #7dd3fc;
-          font-size: 0.76rem;
-          font-weight: 600;
-          font-variant-numeric: tabular-nums;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-
-        .demo-location-info {
-          display: flex;
-          align-items: center;
-          gap: 0.55rem;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .demo-city-name {
-          color: #f8fafc;
-          font-weight: 500;
-          font-size: 0.88rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .demo-icao-pill {
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          color: #94a3b8;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 2px 6px;
-          border-radius: 5px;
-          flex-shrink: 0;
         }
 
         .captcha-box {
@@ -373,152 +334,223 @@ export default function SolicitacaoPage() {
           border-radius: 12px;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+        /* SEÇÃO DE EXPOSIÇÃO DAS SOLICITAÇÕES (LARGURA TOTAL) */
+        .board-section {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          animation: fadeIn 0.8s ease;
+        }
+
+        .board-header {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 1.25rem;
+          padding-bottom: 1.25rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .filter-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .filter-pill {
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          color: #94a3b8;
+          padding: 0.5rem 0.95rem;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          transition: all 0.2s ease;
+          backdrop-filter: blur(10px);
+        }
+        .filter-pill:hover {
+          color: #f8fafc;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+        .filter-pill.active {
+          background: rgba(14, 165, 233, 0.16);
+          border-color: #0ea5e9;
+          color: #f8fafc;
+          box-shadow: 0 4px 14px rgba(14, 165, 233, 0.2);
+        }
+
+        .requests-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 1rem;
+        }
+
+        .request-card {
+          position: relative;
+          background: rgba(15, 23, 42, 0.55);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          padding: 1.15rem 1.25rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.95rem;
+          transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+          overflow: hidden;
+        }
+        .request-card:hover {
+          transform: translateY(-3px);
+          background: rgba(15, 23, 42, 0.78);
+          border-color: rgba(14, 165, 233, 0.32);
+        }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         @media (max-width: 1000px) {
-          .root-wrapper {
-            height: auto !important;
-            min-height: 100vh;
-            overflow: auto !important;
-            overflow-x: hidden !important;
-          }
           .main-container {
-            height: auto !important;
-            display: block !important;
-            padding: 1rem 1.25rem 3rem 1.25rem !important;
-            overflow: visible !important;
+            padding: 1rem 1.25rem 3.5rem 1.25rem;
+            gap: 3rem;
           }
-          .grid-layout {
-            grid-template-columns: 1fr !important;
-            gap: 2rem !important;
-            height: auto !important;
-            max-height: none !important;
+          .top-grid {
+            grid-template-columns: 1fr;
+            gap: 2.25rem;
           }
-          .left-column, .form-column {
-            height: auto !important;
-            overflow: visible !important;
+          .form-column {
+            position: static;
           }
           .glass-panel {
-            padding: 1.4rem !important;
+            padding: 1.5rem !important;
           }
           .termos-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: 1fr;
           }
           .form-row-2 {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: 1fr;
           }
-          .demo-card-row {
-            flex-wrap: wrap;
-            gap: 0.65rem;
-          }
-          .demo-location-info {
-            order: 3;
-            flex-basis: 100%;
-          }
-          .quadro-scroll-area {
-            max-height: 320px !important;
+          .requests-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
 
-      {/* --- SISTEMA DE SLIDE DE FUNDO --- */}
+      {/* --- FUNDO FIXO COM SLIDESHOW --- */}
       <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         {imagensFundo.map((img, index) => (
           <div
             key={index}
             style={{
-              position: 'absolute', inset: 0, backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center',
-              opacity: currentSlide === index ? 0.6 : 0,
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${img})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: currentSlide === index ? 0.55 : 0,
               transform: currentSlide === index ? 'scale(1.05)' : 'scale(1)',
-              transitionProperty: 'opacity, transform', transitionDuration: '2s, 10s',
+              transitionProperty: 'opacity, transform',
+              transitionDuration: '2s, 10s',
             }}
           />
         ))}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(3,7,18,0.95) 0%, rgba(3,7,18,0.72) 50%, rgba(3,7,18,0.95) 100%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(3,7,18,0.88) 0%, rgba(3,7,18,0.76) 45%, rgba(3,7,18,0.96) 100%)', zIndex: 1 }} />
       </div>
 
-      {/* --- MENU SUPERIOR COMPACTO --- */}
-      <header style={{ position: 'relative', zIndex: 50, width: '100%', padding: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', height: '80px', flexShrink: 0 }}>
-        <button 
-          onClick={() => navigate('/')} 
+      {/* --- MENU SUPERIOR --- */}
+      <header style={{ position: 'relative', zIndex: 50, width: '100%', padding: '1.35rem 1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => navigate('/')}
           aria-label="Voltar para a página inicial"
-          style={{ 
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', 
-            padding: '0.6rem 1.25rem', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '0.5rem', 
+          style={{
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc',
+            padding: '0.6rem 1.25rem', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '0.5rem',
             cursor: 'pointer', backdropFilter: 'blur(10px)', transition: 'all 0.2s', fontSize: '0.85rem', fontFamily: '"Comum", sans-serif'
           }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
         >
           <Globe size={16} color="#0ea5e9" aria-hidden="true" /> Voltar ao Início
         </button>
 
-        <a 
-          href="https://instagram.com/eda.msfs" 
-          target="_blank" 
+        {listaSolicitacoes.length > 0 && (
+          <a
+            href="#quadro-solicitacoes"
+            style={{
+              background: 'rgba(14, 165, 233, 0.12)', border: '1px solid rgba(14, 165, 233, 0.3)', color: '#7dd3fc',
+              padding: '0.6rem 1.25rem', borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '0.5rem',
+              cursor: 'pointer', textDecoration: 'none', backdropFilter: 'blur(10px)', transition: 'all 0.2s', fontSize: '0.85rem', fontFamily: '"Comum", sans-serif'
+            }}
+          >
+            <Activity size={16} /> Ver Solicitações ({listaSolicitacoes.length})
+          </a>
+        )}
+
+        <a
+          href="https://instagram.com/eda.msfs"
+          target="_blank"
           rel="noopener noreferrer"
           aria-label="Visitar a página do Instagram da Esquadrilha da Fumaça Virtual"
-          style={{ 
-            background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', 
-            border: 'none', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '99px', display: 'flex', 
-            alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textDecoration: 'none', transition: 'all 0.2s', 
+          style={{
+            background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+            border: 'none', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '99px', display: 'flex',
+            alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textDecoration: 'none', transition: 'all 0.2s',
             fontSize: '0.85rem', fontFamily: '"Comum", sans-serif', boxShadow: '0 4px 15px rgba(220, 39, 67, 0.3)'
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
           <InstagramIcon /> Siga-nos no Instagram
         </a>
       </header>
 
-      {/* --- CONTEÚDO CENTRAL --- */}
+      {/* --- CONTEÚDO PRINCIPAL ROLÁVEL --- */}
       <main className="main-container">
-        <div className="grid-layout">
-          
-          {/* LADO ESQUERDO: Textos, Timeline e Quadro */}
+        <div className="top-grid">
+          {/* LADO ESQUERDO: Etapas e Restrições */}
           <section className="left-column">
-            
-            <header style={{ flexShrink: 0, marginBottom: '1.75rem' }}>
-              <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.8rem' }}>Operações EDAFS</span>
-              <h1 style={{ fontSize: 'clamp(2.1rem, 3.2vw, 3rem)', color: '#ffffff', margin: '0.2rem 0 0.45rem', lineHeight: 1.1, textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+            <header style={{ marginBottom: '2.25rem' }}>
+              <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '0.8rem' }}>
+                Operações EDAFS
+              </span>
+              <h1 style={{ fontSize: 'clamp(2.2rem, 3.6vw, 3.2rem)', color: '#ffffff', margin: '0.25rem 0 0.6rem', lineHeight: 1.08, textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
                 Solicitar Demonstração
               </h1>
-              <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: 1.5, margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                Leve a precisão e a doutrina da Esquadrilha da Fumaça Virtual ao seu evento.
+              <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.55, margin: 0, maxWidth: '580px' }}>
+                Leve a precisão e a doutrina da Esquadrilha da Fumaça Virtual ao seu evento ou aeroclube no Microsoft Flight Simulator.
               </p>
             </header>
 
-            <article style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, marginBottom: '1.5rem' }}>
+            <article style={{ display: 'flex', flexDirection: 'column', marginBottom: '2.25rem' }}>
               <div className="timeline-step">
-                <div className="timeline-icon"><ShieldCheck size={22} aria-hidden="true"/></div>
+                <div className="timeline-icon"><ShieldCheck size={22} aria-hidden="true" /></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>1. Análise de Comando</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
-                    Sua solicitação é avaliada pela seção de Operações da EDAFS quanto à natureza do evento, relevância para a simulação e viabilidade da data.
+                  <h3 style={{ margin: '0 0 0.35rem', color: '#f8fafc', fontSize: '1.12rem' }}>1. Análise de Comando</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    Sua solicitação é recebida pela seção de Operações da EDAFS, que avalia a natureza do evento, relevância para a comunidade e viabilidade da data.
                   </p>
                 </div>
               </div>
 
               <div className="timeline-step">
-                <div className="timeline-icon"><MapPin size={22} aria-hidden="true"/></div>
+                <div className="timeline-icon"><MapPin size={22} aria-hidden="true" /></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>2. Missão Precursora (Logística)</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
-                    Realizamos o reconhecimento técnico do local no simulador. <strong style={{ color: '#cbd5e1' }}>É obrigatória</strong> a existência de um aeródromo homologado a até 80 km de distância.
+                  <h3 style={{ margin: '0 0 0.35rem', color: '#f8fafc', fontSize: '1.12rem' }}>2. Missão Precursora (Logística)</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    Realizamos o reconhecimento técnico do cenário no simulador. <strong style={{ color: '#e2e8f0' }}>É obrigatória</strong> a existência de um aeródromo homologado a no máximo 80 km de distância.
                   </p>
                 </div>
               </div>
 
               <div className="timeline-step">
-                <div className="timeline-icon"><CalendarCheck2 size={22} aria-hidden="true"/></div>
+                <div className="timeline-icon"><CalendarCheck2 size={22} aria-hidden="true" /></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>3. Aprovação e Agenda</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
-                    Sendo viável, o pedido é aprovado internamente. <strong>Atenção:</strong> aguarde sempre a publicação oficial na agenda do site para confirmação definitiva.
+                  <h3 style={{ margin: '0 0 0.35rem', color: '#f8fafc', fontSize: '1.12rem' }}>3. Aprovação e Agenda Oficial</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    Sendo viável, o pedido é aprovado internamente. <strong>Atenção:</strong> aguarde sempre a publicação oficial na agenda da página inicial para confirmação definitiva do voo.
                   </p>
                 </div>
               </div>
@@ -526,118 +558,90 @@ export default function SolicitacaoPage() {
 
             <article className="termos-grid">
               <div>
-                <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><ShieldCheck size={14} aria-hidden="true"/> 1. Apoio Logístico</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>O local requer um aeródromo homologado (ICAO) a no máximo 80 km de distância.</p>
+                <h3 style={{ color: '#0ea5e9', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                  <ShieldCheck size={15} aria-hidden="true" /> 1. Apoio Logístico
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: 1.45 }}>
+                  O local requer um aeródromo homologado (ICAO) a no máximo 80 km de distância.
+                </p>
               </div>
               <div>
-                <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><MapPin size={14} aria-hidden="true"/> 2. Meteorologia</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>Operamos com clima real. Condições extremas podem causar cancelamentos por segurança.</p>
+                <h3 style={{ color: '#0ea5e9', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                  <MapPin size={15} aria-hidden="true" /> 2. Meteorologia
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: 1.45 }}>
+                  Operamos com clima real. Condições extremas podem causar cancelamentos por segurança.
+                </p>
               </div>
               <div>
-                <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><AlertTriangle size={14} aria-hidden="true"/> 3. Disponibilidade</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>Imprevistos técnicos e a escala dos pilotos voluntários podem gerar reagendamentos.</p>
+                <h3 style={{ color: '#0ea5e9', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                  <AlertTriangle size={15} aria-hidden="true" /> 3. Disponibilidade
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: 1.45 }}>
+                  Imprevistos técnicos e a escala dos pilotos voluntários podem gerar reagendamentos.
+                </p>
               </div>
               <div>
-                <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><CalendarCheck2 size={14} aria-hidden="true"/> 4. Confirmação Final</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>A aprovação prévia não garante o voo. Aguarde a publicação na agenda oficial do site.</p>
+                <h3 style={{ color: '#0ea5e9', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+                  <CalendarCheck2 size={15} aria-hidden="true" /> 4. Confirmação Final
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0, lineHeight: 1.45 }}>
+                  A aprovação prévia não garante o voo. Aguarde a publicação na agenda oficial do site.
+                </p>
               </div>
             </article>
-
-            {/* Quadro de Solicitações Reformulado */}
-            {listaSolicitacoes.length > 0 && (
-              <article className="glass-panel" style={{ flexGrow: 1, minHeight: '150px', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '1.1rem 1.35rem' }}>
-                <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <Activity size={18} color="#0ea5e9" aria-hidden="true" />
-                    <h2 style={{ margin: 0, fontSize: '0.98rem', color: '#f8fafc', letterSpacing: '0.02em' }}>Quadro de Demonstrações Solicitadas</h2>
-                  </div>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
-                    {listaSolicitacoes.length} {listaSolicitacoes.length === 1 ? 'registro' : 'registros'}
-                  </span>
-                </header>
-                
-                <div className="custom-scroll quadro-scroll-area" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.35rem' }}>
-                  {listaSolicitacoes.map((s) => {
-                    const isAprovado = s.status === 'Aprovado';
-                    const isRecusado = s.status === 'Recusado';
-                    const statusColor = isAprovado ? '#10b981' : isRecusado ? '#ef4444' : '#f59e0b';
-                    const statusBg = isAprovado ? 'rgba(16,185,129,0.12)' : isRecusado ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
-                    const statusBorder = isAprovado ? 'rgba(16,185,129,0.28)' : isRecusado ? 'rgba(239,68,68,0.28)' : 'rgba(245,158,11,0.28)';
-
-                    return (
-                      <div key={s.id} className="demo-card-row">
-                        <div className="demo-date-badge">
-                          <Clock size={13} color="#0ea5e9" aria-hidden="true" />
-                          <time dateTime={s.dataDesejada}>{s.dataDesejada || 'A definir'}</time>
-                        </div>
-
-                        <div className="demo-location-info">
-                          <MapPin size={14} color="#64748b" style={{ flexShrink: 0 }} aria-hidden="true" />
-                          <span className="demo-city-name" title={s.cidade}>{s.cidade}</span>
-                          {s.icao && <span className="demo-icao-pill">{s.icao}</span>}
-                        </div>
-
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            background: statusBg,
-                            border: `1px solid ${statusBorder}`,
-                            color: statusColor,
-                            padding: '0.28rem 0.65rem',
-                            borderRadius: '999px',
-                            fontSize: '0.64rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor }} />
-                          {s.status}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </article>
-            )}
           </section>
 
-          {/* LADO DIREITO: Formulário Enxuto + Verificação Anti-Spam */}
+          {/* LADO DIREITO: Formulário Sticky */}
           <section className="form-column" aria-label="Formulário de Solicitação">
-            <div className="glass-panel" style={{ padding: '2.1rem', animation: 'fadeIn 0.8s ease' }}>
-              <div style={{ marginBottom: '1.35rem' }}>
-                <h2 style={{ fontSize: '1.3rem', color: '#f8fafc', marginBottom: '0.25rem' }}>Dados da Operação</h2>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8' }}>Informe a localidade, o aeródromo de apoio e a data pretendida.</p>
+            <div className="glass-panel" style={{ padding: '2.2rem', animation: 'fadeIn 0.8s ease' }}>
+              <div style={{ marginBottom: '1.4rem' }}>
+                <h2 style={{ fontSize: '1.35rem', color: '#f8fafc', marginBottom: '0.3rem' }}>Dados da Operação</h2>
+                <p style={{ margin: 0, fontSize: '0.84rem', color: '#94a3b8' }}>
+                  Informe a localidade do evento, o aeródromo de apoio e a data pretendida.
+                </p>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 {/* HONEYPOT ANTI-BOT INVISÍVEL */}
                 <div style={{ opacity: 0, position: 'absolute', top: 0, left: 0, height: 0, width: 0, zIndex: -1, pointerEvents: 'none' }} aria-hidden="true">
                   <label htmlFor="website_confirm">Deixe este campo vazio</label>
-                  <input id="website_confirm" type="text" name="website_confirm" value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+                  <input id="website_confirm" type="text" name="website_confirm" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
                 </div>
 
                 <div className="form-row-2">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <label htmlFor="cidade" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cidade ou Evento *</label>
-                    <input id="cidade" required type="text" className="modern-input" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Ex: Rio de Janeiro - RJ" />
+                    <label htmlFor="cidade" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Cidade ou Evento *
+                    </label>
+                    <input id="cidade" required type="text" className="modern-input" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Rio de Janeiro - RJ" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <label htmlFor="icao" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ICAO *</label>
-                    <input id="icao" required type="text" maxLength={4} className="modern-input" value={icao} onChange={e => setIcao(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} placeholder="SBRJ" style={{ textTransform: 'uppercase', borderColor: 'rgba(14,165,233,0.35)', color: '#0ea5e9', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.08em' }} />
+                    <label htmlFor="icao" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      ICAO *
+                    </label>
+                    <input
+                      id="icao"
+                      required
+                      type="text"
+                      maxLength={4}
+                      className="modern-input"
+                      value={icao}
+                      onChange={(e) => setIcao(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                      placeholder="SBRJ"
+                      style={{ textTransform: 'uppercase', borderColor: 'rgba(14,165,233,0.35)', color: '#0ea5e9', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.08em' }}
+                    />
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <label htmlFor="dataDesejada" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data Desejada *</label>
+                  <label htmlFor="dataDesejada" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Data Desejada *
+                  </label>
                   <input id="dataDesejada" required type="text" maxLength={10} className="modern-input" value={dataDesejada} onChange={handleDateChange} placeholder="DD/MM/AAAA" />
                 </div>
 
-                {/* VERIFICAÇÃO ANTI-SPAM (DESAFIO MATEMÁTICO) */}
+                {/* VERIFICAÇÃO ANTI-SPAM */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <label htmlFor="captcha" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <ShieldAlert size={13} color="#0ea5e9" aria-hidden="true" /> Verificação Anti-Spam *
@@ -658,7 +662,7 @@ export default function SolicitacaoPage() {
                         inputMode="numeric"
                         maxLength={3}
                         value={captchaInput}
-                        onChange={e => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
                         placeholder="?"
                         style={{
                           width: '68px',
@@ -686,12 +690,12 @@ export default function SolicitacaoPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <button 
+                <div style={{ marginTop: '0.2rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <button
                     type="button"
                     role="checkbox"
                     aria-checked={termosAceites}
-                    onClick={() => setTermosAceites(!termosAceites)} 
+                    onClick={() => setTermosAceites(!termosAceites)}
                     style={{ width: '20px', height: '20px', borderRadius: '5px', border: termosAceites ? 'none' : '1px solid #64748b', background: termosAceites ? '#0ea5e9' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: '2px', transition: 'all 0.2s' }}
                   >
                     {termosAceites && <CheckCircle2 size={14} color="#fff" />}
@@ -701,14 +705,14 @@ export default function SolicitacaoPage() {
                   </label>
                 </div>
 
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting || !isFormValid} 
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !isFormValid}
                   aria-busy={isSubmitting}
                   style={{
                     width: '100%',
-                    marginTop: '0.4rem',
-                    padding: '0.9rem',
+                    marginTop: '0.35rem',
+                    padding: '0.92rem',
                     fontSize: '0.9rem',
                     background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
                     color: '#fff',
@@ -728,8 +732,160 @@ export default function SolicitacaoPage() {
               </form>
             </div>
           </section>
-
         </div>
+
+        {/* --- PAINEL AMPLO DE EXPOSIÇÃO DAS SOLICITAÇÕES --- */}
+        <section id="quadro-solicitacoes" className="board-section" aria-label="Quadro Público de Solicitações">
+          <div className="board-header">
+            <div>
+              <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Activity size={14} /> Acompanhamento Público
+              </span>
+              <h2 style={{ fontSize: 'clamp(1.5rem, 2.5vw, 2rem)', color: '#f8fafc', marginTop: '0.25rem' }}>
+                Quadro de Demonstrações Solicitadas
+              </h2>
+            </div>
+
+            <div className="filter-pills" role="tablist" aria-label="Filtrar solicitações por status">
+              {(['Todos', 'Aprovado', 'Pendente', 'Recusado'] as FiltroStatus[]).map((aba) => (
+                <button
+                  key={aba}
+                  type="button"
+                  role="tab"
+                  aria-selected={filtroStatus === aba}
+                  className={`filter-pill ${filtroStatus === aba ? 'active' : ''}`}
+                  onClick={() => setFiltroStatus(aba)}
+                >
+                  <span>{aba === 'Todos' ? 'Todas' : aba === 'Pendente' ? 'Em Análise' : `${aba}s`}</span>
+                  <span style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 7px', borderRadius: '99px', fontSize: '0.7rem', color: '#e2e8f0' }}>
+                    {contadores[aba]}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {solicitacoesFiltradas.length === 0 ? (
+            <div className="glass-panel" style={{ padding: '3rem 2rem', textAlign: 'center', color: '#94a3b8' }}>
+              <Plane size={32} color="#38bdf8" style={{ marginBottom: '0.75rem', opacity: 0.75 }} />
+              <p style={{ margin: 0, fontSize: '0.95rem' }}>
+                Nenhuma solicitação encontrada neste filtro no momento.
+              </p>
+            </div>
+          ) : (
+            <div className="requests-grid">
+              {solicitacoesFiltradas.map((s) => {
+                const isAprovado = s.status === 'Aprovado';
+                const isRecusado = s.status === 'Recusado';
+                const statusColor = isAprovado ? '#10b981' : isRecusado ? '#ef4444' : '#f59e0b';
+                const statusBg = isAprovado ? 'rgba(16,185,129,0.12)' : isRecusado ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
+                const statusBorder = isAprovado ? 'rgba(16,185,129,0.3)' : isRecusado ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)';
+                const dataEnvioCurta = formatarDataEnvio(s.dataSolicitacao);
+
+                return (
+                  <article
+                    key={s.id}
+                    className="request-card"
+                    style={{ borderLeft: `3px solid ${statusColor}` }}
+                  >
+                    {/* Topo do Card: Data Desejada + Status */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          padding: '0.35rem 0.7rem',
+                          borderRadius: '8px',
+                          background: 'rgba(14, 165, 233, 0.1)',
+                          border: '1px solid rgba(14, 165, 233, 0.22)',
+                          color: '#7dd3fc',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        <Calendar size={13} color="#38bdf8" aria-hidden="true" />
+                        <time dateTime={s.dataDesejada}>{s.dataDesejada || 'Data a definir'}</time>
+                      </div>
+
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          background: statusBg,
+                          border: `1px solid ${statusBorder}`,
+                          color: statusColor,
+                          padding: '0.28rem 0.65rem',
+                          borderRadius: '999px',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor }} />
+                        {s.status || 'Pendente'}
+                      </span>
+                    </div>
+
+                    {/* Centro do Card: Cidade / Evento em destaque */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', minWidth: 0 }}>
+                      <MapPin size={17} color="#0ea5e9" style={{ flexShrink: 0, marginTop: '2px' }} aria-hidden="true" />
+                      <h3
+                        title={s.cidade}
+                        style={{
+                          fontSize: '1.08rem',
+                          color: '#f8fafc',
+                          lineHeight: 1.3,
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {s.cidade}
+                      </h3>
+                    </div>
+
+                    {/* Rodapé do Card: Aeródromo ICAO + Data do Pedido */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingTop: '0.7rem',
+                        marginTop: 'auto',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                        fontSize: '0.74rem',
+                        color: '#64748b',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>Apoio ICAO:</span>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            color: s.icao ? '#38bdf8' : '#94a3b8',
+                            background: 'rgba(14, 165, 233, 0.1)',
+                            border: '1px solid rgba(14, 165, 233, 0.2)',
+                            padding: '2px 7px',
+                            borderRadius: '5px',
+                          }}
+                        >
+                          {s.icao || 'N/I'}
+                        </span>
+                      </div>
+
+                      {dataEnvioCurta && (
+                        <span>Recebido em {dataEnvioCurta}</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Modal Sucesso */}
@@ -738,7 +894,7 @@ export default function SolicitacaoPage() {
           <PlaneTakeoff size={48} color="#10b981" style={{ margin: '0 auto 1.5rem', opacity: 0.9 }} aria-hidden="true" />
           <h2 id="sucesso-title" style={{ color: '#f8fafc', fontSize: '1.5rem', margin: '0 0 1rem', fontWeight: 'bold', fontFamily: '"Comum", sans-serif' }}>Solicitação Enviada!</h2>
           <p id="sucesso-desc" style={{ color: '#94a3b8', marginBottom: '2.5rem', lineHeight: '1.6', fontWeight: 400, fontSize: '0.9rem' }}>O Comando Geral irá analisar o seu pedido. Caso viável, faremos o alinhamento interno. Acompanhe a nossa agenda oficial!</p>
-          <button type="button" style={{ background: '#10b981', color: '#030712', letterSpacing: '0.1em', padding: '0.85rem 2rem', width: '100%', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} onClick={() => { setModalSucesso(false); navigate('/'); }}>VOLTAR AO INÍCIO</button>
+          <button type="button" style={{ background: '#10b981', color: '#030712', letterSpacing: '0.1em', padding: '0.85rem 2rem', width: '100%', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.02)')} onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')} onClick={() => { setModalSucesso(false); navigate('/'); }}>VOLTAR AO INÍCIO</button>
         </div>
       </div>
     </div>
