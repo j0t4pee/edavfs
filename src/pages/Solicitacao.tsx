@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 import { 
   PlaneTakeoff, ShieldCheck, MapPin, 
-  CheckCircle2, Radio, Globe, Activity, Clock, AlertTriangle, CalendarCheck2
+  CheckCircle2, Globe, Activity, Clock, AlertTriangle, CalendarCheck2, RefreshCw, ShieldAlert
 } from 'lucide-react';
 
-// Importação das 5 imagens para o Slide
 import bg1 from '../images/1.png';
 import bg2 from '../images/2.png';
 import bg3 from '../images/3.png';
@@ -22,12 +21,12 @@ const imagensFundo = [bg1, bg2, bg3, bg4, bg5];
 interface Solicitacao {
   id?: string;
   cidade: string;
+  icao?: string;
   dataDesejada: string;
   status: string;
   dataSolicitacao: string;
 }
 
-// Ícone do Instagram em SVG desenhado manualmente para evitar erros do Lucide e aplicar o Degradê
 const InstagramIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -45,15 +44,31 @@ export default function SolicitacaoPage() {
   const [listaSolicitacoes, setListaSolicitacoes] = useState<Solicitacao[]>([]);
 
   // Campos do Formulário
-  const [nome, setNome] = useState('');
   const [cidade, setCidade] = useState('');
   const [dataDesejada, setDataDesejada] = useState('');
   const [icao, setIcao] = useState('');
-  const [transmissao, setTransmissao] = useState<'sim' | 'nao' | ''>('');
-  const [canal, setCanal] = useState('');
   const [termosAceites, setTermosAceites] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
-  // Efeito de transição automática do fundo a cada 6 segundos
+  // Verificação Matemática Anti-Spam
+  const [numA, setNumA] = useState(2);
+  const [numB, setNumB] = useState(2);
+  const [captchaInput, setCaptchaInput] = useState('');
+
+  const gerarNovoCaptcha = useCallback(() => {
+    const a = Math.floor(Math.random() * 8) + 1;
+    const b = Math.floor(Math.random() * 8) + 1;
+    setNumA(a);
+    setNumB(b);
+    setCaptchaInput('');
+  }, []);
+
+  useEffect(() => {
+    gerarNovoCaptcha();
+  }, [gerarNovoCaptcha]);
+
+  const isCaptchaCorreto = parseInt(captchaInput.trim(), 10) === numA + numB;
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % imagensFundo.length);
@@ -61,7 +76,6 @@ export default function SolicitacaoPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch das solicitações públicas e Injeção de Meta Tags SEO
   useEffect(() => {
     document.title = "Solicitar Demonstração Aérea | EDAFS Virtual";
     
@@ -96,12 +110,24 @@ export default function SolicitacaoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (honeypot) {
+      setModalSucesso(true);
+      return;
+    }
+
+    if (!isCaptchaCorreto) {
+      alert("A resposta da verificação de segurança está incorreta.");
+      gerarNovoCaptcha();
+      return;
+    }
+
     if (!termosAceites) return alert("É necessário aceitar os termos da demonstração.");
-    if (!cidade.trim() || !icao.trim() || !transmissao) return;
+    if (!cidade.trim() || !icao.trim() || icao.trim().length < 4) return;
 
     const lastRequest = localStorage.getItem('lastDemoRequest_edafs');
     if (lastRequest) {
-      const timeDiff = Date.now() - parseInt(lastRequest);
+      const timeDiff = Date.now() - parseInt(lastRequest, 10);
       if (timeDiff < 24 * 60 * 60 * 1000) {
         alert('Apenas uma solicitação por dia é permitida por dispositivo. Tente novamente amanhã.');
         return;
@@ -112,12 +138,9 @@ export default function SolicitacaoPage() {
 
     try {
       await addDoc(collection(db, 'solicitacoes'), {
-        solicitante: nome,
-        cidade: cidade,
-        icao: icao.toUpperCase(),
+        cidade: cidade.trim(),
+        icao: icao.trim().toUpperCase(),
         dataDesejada: dataDesejada,
-        transmissao: transmissao,
-        canal: transmissao === 'sim' ? canal : 'Sem Transmissão',
         dataSolicitacao: new Date().toISOString(),
         status: 'Pendente'
       });
@@ -125,8 +148,11 @@ export default function SolicitacaoPage() {
       localStorage.setItem('lastDemoRequest_edafs', Date.now().toString());
       setModalSucesso(true);
       
-      setNome(''); setCidade(''); setDataDesejada(''); setIcao(''); 
-      setTransmissao(''); setCanal(''); setTermosAceites(false);
+      setCidade('');
+      setDataDesejada('');
+      setIcao('');
+      setTermosAceites(false);
+      gerarNovoCaptcha();
     } catch (error) {
       console.error(error);
       alert("Houve um erro ao enviar o pedido. Verifique a conexão e tente novamente.");
@@ -139,12 +165,12 @@ export default function SolicitacaoPage() {
     let val = e.target.value.replace(/\D/g, '');
     if (val.length > 8) val = val.slice(0, 8);
     if (val.length >= 2) {
-      let day = parseInt(val.substring(0, 2));
+      const day = parseInt(val.substring(0, 2), 10);
       if (day > 31) val = '31' + val.substring(2);
       else if (day === 0 && val.length >= 2) val = '01' + val.substring(2);
     }
     if (val.length >= 4) {
-      let month = parseInt(val.substring(2, 4));
+      const month = parseInt(val.substring(2, 4), 10);
       if (month > 12) val = val.substring(0, 2) + '12' + val.substring(4);
       else if (month === 0 && val.length >= 4) val = val.substring(0, 2) + '01' + val.substring(4);
     }
@@ -152,6 +178,13 @@ export default function SolicitacaoPage() {
     else if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
     setDataDesejada(val);
   };
+
+  const isFormValid =
+    cidade.trim().length > 0 &&
+    icao.trim().length === 4 &&
+    dataDesejada.length === 10 &&
+    termosAceites &&
+    isCaptchaCorreto;
 
   return (
     <div className="root-wrapper">
@@ -162,7 +195,6 @@ export default function SolicitacaoPage() {
         * { font-family: 'Regular', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Comum', sans-serif !important; margin: 0; }
 
-        /* Estrutura Base */
         .root-wrapper {
           background-color: #030712;
           height: 100vh;
@@ -189,11 +221,11 @@ export default function SolicitacaoPage() {
         .grid-layout {
           display: grid;
           grid-template-columns: 1.25fr 1fr;
-          gap: 4rem;
+          gap: 3.5rem;
           width: 100%;
           max-width: 1300px;
           height: 100%;
-          max-height: 850px;
+          max-height: 860px;
           align-items: stretch;
         }
         
@@ -216,57 +248,137 @@ export default function SolicitacaoPage() {
         .termos-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
+          gap: 0.9rem;
           background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.06);
           padding: 1rem;
-          border-radius: 12px;
-          margin-bottom: 1.5rem;
+          border-radius: 14px;
+          margin-bottom: 1.25rem;
           flex-shrink: 0;
         }
 
         .form-row-2 {
           display: grid;
-          grid-template-columns: 1fr 100px;
+          grid-template-columns: 1fr 115px;
           gap: 0.75rem;
         }
 
-        /* Elementos UI */
         .modern-input {
-          width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.08); outline: none; padding: 0.75rem 1rem; color: #ffffff; border-radius: 10px; font-size: 0.9rem; font-weight: 300; transition: all 0.3s ease; box-sizing: border-box; backdrop-filter: blur(4px);
+          width: 100%;
+          background: rgba(0, 0, 0, 0.42);
+          border: 1px solid rgba(255,255,255,0.09);
+          outline: none;
+          padding: 0.8rem 1rem;
+          color: #ffffff;
+          border-radius: 11px;
+          font-size: 0.9rem;
+          font-weight: 400;
+          transition: all 0.25s ease;
+          backdrop-filter: blur(4px);
         }
-        .modern-input:focus { background: rgba(0, 0, 0, 0.6); border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
-        .modern-input::placeholder { color: #64748b !important; opacity: 0.6 !important; font-weight: 300; }
-        
-        .platform-btn {
-          flex: 1; padding: 0.6rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); outline: none; border-radius: 10px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s ease; font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; backdrop-filter: blur(4px);
+        .modern-input:focus {
+          background: rgba(0, 0, 0, 0.65);
+          border-color: #0ea5e9;
+          box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
         }
-        .platform-btn:hover { background: rgba(255,255,255,0.08); color: #f8fafc; border-color: rgba(255,255,255,0.15); }
-        .platform-btn.active { background: rgba(14, 165, 233, 0.15); border-color: #0ea5e9; color: #0ea5e9; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); }
+        .modern-input::placeholder { color: #64748b !important; opacity: 0.7 !important; }
         
-        .timeline-step { display: flex; gap: 1.5rem; position: relative; padding-bottom: 2.5rem; }
+        .timeline-step { display: flex; gap: 1.25rem; position: relative; padding-bottom: 1.75rem; }
         .timeline-step:last-child { padding-bottom: 0; }
-        .timeline-step::before { content: ''; position: absolute; left: 23px; top: 48px; bottom: 0; width: 2px; background: linear-gradient(to bottom, #0ea5e9, rgba(14,165,233,0.05)); }
+        .timeline-step::before { content: ''; position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: linear-gradient(to bottom, #0ea5e9, rgba(14,165,233,0.05)); }
         .timeline-step:last-child::before { display: none; }
-        .timeline-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); display: flex; align-items: center; justify-content: center; color: #0ea5e9; flex-shrink: 0; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        .timeline-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); display: flex; align-items: center; justify-content: center; color: #0ea5e9; flex-shrink: 0; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
         
         .glass-panel {
-          background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+          background: rgba(15, 23, 42, 0.5);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.1);
         }
 
-        .list-row {
-          display: grid; grid-template-columns: 80px 1fr auto; align-items: center; padding: 0.75rem 1rem;
-          background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 0.5rem;
+        /* NOVO LAYOUT DO QUADRO DE DEMONSTRAÇÕES */
+        .demo-card-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.25rem;
+          padding: 0.8rem 1rem;
+          background: rgba(3, 7, 18, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          margin-bottom: 0.55rem;
+          transition: all 0.2s ease;
+        }
+        .demo-card-row:last-child { margin-bottom: 0; }
+        .demo-card-row:hover {
+          background: rgba(15, 23, 42, 0.7);
+          border-color: rgba(14, 165, 233, 0.25);
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .demo-date-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0.38rem 0.7rem;
+          border-radius: 8px;
+          background: rgba(14, 165, 233, 0.1);
+          border: 1px solid rgba(14, 165, 233, 0.22);
+          color: #7dd3fc;
+          font-size: 0.76rem;
+          font-weight: 600;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .demo-location-info {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .demo-city-name {
+          color: #f8fafc;
+          font-weight: 500;
+          font-size: 0.88rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .demo-icao-pill {
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          color: #94a3b8;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 2px 6px;
+          border-radius: 5px;
+          flex-shrink: 0;
+        }
+
+        .captcha-box {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.75rem 0.9rem;
+          background: rgba(2, 6, 23, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 12px;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* RESPONSIVIDADE MOBILE ABSOLUTA */
         @media (max-width: 1000px) {
           .root-wrapper {
             height: auto !important;
@@ -277,49 +389,38 @@ export default function SolicitacaoPage() {
           .main-container {
             height: auto !important;
             display: block !important;
-            padding: 1rem 1.5rem 3rem 1.5rem !important;
+            padding: 1rem 1.25rem 3rem 1.25rem !important;
             overflow: visible !important;
           }
           .grid-layout {
             grid-template-columns: 1fr !important;
-            gap: 2.5rem !important;
+            gap: 2rem !important;
             height: auto !important;
             max-height: none !important;
           }
-          .left-column {
+          .left-column, .form-column {
             height: auto !important;
             overflow: visible !important;
           }
-          .form-column {
-            height: auto !important;
-          }
           .glass-panel {
-            padding: 1.5rem !important;
-          }
-          .timeline-step {
-            gap: 1rem;
-            padding-bottom: 2rem;
-          }
-          .timeline-step::before {
-             left: 20px;
-             top: 40px;
-          }
-          .timeline-icon {
-             width: 40px;
-             height: 40px;
-          }
-          .timeline-icon svg {
-             width: 20px;
-             height: 20px;
+            padding: 1.4rem !important;
           }
           .termos-grid {
             grid-template-columns: 1fr !important;
           }
           .form-row-2 {
-             grid-template-columns: 1fr !important;
+            grid-template-columns: 1fr !important;
+          }
+          .demo-card-row {
+            flex-wrap: wrap;
+            gap: 0.65rem;
+          }
+          .demo-location-info {
+            order: 3;
+            flex-basis: 100%;
           }
           .quadro-scroll-area {
-            max-height: 350px !important;
+            max-height: 320px !important;
           }
         }
       `}</style>
@@ -331,14 +432,13 @@ export default function SolicitacaoPage() {
             key={index}
             style={{
               position: 'absolute', inset: 0, backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center',
-              opacity: currentSlide === index ? 0.6 : 0, transition: 'opacity 2s ease-in-out',
+              opacity: currentSlide === index ? 0.6 : 0,
               transform: currentSlide === index ? 'scale(1.05)' : 'scale(1)',
               transitionProperty: 'opacity, transform', transitionDuration: '2s, 10s',
             }}
           />
         ))}
-        {/* Máscara Escura para contraste */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(3,7,18,0.95) 0%, rgba(3,7,18,0.7) 50%, rgba(3,7,18,0.95) 100%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(3,7,18,0.95) 0%, rgba(3,7,18,0.72) 50%, rgba(3,7,18,0.95) 100%)', zIndex: 1 }} />
       </div>
 
       {/* --- MENU SUPERIOR COMPACTO --- */}
@@ -379,64 +479,59 @@ export default function SolicitacaoPage() {
       <main className="main-container">
         <div className="grid-layout">
           
-          {/* LADO ESQUERDO: Textos e Timeline */}
+          {/* LADO ESQUERDO: Textos, Timeline e Quadro */}
           <section className="left-column">
             
-            {/* Título e Info */}
-            <header style={{ flexShrink: 0, marginBottom: '2.5rem' }}>
+            <header style={{ flexShrink: 0, marginBottom: '1.75rem' }}>
               <span style={{ color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.8rem' }}>Operações EDAFS</span>
-              <h1 style={{ fontSize: 'clamp(2.2rem, 3.5vw, 3.2rem)', color: '#ffffff', margin: '0.2rem 0 0.5rem', lineHeight: 1.1, textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+              <h1 style={{ fontSize: 'clamp(2.1rem, 3.2vw, 3rem)', color: '#ffffff', margin: '0.2rem 0 0.45rem', lineHeight: 1.1, textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
                 Solicitar Demonstração
               </h1>
-              <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.5, margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                Leve a precisão e a doutrina da Esquadrilha da Fumaça Virtual ao seu evento. 
+              <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: 1.5, margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                Leve a precisão e a doutrina da Esquadrilha da Fumaça Virtual ao seu evento.
               </p>
             </header>
 
-            {/* TIMELINE VERTICAL */}
-            <article style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, marginBottom: '2rem' }}>
-              
+            <article style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, marginBottom: '1.5rem' }}>
               <div className="timeline-step">
-                <div className="timeline-icon"><ShieldCheck size={24} aria-hidden="true"/></div>
+                <div className="timeline-icon"><ShieldCheck size={22} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>1. Análise de Comando</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                    Sua solicitação é recebida de imediato pela seção de Operações da EDAFS. O Comando Geral avaliará a natureza do evento, relevância para a simulação e viabilidade da data.
+                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>1. Análise de Comando</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
+                    Sua solicitação é avaliada pela seção de Operações da EDAFS quanto à natureza do evento, relevância para a simulação e viabilidade da data.
                   </p>
                 </div>
               </div>
 
               <div className="timeline-step">
-                <div className="timeline-icon"><MapPin size={24} aria-hidden="true"/></div>
+                <div className="timeline-icon"><MapPin size={22} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>2. Missão Precursora (Logística)</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                    Uma equipe realiza o reconhecimento técnico do local no simulador. <strong style={{ color: '#cbd5e1' }}>É obrigatória</strong> a existência de um aeródromo homologado a no máximo 80 km de distância do evento, para apoio logístico.
+                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>2. Missão Precursora (Logística)</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
+                    Realizamos o reconhecimento técnico do local no simulador. <strong style={{ color: '#cbd5e1' }}>É obrigatória</strong> a existência de um aeródromo homologado a até 80 km de distância.
                   </p>
                 </div>
               </div>
 
               <div className="timeline-step">
-                <div className="timeline-icon"><CalendarCheck2 size={24} aria-hidden="true"/></div>
+                <div className="timeline-icon"><CalendarCheck2 size={22} aria-hidden="true"/></div>
                 <div>
-                  <h3 style={{ margin: '0 0 0.4rem', color: '#f8fafc', fontSize: '1.15rem' }}>3. Aprovação e Alinhamento</h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                    Sendo viável, o pedido é aprovado e a equipe fará uma reunião de alinhamento. <strong>Atenção:</strong> a aprovação da solicitação não confirma 100% que o evento ocorrerá. Aguarde a publicação oficial na agenda do site.
+                  <h3 style={{ margin: '0 0 0.3rem', color: '#f8fafc', fontSize: '1.08rem' }}>3. Aprovação e Agenda</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.86rem', lineHeight: 1.48 }}>
+                    Sendo viável, o pedido é aprovado internamente. <strong>Atenção:</strong> aguarde sempre a publicação oficial na agenda do site para confirmação definitiva.
                   </p>
                 </div>
               </div>
-
             </article>
 
-            {/* Termos de Execução */}
             <article className="termos-grid">
               <div>
                 <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><ShieldCheck size={14} aria-hidden="true"/> 1. Apoio Logístico</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>O local do evento requer um aeródromo homologado (ICAO) a no máximo 80 km de distância.</p>
+                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>O local requer um aeródromo homologado (ICAO) a no máximo 80 km de distância.</p>
               </div>
               <div>
                 <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><MapPin size={14} aria-hidden="true"/> 2. Meteorologia</h3>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>Operamos com clima real. Condições extremas podem causar cancelamentos por segurança virtual.</p>
+                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0, lineHeight: 1.4 }}>Operamos com clima real. Condições extremas podem causar cancelamentos por segurança.</p>
               </div>
               <div>
                 <h3 style={{ color: '#0ea5e9', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}><AlertTriangle size={14} aria-hidden="true"/> 3. Disponibilidade</h3>
@@ -448,105 +543,187 @@ export default function SolicitacaoPage() {
               </div>
             </article>
 
-            {/* Quadro de Solicitações */}
+            {/* Quadro de Solicitações Reformulado */}
             {listaSolicitacoes.length > 0 && (
-              <article className="glass-panel" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '1rem 1.5rem' }}>
-                <header style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexShrink: 0 }}>
-                  <Activity size={18} color="#0ea5e9" aria-hidden="true" />
-                  <h2 style={{ margin: 0, fontSize: '1rem', color: '#f8fafc' }}>Quadro de Solicitações</h2>
+              <article className="glass-panel" style={{ flexGrow: 1, minHeight: '150px', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '1.1rem 1.35rem' }}>
+                <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.9rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <Activity size={18} color="#0ea5e9" aria-hidden="true" />
+                    <h2 style={{ margin: 0, fontSize: '0.98rem', color: '#f8fafc', letterSpacing: '0.02em' }}>Quadro de Demonstrações Solicitadas</h2>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
+                    {listaSolicitacoes.length} {listaSolicitacoes.length === 1 ? 'registro' : 'registros'}
+                  </span>
                 </header>
                 
-                <div className="custom-scroll quadro-scroll-area" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.5rem' }}>
-                  {listaSolicitacoes.map(s => (
-                    <div key={s.id} className="list-row">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#94a3b8', fontSize: '0.75rem' }}>
-                        <Clock size={12} aria-hidden="true" /> <time dateTime={s.dataDesejada}>{s.dataDesejada || 'A definir'}</time>
-                      </div>
-                      <div style={{ color: '#f8fafc', fontWeight: 500, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {s.cidade}
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ 
-                          background: s.status === 'Aprovado' ? 'rgba(16,185,129,0.1)' : s.status === 'Recusado' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', 
-                          color: s.status === 'Aprovado' ? '#10b981' : s.status === 'Recusado' ? '#ef4444' : '#f59e0b', 
-                          padding: '2px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase' 
-                        }}>
+                <div className="custom-scroll quadro-scroll-area" style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '0.35rem' }}>
+                  {listaSolicitacoes.map((s) => {
+                    const isAprovado = s.status === 'Aprovado';
+                    const isRecusado = s.status === 'Recusado';
+                    const statusColor = isAprovado ? '#10b981' : isRecusado ? '#ef4444' : '#f59e0b';
+                    const statusBg = isAprovado ? 'rgba(16,185,129,0.12)' : isRecusado ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
+                    const statusBorder = isAprovado ? 'rgba(16,185,129,0.28)' : isRecusado ? 'rgba(239,68,68,0.28)' : 'rgba(245,158,11,0.28)';
+
+                    return (
+                      <div key={s.id} className="demo-card-row">
+                        <div className="demo-date-badge">
+                          <Clock size={13} color="#0ea5e9" aria-hidden="true" />
+                          <time dateTime={s.dataDesejada}>{s.dataDesejada || 'A definir'}</time>
+                        </div>
+
+                        <div className="demo-location-info">
+                          <MapPin size={14} color="#64748b" style={{ flexShrink: 0 }} aria-hidden="true" />
+                          <span className="demo-city-name" title={s.cidade}>{s.cidade}</span>
+                          {s.icao && <span className="demo-icao-pill">{s.icao}</span>}
+                        </div>
+
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            background: statusBg,
+                            border: `1px solid ${statusBorder}`,
+                            color: statusColor,
+                            padding: '0.28rem 0.65rem',
+                            borderRadius: '999px',
+                            fontSize: '0.64rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor }} />
                           {s.status}
                         </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </article>
             )}
           </section>
 
-          {/* LADO DIREITO: Formulário Glassmorphism */}
+          {/* LADO DIREITO: Formulário Enxuto + Verificação Anti-Spam */}
           <section className="form-column" aria-label="Formulário de Solicitação">
-            <div className="glass-panel" style={{ padding: '2rem', animation: 'fadeIn 0.8s ease' }}>
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="glass-panel" style={{ padding: '2.1rem', animation: 'fadeIn 0.8s ease' }}>
+              <div style={{ marginBottom: '1.35rem' }}>
+                <h2 style={{ fontSize: '1.3rem', color: '#f8fafc', marginBottom: '0.25rem' }}>Dados da Operação</h2>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8' }}>Informe a localidade, o aeródromo de apoio e a data pretendida.</p>
+              </div>
+
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <label htmlFor="nome" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nome / Organização *</label>
-                  <input id="nome" required type="text" className="modern-input" value={nome} onChange={e => setNome(e.target.value)} placeholder="Quem está organizando?" />
+                {/* HONEYPOT ANTI-BOT INVISÍVEL */}
+                <div style={{ opacity: 0, position: 'absolute', top: 0, left: 0, height: 0, width: 0, zIndex: -1, pointerEvents: 'none' }} aria-hidden="true">
+                  <label htmlFor="website_confirm">Deixe este campo vazio</label>
+                  <input id="website_confirm" type="text" name="website_confirm" value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
                 </div>
 
                 <div className="form-row-2">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <label htmlFor="cidade" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cidade ou Evento *</label>
                     <input id="cidade" required type="text" className="modern-input" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Ex: Rio de Janeiro - RJ" />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <label htmlFor="icao" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ICAO *</label>
-                    <input id="icao" required type="text" maxLength={4} className="modern-input" value={icao} onChange={e => setIcao(e.target.value)} placeholder="SBRJ" style={{ textTransform: 'uppercase', borderColor: 'rgba(14,165,233,0.3)', color: '#0ea5e9', fontWeight: 'bold' }} />
+                    <input id="icao" required type="text" maxLength={4} className="modern-input" value={icao} onChange={e => setIcao(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} placeholder="SBRJ" style={{ textTransform: 'uppercase', borderColor: 'rgba(14,165,233,0.35)', color: '#0ea5e9', fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.08em' }} />
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <label htmlFor="dataDesejada" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data Desejada</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label htmlFor="dataDesejada" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Data Desejada *</label>
                   <input id="dataDesejada" required type="text" maxLength={10} className="modern-input" value={dataDesejada} onChange={handleDateChange} placeholder="DD/MM/AAAA" />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Haverá Transmissão ao Vivo? *</span>
-                  <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }} role="group" aria-label="Haverá transmissão ao vivo?">
-                    <button type="button" aria-pressed={transmissao === 'sim'} onClick={() => setTransmissao('sim')} className={`platform-btn ${transmissao === 'sim' ? 'active' : ''}`}>Sim</button>
-                    <button type="button" aria-pressed={transmissao === 'nao'} onClick={() => { setTransmissao('nao'); setCanal(''); }} className={`platform-btn ${transmissao === 'nao' ? 'active' : ''}`}>Não</button>
+                {/* VERIFICAÇÃO ANTI-SPAM (DESAFIO MATEMÁTICO) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <label htmlFor="captcha" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <ShieldAlert size={13} color="#0ea5e9" aria-hidden="true" /> Verificação Anti-Spam *
+                  </label>
+                  <div className="captcha-box" style={{ borderColor: captchaInput ? (isCaptchaCorreto ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.45)') : 'rgba(255,255,255,0.09)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Quanto é</span>
+                      <span style={{ background: 'rgba(14,165,233,0.14)', border: '1px solid rgba(14,165,233,0.3)', color: '#f8fafc', padding: '0.32rem 0.7rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.05em' }}>
+                        {numA} + {numB} =
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        id="captcha"
+                        required
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={3}
+                        value={captchaInput}
+                        onChange={e => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
+                        placeholder="?"
+                        style={{
+                          width: '68px',
+                          textAlign: 'center',
+                          padding: '0.48rem',
+                          borderRadius: '8px',
+                          background: 'rgba(0,0,0,0.5)',
+                          border: `1px solid ${captchaInput ? (isCaptchaCorreto ? '#10b981' : '#ef4444') : 'rgba(255,255,255,0.15)'}`,
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '0.95rem',
+                          outline: 'none',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={gerarNovoCaptcha}
+                        title="Gerar outra conta"
+                        aria-label="Gerar novo cálculo de segurança"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', width: '34px', height: '34px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <RefreshCw size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {transmissao === 'sim' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', animation: 'fadeIn 0.3s ease' }}>
-                    <label htmlFor="canal" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Link do Canal (YouTube/Twitch) *</label>
-                    <div style={{ position: 'relative' }}>
-                      <Radio size={16} color="#94a3b8" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} aria-hidden="true" />
-                      <input id="canal" required type="url" className="modern-input" value={canal} onChange={e => setCanal(e.target.value)} placeholder="https://youtube.com/..." style={{ paddingLeft: '2.5rem' }} />
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                   <button 
                     type="button"
                     role="checkbox"
                     aria-checked={termosAceites}
                     onClick={() => setTermosAceites(!termosAceites)} 
-                    style={{ width: '20px', height: '20px', borderRadius: '4px', border: termosAceites ? 'none' : '1px solid #64748b', background: termosAceites ? '#0ea5e9' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: '2px', transition: 'all 0.2s' }}
+                    style={{ width: '20px', height: '20px', borderRadius: '5px', border: termosAceites ? 'none' : '1px solid #64748b', background: termosAceites ? '#0ea5e9' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: '2px', transition: 'all 0.2s' }}
                   >
                     {termosAceites && <CheckCircle2 size={14} color="#fff" />}
                   </button>
-                  <label style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: 1.4, cursor: 'pointer', userSelect: 'none' }} onClick={() => setTermosAceites(!termosAceites)}>
+                  <label style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45, cursor: 'pointer', userSelect: 'none' }} onClick={() => setTermosAceites(!termosAceites)}>
                     Li e concordo expressamente com todas as etapas de avaliação e as 4 restrições descritas ao lado.
                   </label>
                 </div>
 
                 <button 
                   type="submit" 
-                  disabled={isSubmitting || !nome || !cidade || !icao || !transmissao || !termosAceites || icao.length < 4} 
+                  disabled={isSubmitting || !isFormValid} 
                   aria-busy={isSubmitting}
-                  style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem', fontSize: '0.9rem', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', opacity: (isSubmitting || !nome || !cidade || !icao || !transmissao || !termosAceites || icao.length < 4) ? 0.5 : 1, boxShadow: '0 10px 25px rgba(14, 165, 233, 0.4)' }}
+                  style={{
+                    width: '100%',
+                    marginTop: '0.4rem',
+                    padding: '0.9rem',
+                    fontSize: '0.9rem',
+                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '11px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    cursor: (isSubmitting || !isFormValid) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: (isSubmitting || !isFormValid) ? 0.45 : 1,
+                    boxShadow: isFormValid ? '0 10px 25px rgba(14, 165, 233, 0.38)' : 'none',
+                  }}
                 >
-                  {isSubmitting ? 'Enviando Comando...' : 'Enviar Solicitação'}
+                  {isSubmitting ? 'Enviando ao Comando...' : 'Enviar Solicitação'}
                 </button>
               </form>
             </div>
