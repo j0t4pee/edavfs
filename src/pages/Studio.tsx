@@ -45,12 +45,11 @@ interface StudioLayer {
   type: 'text' | 'sticker' | 'glass';
   name: string;
   visible: boolean;
-  x: number; // % (0 a 100)
-  y: number; // % (0 a 100)
+  x: number;
+  y: number;
   opacity?: number;
   borderRadius?: number;
 
-  // Texto
   text?: string;
   fontFamily?: string;
   fontSize?: number;
@@ -64,6 +63,7 @@ interface StudioLayer {
   lineHeight?: number;
   shadow?: boolean;
   shadowColor?: string;
+  shadowOpacity?: number;
   shadowBlur?: number;
   shadowOffsetY?: number;
   strokeWidth?: number;
@@ -75,15 +75,13 @@ interface StudioLayer {
   textBgPadding?: number;
   textBgRadius?: number;
 
-  // Sticker / Imagem
   src?: string;
   scale?: number;
   stickerBorder?: number;
   stickerBorderColor?: string;
 
-  // Glass Card
-  boxWidth?: number; // % da largura do canvas
-  boxHeight?: number; // % da altura do canvas
+  boxWidth?: number;
+  boxHeight?: number;
   glassBlur?: number;
   glassTint?: string;
   glassOpacity?: number;
@@ -177,10 +175,6 @@ const hexToRgba = (hex: string, alpha: number) => {
   const b = bigint & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
-
-/* ============================================================================
-   COMPONENTES VISUAIS REFINADOS (SLIDERS, SELECTS, TOGGLES, COLOR PICKERS)
-   ============================================================================ */
 
 const PrettySlider = ({
   label,
@@ -455,10 +449,6 @@ const ColorPill = ({
   </div>
 );
 
-/* ============================================================================
-   COMPONENTE PRINCIPAL: STUDIO
-   ============================================================================ */
-
 export default function Studio() {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -469,17 +459,16 @@ export default function Studio() {
   const imageCache = useRef<Record<string, HTMLImageElement>>({});
   const layerBoundsRef = useRef<Record<string, HitBox>>({});
 
-  // Responsividade Mobile
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth <= 960 : false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('inspector');
 
-  // Formato e Exportação
   const [preset, setPreset] = useState<PresetKey>('reels');
-  const [exportScale, setExportScale] = useState<string>('2'); // 2x = Ultra HD (2160px de base!)
+  const [exportScale, setExportScale] = useState<string>('2');
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
-  // Imagem de Fundo
   const [bgSrc, setBgSrc] = useState<string>(img5);
+  const [bgBaseColor, setBgBaseColor] = useState<string>('#030712');
+  const [bgOpacity, setBgOpacity] = useState<number>(100);
   const [bgScale, setBgScale] = useState<number>(1.05);
   const [bgOffsetX, setBgOffsetX] = useState<number>(0);
   const [bgOffsetY, setBgOffsetY] = useState<number>(0);
@@ -488,7 +477,6 @@ export default function Studio() {
   const [bgSaturation, setBgSaturation] = useState<number>(105);
   const [artboardRadius, setArtboardRadius] = useState<number>(0);
 
-  // Efeitos de Sobreposição
   const [bottomShadow, setBottomShadow] = useState<number>(85);
   const [bottomShadowHeight, setBottomShadowHeight] = useState<number>(55);
   const [topGradient, setTopGradient] = useState<number>(40);
@@ -504,11 +492,9 @@ export default function Studio() {
   const [isDropHover, setIsDropHover] = useState<boolean>(false);
   const [hoverCursor, setHoverCursor] = useState<string>('default');
 
-  // Edição Inline (Duplo Clique)
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [artboardDisplaySize, setArtboardDisplaySize] = useState<{ w: number; h: number }>({ w: 540, h: 960 });
 
-  // Camadas
   const [layers, setLayers] = useState<StudioLayer[]>([
     {
       id: 'logo-edafs',
@@ -522,6 +508,10 @@ export default function Studio() {
       borderRadius: 0,
       stickerBorder: 0,
       stickerBorderColor: '#ffffff',
+      shadow: true,
+      shadowOpacity: 45,
+      shadowBlur: 32,
+      shadowOffsetY: 6,
       opacity: 100,
     },
     {
@@ -563,6 +553,7 @@ export default function Studio() {
       letterSpacing: 6,
       lineHeight: 1.15,
       textBgRadius: 20,
+      opacity: 100,
     },
     {
       id: 'main-title',
@@ -587,6 +578,7 @@ export default function Studio() {
       letterSpacing: 2,
       lineHeight: 1.05,
       textBgRadius: 24,
+      opacity: 100,
     },
     {
       id: 'sub-info',
@@ -611,6 +603,7 @@ export default function Studio() {
       letterSpacing: 3,
       lineHeight: 1.2,
       textBgRadius: 999,
+      opacity: 100,
     },
   ]);
 
@@ -622,7 +615,6 @@ export default function Studio() {
   const editingLayer = layers.find((l) => l.id === editingTextId && l.type === 'text') || null;
   const currentSpec = PRESETS[preset];
 
-  // Listener de Responsividade
   useEffect(() => {
     const onResize = () => {
       setIsMobile(window.innerWidth <= 960);
@@ -708,7 +700,6 @@ export default function Studio() {
     if (blurPx > 0) {
       ctx.filter = `blur(${blurPx * resMultiplier}px)`;
       const pad = 24 * resMultiplier;
-      // bgSourceCanvas já está dimensionado em W*resMultiplier, compensamos o ctx.scale ativo
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(bgSourceCanvas, -pad, -pad, bgSourceCanvas.width + pad * 2, bgSourceCanvas.height + pad * 2);
@@ -771,7 +762,6 @@ export default function Studio() {
     ctx.restore();
   };
 
-  // Motor de Renderização Principal (Suporta Supersampling 2x/3x para Exportação Máxima)
   const renderSceneToCanvas = useCallback(
     async (targetCanvas: HTMLCanvasElement, exportMode: boolean, scaleFactor = 1) => {
       const ctx = targetCanvas.getContext('2d', { alpha: true });
@@ -799,38 +789,39 @@ export default function Studio() {
       bgCtx.imageSmoothingQuality = 'high';
       bgCtx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
 
-      bgCtx.fillStyle = '#030712';
+      bgCtx.fillStyle = bgBaseColor || '#030712';
       bgCtx.fillRect(0, 0, W, H);
 
-      // 1. Foto Base
-      try {
-        const bgImg = await loadImg(bgSrc);
-        const imgRatio = bgImg.width / bgImg.height;
-        const canvasRatio = W / H;
-        let drawW = W;
-        let drawH = H;
+      if (bgOpacity > 0) {
+        try {
+          const bgImg = await loadImg(bgSrc);
+          const imgRatio = bgImg.width / bgImg.height;
+          const canvasRatio = W / H;
+          let drawW = W;
+          let drawH = H;
 
-        if (imgRatio > canvasRatio) {
-          drawH = H;
-          drawW = H * imgRatio;
-        } else {
-          drawW = W;
-          drawH = W / imgRatio;
-        }
+          if (imgRatio > canvasRatio) {
+            drawH = H;
+            drawW = H * imgRatio;
+          } else {
+            drawW = W;
+            drawH = W / imgRatio;
+          }
 
-        drawW *= bgScale;
-        drawH *= bgScale;
+          drawW *= bgScale;
+          drawH *= bgScale;
 
-        const drawX = (W - drawW) / 2 + (bgOffsetX / 100) * W;
-        const drawY = (H - drawH) / 2 + (bgOffsetY / 100) * H;
+          const drawX = (W - drawW) / 2 + (bgOffsetX / 100) * W;
+          const drawY = (H - drawH) / 2 + (bgOffsetY / 100) * H;
 
-        bgCtx.save();
-        bgCtx.filter = `brightness(${bgBrightness}%) contrast(${bgContrast}%) saturate(${bgSaturation}%)`;
-        bgCtx.drawImage(bgImg, drawX, drawY, drawW, drawH);
-        bgCtx.restore();
-      } catch {}
+          bgCtx.save();
+          bgCtx.globalAlpha = bgOpacity / 100;
+          bgCtx.filter = `brightness(${bgBrightness}%) contrast(${bgContrast}%) saturate(${bgSaturation}%)`;
+          bgCtx.drawImage(bgImg, drawX, drawY, drawW, drawH);
+          bgCtx.restore();
+        } catch {}
+      }
 
-      // 2. Degradê Atmosférico
       if (gradOverlayOpacity > 0) {
         const rad = (gradAngle * Math.PI) / 180;
         const cx = W / 2;
@@ -848,7 +839,6 @@ export default function Studio() {
         bgCtx.fillRect(0, 0, W, H);
       }
 
-      // 3. Vinheta Radial
       if (radialVignette > 0) {
         const outerR = Math.hypot(W, H) * 0.62;
         const innerR = Math.min(W, H) * 0.22;
@@ -859,7 +849,6 @@ export default function Studio() {
         bgCtx.fillRect(0, 0, W, H);
       }
 
-      // 4. Degradê do Topo
       if (topGradient > 0) {
         const gradTop = bgCtx.createLinearGradient(0, 0, 0, H * 0.42);
         gradTop.addColorStop(0, `rgba(2, 6, 17, ${(topGradient / 100) * 0.92})`);
@@ -868,7 +857,6 @@ export default function Studio() {
         bgCtx.fillRect(0, 0, W, H * 0.42);
       }
 
-      // 5. Sombra Inferior
       if (bottomShadow > 0 && bottomShadowHeight > 0) {
         const startY = H * (1 - bottomShadowHeight / 100);
         const gradBot = bgCtx.createLinearGradient(0, startY, 0, H);
@@ -879,7 +867,6 @@ export default function Studio() {
         bgCtx.fillRect(0, startY, W, H - startY);
       }
 
-      // Aplica Arredondamento Geral da Arte (se configurado > 0)
       ctx.save();
       ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
       if (artboardRadius > 0) {
@@ -888,7 +875,6 @@ export default function Studio() {
         ctx.clip();
       }
 
-      // Copia o fundo pronto em resolução máxima
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(bgCanvas, 0, 0);
@@ -896,17 +882,15 @@ export default function Studio() {
 
       const nextBounds: Record<string, HitBox> = {};
 
-      // 6. Renderizar Camadas
       for (const layer of layers) {
         if (!layer.visible) continue;
         const posX = (layer.x / 100) * W;
         const posY = (layer.y / 100) * H;
-        const layerAlpha = (layer.opacity ?? 100) / 100;
+        const layerAlpha = Math.max(0, Math.min(1, (layer.opacity ?? 100) / 100));
 
         ctx.save();
         ctx.globalAlpha = layerAlpha;
 
-        // --- GLASS CARD ---
         if (layer.type === 'glass') {
           const boxW = ((layer.boxWidth ?? 80) / 100) * W;
           const boxH = ((layer.boxHeight ?? 22) / 100) * H;
@@ -915,9 +899,9 @@ export default function Studio() {
 
           ctx.save();
           drawRoundedRectPath(ctx, boxX, boxY, boxW, boxH, layer.borderRadius ?? 28);
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.42)';
           ctx.shadowBlur = 35 * scaleFactor;
-          ctx.shadowOffsetY = 14 * scaleFactor;
+          ctx.shadowOffsetY = 12 * scaleFactor;
           ctx.fillStyle = 'rgba(0,0,0,0.01)';
           ctx.fill();
           ctx.restore();
@@ -940,7 +924,6 @@ export default function Studio() {
           if (!exportMode) nextBounds[layer.id] = { x: boxX, y: boxY, w: boxW, h: boxH };
         }
 
-        // --- STICKER / IMAGEM COM SUPORTE A ARREDONDAMENTO & BORDA ---
         if (layer.type === 'sticker' && layer.src) {
           try {
             const stImg = await loadImg(layer.src);
@@ -951,32 +934,73 @@ export default function Studio() {
             const drawY = posY - targetH / 2;
             const radius = layer.borderRadius ?? 0;
 
-            ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.55)';
-            ctx.shadowBlur = 20 * scaleFactor;
-            ctx.shadowOffsetY = 8 * scaleFactor;
+            const hasShadow = layer.shadow !== false;
+            const sBlur = (layer.shadowBlur ?? 32) * scaleFactor;
+            const sOffY = (layer.shadowOffsetY ?? 6) * scaleFactor;
+            const sAlpha = (layer.shadowOpacity ?? 45) / 100;
+            const sColor = hexToRgba(layer.shadowColor || '#000000', sAlpha);
 
             if (radius > 0) {
-              drawRoundedRectPath(ctx, drawX, drawY, targetW, targetH, radius);
-              ctx.clip();
-            }
-            ctx.drawImage(stImg, drawX, drawY, targetW, targetH);
-            ctx.restore();
+              const tempC = document.createElement('canvas');
+              tempC.width = Math.max(1, Math.ceil(targetW * scaleFactor));
+              tempC.height = Math.max(1, Math.ceil(targetH * scaleFactor));
+              const tCtx = tempC.getContext('2d');
+              if (tCtx) {
+                tCtx.scale(scaleFactor, scaleFactor);
+                drawRoundedRectPath(tCtx, 0, 0, targetW, targetH, radius);
+                tCtx.clip();
+                tCtx.drawImage(stImg, 0, 0, targetW, targetH);
 
-            if ((layer.stickerBorder ?? 0) > 0) {
+                if ((layer.stickerBorder ?? 0) > 0) {
+                  drawRoundedRectPath(tCtx, 0, 0, targetW, targetH, radius);
+                  tCtx.strokeStyle = layer.stickerBorderColor || '#ffffff';
+                  tCtx.lineWidth = layer.stickerBorder!;
+                  tCtx.stroke();
+                }
+              }
+
               ctx.save();
-              drawRoundedRectPath(ctx, drawX, drawY, targetW, targetH, radius);
-              ctx.strokeStyle = layer.stickerBorderColor || '#ffffff';
-              ctx.lineWidth = layer.stickerBorder!;
-              ctx.stroke();
+              if (hasShadow) {
+                ctx.shadowColor = sColor;
+                ctx.shadowBlur = sBlur;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = sOffY;
+              }
+              ctx.drawImage(tempC, drawX, drawY, targetW, targetH);
               ctx.restore();
+            } else {
+              const tempC = document.createElement('canvas');
+              tempC.width = Math.max(1, Math.ceil(targetW * scaleFactor));
+              tempC.height = Math.max(1, Math.ceil(targetH * scaleFactor));
+              const tCtx = tempC.getContext('2d');
+              if (tCtx) {
+                tCtx.scale(scaleFactor, scaleFactor);
+                tCtx.drawImage(stImg, 0, 0, targetW, targetH);
+              }
+
+              ctx.save();
+              if (hasShadow) {
+                ctx.shadowColor = sColor;
+                ctx.shadowBlur = sBlur;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = sOffY;
+              }
+              ctx.drawImage(tempC, drawX, drawY, targetW, targetH);
+              ctx.restore();
+
+              if ((layer.stickerBorder ?? 0) > 0) {
+                ctx.save();
+                ctx.strokeStyle = layer.stickerBorderColor || '#ffffff';
+                ctx.lineWidth = layer.stickerBorder!;
+                ctx.strokeRect(drawX, drawY, targetW, targetH);
+                ctx.restore();
+              }
             }
 
             if (!exportMode) nextBounds[layer.id] = { x: drawX, y: drawY, w: targetW, h: targetH };
           } catch {}
         }
 
-        // --- TEXTO RICO COM ARREDONDAMENTO NO BADGE ---
         if (layer.type === 'text' && layer.text !== undefined) {
           const fontSize = layer.fontSize ?? 64;
           const fontFam = layer.fontFamily || 'Comum';
@@ -1056,7 +1080,8 @@ export default function Studio() {
 
             ctx.save();
             if (layer.shadow) {
-              ctx.shadowColor = layer.shadowColor || 'rgba(0,0,0,0.85)';
+              const textShadowAlpha = (layer.shadowOpacity ?? 75) / 100;
+              ctx.shadowColor = hexToRgba(layer.shadowColor || '#000000', textShadowAlpha);
               ctx.shadowBlur = (layer.shadowBlur ?? 24) * scaleFactor;
               ctx.shadowOffsetY = (layer.shadowOffsetY ?? 8) * scaleFactor;
             }
@@ -1085,7 +1110,6 @@ export default function Studio() {
         layerBoundsRef.current = nextBounds;
       }
 
-      // 7. Scanlines & Film Grain
       if (scanlines > 0) {
         ctx.save();
         ctx.fillStyle = `rgba(0, 0, 0, ${(scanlines / 100) * 0.35})`;
@@ -1107,9 +1131,8 @@ export default function Studio() {
         }
       }
 
-      ctx.restore(); // Fecha clip do artboardRadius
+      ctx.restore();
 
-      // 8. Guias Seguras + Bounding Box (apenas no editor)
       if (!exportMode) {
         ctx.save();
         ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
@@ -1143,7 +1166,7 @@ export default function Studio() {
       }
     },
     [
-      currentSpec, bgSrc, bgScale, bgOffsetX, bgOffsetY, bgBrightness, bgContrast, bgSaturation, artboardRadius,
+      currentSpec, bgSrc, bgBaseColor, bgOpacity, bgScale, bgOffsetX, bgOffsetY, bgBrightness, bgContrast, bgSaturation, artboardRadius,
       bottomShadow, bottomShadowHeight, topGradient, radialVignette, gradOverlayOpacity,
       gradColorA, gradColorB, gradAngle, scanlines, filmGrain, layers, selectedId, editingTextId, showSafeGuides, preset, isMobile, loadImg
     ]
@@ -1159,7 +1182,6 @@ export default function Studio() {
     }
   }, [renderSceneToCanvas]);
 
-  // ATALHOS DE TECLADO
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -1238,7 +1260,6 @@ export default function Studio() {
 
     const { pxX, pxY, pctX, pctY } = getCanvasPointer(e);
 
-    // 1. Alças de Redimensionamento
     const hitHandle = hitTestHandles(pxX, pxY);
     if (hitHandle && selectedId) {
       const origLayer = layers.find((l) => l.id === selectedId);
@@ -1259,7 +1280,6 @@ export default function Studio() {
       }
     }
 
-    // 2. Seleção / Arraste de Camada
     for (let i = layers.length - 1; i >= 0; i--) {
       const l = layers[i];
       if (!l.visible) continue;
@@ -1273,7 +1293,6 @@ export default function Studio() {
       }
     }
 
-    // 3. Arrastar Foto de Fundo
     setSelectedId(null);
     setDragState({ mode: 'bg', startPctX: pctX, startPctY: pctY, origX: bgOffsetX, origY: bgOffsetY });
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -1509,11 +1528,13 @@ export default function Studio() {
         uppercase: true,
         shadow: true,
         shadowColor: '#000000',
+        shadowOpacity: 75,
         shadowBlur: 24,
         shadowOffsetY: 8,
         letterSpacing: 2,
         lineHeight: 1.1,
         textBgRadius: 22,
+        opacity: 100,
       },
     ]);
     setSelectedId(id);
@@ -1561,6 +1582,10 @@ export default function Studio() {
         borderRadius: 0,
         stickerBorder: 0,
         stickerBorderColor: '#ffffff',
+        shadow: true,
+        shadowOpacity: 45,
+        shadowBlur: 32,
+        shadowOffsetY: 6,
         opacity: 100,
       },
     ]);
@@ -1592,10 +1617,10 @@ export default function Studio() {
       setGradColorA('#0ea5e9');
       setGradColorB('#020617');
       setLayers([
-        { id: 'gr1', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 34, src: logoEdafs, scale: 0.36, borderRadius: 0, opacity: 100 },
+        { id: 'gr1', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 34, src: logoEdafs, scale: 0.36, borderRadius: 0, shadow: true, shadowOpacity: 45, shadowBlur: 32, shadowOffsetY: 6, opacity: 100 },
         { id: 'gr2', type: 'glass', name: 'Card Central 1:1', visible: true, x: 50, y: 54, boxWidth: 86, boxHeight: 20, borderRadius: 36, glassBlur: 20, glassTint: '#0b1120', glassOpacity: 45, glassBorderOpacity: 45, opacity: 100 },
-        { id: 'gr3', type: 'text', name: 'Título Reels', visible: true, x: 50, y: 52, text: 'NA ALA DO LÍDER', fontFamily: 'StratumNo2', fontSize: 82, color: '#ffffff', useGradient: true, color2: '#93c5fd', gradientAngle: 180, align: 'center', uppercase: true, shadow: true, shadowColor: '#000000', shadowBlur: 20, shadowOffsetY: 6, letterSpacing: 2, lineHeight: 1.05 },
-        { id: 'gr4', type: 'text', name: 'Subtítulo', visible: true, x: 50, y: 59, text: 'REELS OFICIAL • A-29 SUPER TUCANO', fontFamily: 'Comum', fontSize: 28, color: '#38bdf8', align: 'center', uppercase: true, shadow: true, letterSpacing: 5, lineHeight: 1.2 },
+        { id: 'gr3', type: 'text', name: 'Título Reels', visible: true, x: 50, y: 52, text: 'NA ALA DO LÍDER', fontFamily: 'StratumNo2', fontSize: 82, color: '#ffffff', useGradient: true, color2: '#93c5fd', gradientAngle: 180, align: 'center', uppercase: true, shadow: true, shadowColor: '#000000', shadowBlur: 20, shadowOffsetY: 6, letterSpacing: 2, lineHeight: 1.05, opacity: 100 },
+        { id: 'gr4', type: 'text', name: 'Subtítulo', visible: true, x: 50, y: 59, text: 'REELS OFICIAL • A-29 SUPER TUCANO', fontFamily: 'Comum', fontSize: 28, color: '#38bdf8', align: 'center', uppercase: true, shadow: true, letterSpacing: 5, lineHeight: 1.2, opacity: 100 },
       ]);
     } else if (kind === 'agenda_gold') {
       setPreset('portrait');
@@ -1605,10 +1630,10 @@ export default function Studio() {
       setGradColorA('#f59e0b');
       setGradColorB('#030712');
       setLayers([
-        { id: 'ag1', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 11, src: logoEdafs, scale: 0.42, borderRadius: 0, opacity: 100 },
-        { id: 'ag2', type: 'text', name: 'Overline', visible: true, x: 50, y: 71, text: 'DEMONSTRAÇÃO CONFIRMADA', fontFamily: 'Comum', fontSize: 30, color: '#fde047', align: 'center', uppercase: true, glow: true, glowColor: '#f59e0b', glowBlur: 24, shadow: true, letterSpacing: 6, lineHeight: 1.2 },
-        { id: 'ag3', type: 'text', name: 'Localidade', visible: true, x: 50, y: 80, text: 'FLORIANÓPOLIS', fontFamily: 'StratumNo2', fontSize: 98, color: '#ffffff', useGradient: true, color2: '#fde68a', gradientAngle: 180, align: 'center', uppercase: true, shadow: true, shadowBlur: 30, shadowOffsetY: 10, letterSpacing: 2, lineHeight: 1.05 },
-        { id: 'ag4', type: 'text', name: 'Info Voo', visible: true, x: 50, y: 90, text: 'SÁBADO • 19H30 BRT • SBFL', fontFamily: 'Regular', fontSize: 30, color: '#e2e8f0', textBgGlass: true, textBgPadding: 18, textBgRadius: 999, align: 'center', uppercase: true, shadow: false, letterSpacing: 4, lineHeight: 1.2 },
+        { id: 'ag1', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 11, src: logoEdafs, scale: 0.42, borderRadius: 0, shadow: true, shadowOpacity: 45, shadowBlur: 32, shadowOffsetY: 6, opacity: 100 },
+        { id: 'ag2', type: 'text', name: 'Overline', visible: true, x: 50, y: 71, text: 'DEMONSTRAÇÃO CONFIRMADA', fontFamily: 'Comum', fontSize: 30, color: '#fde047', align: 'center', uppercase: true, glow: true, glowColor: '#f59e0b', glowBlur: 24, shadow: true, letterSpacing: 6, lineHeight: 1.2, opacity: 100 },
+        { id: 'ag3', type: 'text', name: 'Localidade', visible: true, x: 50, y: 80, text: 'FLORIANÓPOLIS', fontFamily: 'StratumNo2', fontSize: 98, color: '#ffffff', useGradient: true, color2: '#fde68a', gradientAngle: 180, align: 'center', uppercase: true, shadow: true, shadowBlur: 30, shadowOffsetY: 10, letterSpacing: 2, lineHeight: 1.05, opacity: 100 },
+        { id: 'ag4', type: 'text', name: 'Info Voo', visible: true, x: 50, y: 90, text: 'SÁBADO • 19H30 BRT • SBFL', fontFamily: 'Regular', fontSize: 30, color: '#e2e8f0', textBgGlass: true, textBgPadding: 18, textBgRadius: 999, align: 'center', uppercase: true, shadow: false, letterSpacing: 4, lineHeight: 1.2, opacity: 100 },
       ]);
     } else if (kind === 'notam_hud') {
       setPreset('square');
@@ -1619,16 +1644,15 @@ export default function Studio() {
       setGradColorB('#030712');
       setLayers([
         { id: 'nh1', type: 'glass', name: 'Painel NOTAM', visible: true, x: 50, y: 54, boxWidth: 86, boxHeight: 62, borderRadius: 28, glassBlur: 22, glassTint: '#090d16', glassOpacity: 62, glassBorderOpacity: 35, opacity: 100 },
-        { id: 'nh2', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 33, src: logoEdafs, scale: 0.36, borderRadius: 0, opacity: 100 },
-        { id: 'nh3', type: 'text', name: 'Tag NOTAM', visible: true, x: 50, y: 47, text: 'COMUNICADO OPERACIONAL', fontFamily: 'Comum', fontSize: 30, color: '#ef4444', glow: true, glowColor: '#ef4444', glowBlur: 22, align: 'center', uppercase: true, shadow: true, letterSpacing: 6 },
-        { id: 'nh4', type: 'text', name: 'Mensagem', visible: true, x: 50, y: 59, text: 'RECRUTAMENTO\nENCERRADO', fontFamily: 'StratumNo2', fontSize: 84, color: '#ffffff', align: 'center', uppercase: true, shadow: true, letterSpacing: 2, lineHeight: 1.08 },
-        { id: 'nh5', type: 'text', name: 'Assinatura', visible: true, x: 50, y: 76, text: 'COMANDO GERAL • EDAFS', fontFamily: 'Regular', fontSize: 24, color: '#94a3b8', align: 'center', uppercase: true, letterSpacing: 5 },
+        { id: 'nh2', type: 'sticker', name: 'Brasão EDAFS', visible: true, x: 50, y: 33, src: logoEdafs, scale: 0.36, borderRadius: 0, shadow: true, shadowOpacity: 45, shadowBlur: 32, shadowOffsetY: 6, opacity: 100 },
+        { id: 'nh3', type: 'text', name: 'Tag NOTAM', visible: true, x: 50, y: 47, text: 'COMUNICADO OPERACIONAL', fontFamily: 'Comum', fontSize: 30, color: '#ef4444', glow: true, glowColor: '#ef4444', glowBlur: 22, align: 'center', uppercase: true, shadow: true, letterSpacing: 6, opacity: 100 },
+        { id: 'nh4', type: 'text', name: 'Mensagem', visible: true, x: 50, y: 59, text: 'RECRUTAMENTO\nENCERRADO', fontFamily: 'StratumNo2', fontSize: 84, color: '#ffffff', align: 'center', uppercase: true, shadow: true, letterSpacing: 2, lineHeight: 1.08, opacity: 100 },
+        { id: 'nh5', type: 'text', name: 'Assinatura', visible: true, x: 50, y: 76, text: 'COMANDO GERAL • EDAFS', fontFamily: 'Regular', fontSize: 24, color: '#94a3b8', align: 'center', uppercase: true, letterSpacing: 5, opacity: 100 },
       ]);
     }
     setSelectedId(null);
   };
 
-  // EXPORTAÇÃO EM QUALIDADE MÁXIMA (SUPERSAMPLING + BLOB PNG LOSSLESS)
   const handleExportMaxQualityPNG = async () => {
     setEditingTextId(null);
     setIsExporting(true);
@@ -1663,10 +1687,6 @@ export default function Studio() {
 
   const scaleDisplayFactor = artboardDisplaySize.w / currentSpec.width;
 
-  /* ============================================================================
-     BLOCOS DE PAINÉIS REUTILIZÁVEIS (COMPARTILHADOS ENTRE DESKTOP E MOBILE)
-     ============================================================================ */
-
   const renderBgPanel = () => (
     <>
       <div className="panel-section">
@@ -1679,9 +1699,11 @@ export default function Studio() {
 
       <div className="panel-section">
         <div className="studio-label">
-          <span>Enquadramento, Cor & Bordas</span>
+          <span>Transparência, Enquadramento & Cor</span>
           <button
             onClick={() => {
+              setBgOpacity(100);
+              setBgBaseColor('#030712');
               setBgScale(1);
               setBgOffsetX(0);
               setBgOffsetY(0);
@@ -1695,6 +1717,8 @@ export default function Studio() {
             <RotateCcw size={11} /> Resetar
           </button>
         </div>
+        <PrettySlider label="Opacidade da Foto de Fundo" valueDisplay={`${bgOpacity}%`} min={0} max={100} value={bgOpacity} onChange={setBgOpacity} />
+        <ColorPill label="Cor Sólida de Base (Atrás da Foto)" color={bgBaseColor} onChange={setBgBaseColor} />
         <PrettySlider label="Zoom da Foto" valueDisplay={`${Math.round(bgScale * 100)}%`} min={0.6} max={3} step={0.02} value={bgScale} onChange={setBgScale} />
         <PrettySlider label="Arredondamento da Arte" valueDisplay={`${artboardRadius}px`} min={0} max={120} value={artboardRadius} onChange={setArtboardRadius} />
         <PrettySlider label="Brilho" valueDisplay={`${bgBrightness}%`} min={40} max={160} value={bgBrightness} onChange={setBgBrightness} />
@@ -1765,7 +1789,7 @@ export default function Studio() {
       </button>
 
       <div className="panel-section">
-        <span className="studio-label">Insígnias & Logos Oficiais</span>
+        <span className="studio-label">Insígnias & Imagens Sobrepostas</span>
         <button onClick={() => addStickerLayer('Brasão EDAFS', logoEdafs)} className="tool-pill" style={{ justifyContent: 'space-between', padding: '0.65rem', borderRadius: '10px' }}>
           <span>Brasão EDAFS</span>
           <img src={logoEdafs} alt="EDAFS" style={{ height: '22px' }} />
@@ -1779,7 +1803,7 @@ export default function Studio() {
           <img src={mfLogo} alt="MSFS 2020" style={{ height: '15px' }} />
         </button>
         <label className="tool-pill" style={{ justifyContent: 'center', padding: '0.7rem', borderStyle: 'dashed', borderRadius: '10px' }}>
-          <Upload size={14} color="#0ea5e9" /> Importar Foto / Sticker Sobrepo.
+          <Upload size={14} color="#0ea5e9" /> Importar Foto / PNG Sobreposto
           <input type="file" accept="image/*" onChange={handleUploadSticker} style={{ display: 'none' }} />
         </label>
       </div>
@@ -1808,14 +1832,13 @@ export default function Studio() {
     if (!selectedLayer) {
       return (
         <div style={{ padding: '2rem 0.75rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem', lineHeight: 1.5 }}>
-          Toque ou clique em qualquer elemento na imagem para ajustar tamanho, arredondamento, cores e efeitos — ou dê <strong>2 cliques em um texto</strong> para editar na tela.
+          Toque ou clique em qualquer elemento na imagem para ajustar transparência, tamanho, arredondamento, cores e efeitos — ou dê <strong>2 cliques em um texto</strong> para editar na tela.
         </div>
       );
     }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-        {/* BARRA DE AÇÃO RÁPIDA DO ITEM */}
         <div style={{ display: 'flex', gap: '0.4rem' }}>
           <button onClick={() => updateSelectedLayer({ x: 50 })} className="tool-pill" style={{ flex: 1, justifyContent: 'center' }}>Centrar X</button>
           <button onClick={() => updateSelectedLayer({ y: 50 })} className="tool-pill" style={{ flex: 1, justifyContent: 'center' }}>Centrar Y</button>
@@ -1830,16 +1853,61 @@ export default function Studio() {
           </button>
         </div>
 
-        {/* POSIÇÃO FINA */}
         <div className="panel-section">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
             <PrettySlider label="Posição X" valueDisplay={`${selectedLayer.x.toFixed(0)}%`} min={0} max={100} step={0.5} value={selectedLayer.x} onChange={(v) => updateSelectedLayer({ x: v })} />
             <PrettySlider label="Posição Y" valueDisplay={`${selectedLayer.y.toFixed(0)}%`} min={0} max={100} step={0.5} value={selectedLayer.y} onChange={(v) => updateSelectedLayer({ y: v })} />
           </div>
-          <PrettySlider label="Opacidade da Camada" valueDisplay={`${selectedLayer.opacity ?? 100}%`} min={10} max={100} value={selectedLayer.opacity ?? 100} onChange={(v) => updateSelectedLayer({ opacity: v })} />
+          <PrettySlider
+            label={selectedLayer.type === 'sticker' ? 'Opacidade da Imagem / Logo' : 'Opacidade da Camada'}
+            valueDisplay={`${selectedLayer.opacity ?? 100}%`}
+            min={0}
+            max={100}
+            value={selectedLayer.opacity ?? 100}
+            onChange={(v) => updateSelectedLayer({ opacity: v })}
+          />
         </div>
 
-        {/* INSPETOR DE TEXTO */}
+        {selectedLayer.type === 'sticker' && (
+          <div className="panel-section">
+            <span className="studio-label" style={{ color: '#f59e0b' }}>Imagem: Escala, Bordas & Sombra</span>
+            <PrettySlider label="Escala da Imagem" valueDisplay={`${Math.round((selectedLayer.scale || 0.5) * 100)}%`} min={0.06} max={3} step={0.02} value={selectedLayer.scale || 0.5} onChange={(v) => updateSelectedLayer({ scale: v })} accent="#f59e0b" />
+            <PrettySlider
+              label="Transparência"
+              valueDisplay={`${100 - (selectedLayer.opacity ?? 100)}%`}
+              min={0}
+              max={100}
+              value={100 - (selectedLayer.opacity ?? 100)}
+              onChange={(transp) => updateSelectedLayer({ opacity: 100 - transp })}
+              accent="#f59e0b"
+            />
+            <PrettySlider label="Arredondamento dos Cantos" valueDisplay={`${selectedLayer.borderRadius ?? 0}px`} min={0} max={250} value={selectedLayer.borderRadius ?? 0} onChange={(v) => updateSelectedLayer({ borderRadius: v })} accent="#f59e0b" />
+
+            <StudioToggle label="Sombra Suave na Imagem" checked={selectedLayer.shadow !== false} onChange={(v) => updateSelectedLayer({ shadow: v })} />
+            {selectedLayer.shadow !== false && (
+              <>
+                <PrettySlider
+                  label="Intensidade da Sombra"
+                  valueDisplay={`${selectedLayer.shadowOpacity ?? 45}%`}
+                  min={5}
+                  max={95}
+                  value={selectedLayer.shadowOpacity ?? 45}
+                  onChange={(v) => updateSelectedLayer({ shadowOpacity: v })}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                  <PrettySlider label="Difusão (Blur)" valueDisplay={`${selectedLayer.shadowBlur ?? 32}px`} min={0} max={80} value={selectedLayer.shadowBlur ?? 32} onChange={(v) => updateSelectedLayer({ shadowBlur: v })} />
+                  <PrettySlider label="Distância Y" valueDisplay={`${selectedLayer.shadowOffsetY ?? 6}px`} min={0} max={40} value={selectedLayer.shadowOffsetY ?? 6} onChange={(v) => updateSelectedLayer({ shadowOffsetY: v })} />
+                </div>
+              </>
+            )}
+
+            <PrettySlider label="Espessura da Moldura" valueDisplay={`${selectedLayer.stickerBorder ?? 0}px`} min={0} max={20} value={selectedLayer.stickerBorder ?? 0} onChange={(v) => updateSelectedLayer({ stickerBorder: v })} />
+            {(selectedLayer.stickerBorder ?? 0) > 0 && (
+              <ColorPill label="Cor da Moldura" color={selectedLayer.stickerBorderColor || '#ffffff'} onChange={(hex) => updateSelectedLayer({ stickerBorderColor: hex })} />
+            )}
+          </div>
+        )}
+
         {selectedLayer.type === 'text' && (
           <>
             <div className="panel-section">
@@ -1873,7 +1941,6 @@ export default function Studio() {
               </div>
             </div>
 
-            {/* COR E DEGRADÊ */}
             <div className="panel-section">
               <StudioToggle label="Degradê de Duas Cores" checked={!!selectedLayer.useGradient} onChange={(v) => updateSelectedLayer({ useGradient: v })} />
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1887,7 +1954,6 @@ export default function Studio() {
               )}
             </div>
 
-            {/* EFEITOS ESPECIAIS & ARREDONDAMENTO DO BADGE */}
             <div className="panel-section">
               <span className="studio-label" style={{ color: '#38bdf8' }}>Caixa de Vidro & Efeitos</span>
 
@@ -1914,16 +1980,25 @@ export default function Studio() {
 
               <StudioToggle label="Sombra Projetada" checked={!!selectedLayer.shadow} onChange={(v) => updateSelectedLayer({ shadow: v })} />
               {selectedLayer.shadow && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-                  <PrettySlider label="Suavidade" valueDisplay={`${selectedLayer.shadowBlur ?? 24}px`} min={0} max={60} value={selectedLayer.shadowBlur ?? 24} onChange={(v) => updateSelectedLayer({ shadowBlur: v })} />
-                  <PrettySlider label="Distância Y" valueDisplay={`${selectedLayer.shadowOffsetY ?? 8}px`} min={0} max={35} value={selectedLayer.shadowOffsetY ?? 8} onChange={(v) => updateSelectedLayer({ shadowOffsetY: v })} />
-                </div>
+                <>
+                  <PrettySlider
+                    label="Intensidade da Sombra"
+                    valueDisplay={`${selectedLayer.shadowOpacity ?? 75}%`}
+                    min={5}
+                    max={100}
+                    value={selectedLayer.shadowOpacity ?? 75}
+                    onChange={(v) => updateSelectedLayer({ shadowOpacity: v })}
+                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                    <PrettySlider label="Suavidade" valueDisplay={`${selectedLayer.shadowBlur ?? 24}px`} min={0} max={60} value={selectedLayer.shadowBlur ?? 24} onChange={(v) => updateSelectedLayer({ shadowBlur: v })} />
+                    <PrettySlider label="Distância Y" valueDisplay={`${selectedLayer.shadowOffsetY ?? 8}px`} min={0} max={35} value={selectedLayer.shadowOffsetY ?? 8} onChange={(v) => updateSelectedLayer({ shadowOffsetY: v })} />
+                  </div>
+                </>
               )}
             </div>
           </>
         )}
 
-        {/* INSPETOR DE CARD GLASSMORPHISM */}
         {selectedLayer.type === 'glass' && (
           <div className="panel-section">
             <span className="studio-label" style={{ color: '#38bdf8' }}>Dimensões, Arredondamento & Vidro</span>
@@ -1932,21 +2007,8 @@ export default function Studio() {
             <PrettySlider label="Arredondamento dos Cantos" valueDisplay={`${selectedLayer.borderRadius ?? 32}px`} min={0} max={180} value={selectedLayer.borderRadius ?? 32} onChange={(v) => updateSelectedLayer({ borderRadius: v })} />
             <PrettySlider label="Desfoque do Fundo (Blur)" valueDisplay={`${selectedLayer.glassBlur ?? 18}px`} min={0} max={45} value={selectedLayer.glassBlur ?? 18} onChange={(v) => updateSelectedLayer({ glassBlur: v })} />
             <ColorPill label="Tonalidade do Vidro" color={selectedLayer.glassTint || '#0f172a'} onChange={(hex) => updateSelectedLayer({ glassTint: hex })} />
-            <PrettySlider label="Opacidade do Vidro" valueDisplay={`${selectedLayer.glassOpacity ?? 42}%`} min={5} max={90} value={selectedLayer.glassOpacity ?? 42} onChange={(v) => updateSelectedLayer({ glassOpacity: v })} />
+            <PrettySlider label="Preenchimento do Vidro" valueDisplay={`${selectedLayer.glassOpacity ?? 42}%`} min={5} max={90} value={selectedLayer.glassOpacity ?? 42} onChange={(v) => updateSelectedLayer({ glassOpacity: v })} />
             <PrettySlider label="Brilho da Borda" valueDisplay={`${selectedLayer.glassBorderOpacity ?? 35}%`} min={0} max={100} value={selectedLayer.glassBorderOpacity ?? 35} onChange={(v) => updateSelectedLayer({ glassBorderOpacity: v })} />
-          </div>
-        )}
-
-        {/* INSPETOR DE STICKER / FOTO SOBREPOSTA COM ARREDONDAMENTO */}
-        {selectedLayer.type === 'sticker' && (
-          <div className="panel-section">
-            <span className="studio-label" style={{ color: '#f59e0b' }}>Tamanho, Arredondamento & Moldura</span>
-            <PrettySlider label="Escala da Imagem" valueDisplay={`${Math.round((selectedLayer.scale || 0.5) * 100)}%`} min={0.06} max={3} step={0.02} value={selectedLayer.scale || 0.5} onChange={(v) => updateSelectedLayer({ scale: v })} />
-            <PrettySlider label="Arredondamento dos Cantos" valueDisplay={`${selectedLayer.borderRadius ?? 0}px`} min={0} max={250} value={selectedLayer.borderRadius ?? 0} onChange={(v) => updateSelectedLayer({ borderRadius: v })} />
-            <PrettySlider label="Espessura da Moldura" valueDisplay={`${selectedLayer.stickerBorder ?? 0}px`} min={0} max={20} value={selectedLayer.stickerBorder ?? 0} onChange={(v) => updateSelectedLayer({ stickerBorder: v })} />
-            {(selectedLayer.stickerBorder ?? 0) > 0 && (
-              <ColorPill label="Cor da Moldura" color={selectedLayer.stickerBorderColor || '#ffffff'} onChange={(hex) => updateSelectedLayer({ stickerBorderColor: hex })} />
-            )}
           </div>
         )}
       </div>
@@ -2040,7 +2102,6 @@ export default function Studio() {
           align-items: center;
         }
 
-        /* SLIDER MODERNO CUSTOMIZADO */
         .pretty-range {
           -webkit-appearance: none;
           appearance: none;
@@ -2113,7 +2174,6 @@ export default function Studio() {
         .studio-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
       `}</style>
 
-      {/* HEADER RESPONSIVO */}
       <header
         style={{
           minHeight: isMobile ? '54px' : '60px',
@@ -2138,7 +2198,6 @@ export default function Studio() {
           </span>
         </div>
 
-        {/* SELETOR DE FORMATO (COMPACTO NO MOBILE) */}
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           {(Object.keys(PRESETS) as PresetKey[]).map((key) => (
             <button
@@ -2156,7 +2215,6 @@ export default function Studio() {
           ))}
         </div>
 
-        {/* EXPORTAÇÃO MÁXIMA QUALIDADE */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <button
             className={`tool-pill ${showSafeGuides ? 'active' : ''}`}
@@ -2195,12 +2253,8 @@ export default function Studio() {
         </div>
       </header>
 
-      {/* ========================================================================
-          MODO DESKTOP (3 COLUNAS) vs MODO MOBILE (PALCO + GAVETA INFERIOR)
-         ======================================================================== */}
       {!isMobile ? (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* COLUNA ESQUERDA DESKTOP */}
           <aside style={{ width: '330px', background: '#0b0f19', borderRight: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '0.5rem', gap: '0.3rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <button className={`tool-pill ${activeLeftTab === 'bg' ? 'active' : ''}`} style={{ justifyContent: 'center', padding: '0.45rem 0.2rem', fontSize: '0.72rem' }} onClick={() => setActiveLeftTab('bg')}>
@@ -2225,7 +2279,6 @@ export default function Studio() {
             </div>
           </aside>
 
-          {/* PALCO CENTRAL DESKTOP */}
           <main
             onDragOver={(e) => { e.preventDefault(); setIsDropHover(true); }}
             onDragLeave={() => setIsDropHover(false)}
@@ -2324,7 +2377,6 @@ export default function Studio() {
             </div>
           </main>
 
-          {/* COLUNA DIREITA DESKTOP */}
           <aside style={{ width: '355px', background: '#0b0f19', borderLeft: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div className="studio-scroll" style={{ padding: '0.9rem', borderBottom: '1px solid rgba(255,255,255,0.08)', flex: 1, overflowY: 'auto' }}>
               <span className="studio-label" style={{ marginBottom: '0.6rem' }}>Propriedades do Elemento</span>
@@ -2342,11 +2394,7 @@ export default function Studio() {
           </aside>
         </div>
       ) : (
-        /* ======================================================================
-           LAYOUT MOBILE DEDICADO (PALCO NO TOPO + GAVETA INFERIOR DESLIZÁVEL)
-           ====================================================================== */
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          {/* PALCO COMPACTO MOBILE */}
           <div
             style={{
               height: '46dvh',
@@ -2415,7 +2463,6 @@ export default function Studio() {
             </div>
           </div>
 
-          {/* NAVEGAÇÃO DE ABAS MOBILE */}
           <div
             className="studio-scroll"
             style={{
@@ -2449,7 +2496,6 @@ export default function Studio() {
             </button>
           </div>
 
-          {/* CONTEÚDO ROLÁVEL DA GAVETA MOBILE */}
           <div className="studio-scroll" style={{ flex: 1, overflowY: 'auto', padding: '0.85rem', background: '#090d16', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {mobileTab === 'inspector' && renderInspectorPanel()}
             {mobileTab === 'elements' && renderElementsPanel()}
