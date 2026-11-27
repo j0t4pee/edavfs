@@ -4,35 +4,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowLeft, GitCommit, Calendar, CheckCircle2, RefreshCw } from 'lucide-react';
+import { GitCommit, Calendar, CheckCircle2, RefreshCw, Shield, Gauge, Cpu, Flame, Lock, Globe } from 'lucide-react';
 
 import '../App.css';
 
 import rpLogo from '../images/rp.png';
-import heroImg from '../images/5.png';
-import a29Feature from '../images/tucano8.png';
-import a29Specs from '../images/tucano8.png';
+import heroImg from '../images/tucano8.png';
+import a29Feature from '../images/tucano10.png';
+import a29SpecsImg from '../images/a29.png';
+import socialCoverImg from '../images/1.jpg';
 
 const RP_DISCORD_URL = "https://discord.gg/nFkEd8vpHs";
-
-const FALLBACK_RELEASE = {
-  version: "v1.2.0",
-  releaseDate: "05/11/2026",
-  patchNotes: [
-    "Compatibilidade e otimização de performance para o Microsoft Flight Simulator 2024.",
-    "Ajuste fino de resposta do turboélice PT6A-68C em manobras acrobáticas.",
-    "Aprimoramento visual na dispersão da fumaça para voos de demonstração.",
-    "Revisão na lógica de transferência dos tanques externos e freio aerodinâmico.",
-    "Calibragem de brilho nos painéis MFD, UFCP e HUD em voos noturnos."
-  ]
-};
+const PAGE_TITLE = "RP Simulation | A-29";
+const PAGE_DESCRIPTION = "Conheça o A-29 Super Tucano oficial da RP Simulation para Microsoft Flight Simulator 2020 e 2024. Aviônica completa, modelo de voo avançado, especificações e notas de atualização.";
 
 interface ReleaseData {
   version: string;
   releaseDate: string;
   patchNotes: string[];
   updatedAt?: string;
-  updatedBy?: string;
 }
 
 const DiscordIcon = () => (
@@ -43,12 +33,85 @@ const DiscordIcon = () => (
 
 export default function A29Page() {
   const navigate = useNavigate();
-  const [release, setRelease] = useState<ReleaseData>(FALLBACK_RELEASE);
+  const [release, setRelease] = useState<ReleaseData>({
+    version: "v1.0.0",
+    releaseDate: "--/--/----",
+    patchNotes: [],
+  });
   const [loadingRelease, setLoadingRelease] = useState(true);
 
   useEffect(() => {
-    document.title = "A-29 Super Tucano | RP Simulations";
+    document.title = PAGE_TITLE;
     document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('lang', 'pt-BR');
+
+    const origin = window.location.origin;
+    const canonicalUrl = `${origin}/a29`;
+    const absoluteCoverUrl = socialCoverImg.startsWith('http')
+      ? socialCoverImg
+      : `${origin}${socialCoverImg.startsWith('/') ? '' : '/'}${socialCoverImg}`;
+
+    const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    upsertMeta('name', 'description', PAGE_DESCRIPTION);
+    upsertMeta('name', 'keywords', 'RP Simulation, RP Simulations, A-29 Super Tucano, EMB-314, MSFS 2020, MSFS 2024, Microsoft Flight Simulator, Add-on A-29, Tucano simulador');
+    upsertMeta('name', 'robots', 'index, follow');
+    upsertMeta('name', 'author', 'RP Simulation');
+    upsertMeta('name', 'theme-color', '#0ea5e9');
+
+    upsertMeta('property', 'og:type', 'website');
+    upsertMeta('property', 'og:site_name', 'RP Simulation');
+    upsertMeta('property', 'og:title', PAGE_TITLE);
+    upsertMeta('property', 'og:description', PAGE_DESCRIPTION);
+    upsertMeta('property', 'og:url', canonicalUrl);
+    upsertMeta('property', 'og:image', absoluteCoverUrl);
+    upsertMeta('property', 'og:image:alt', 'RP Simulation | A-29 Super Tucano');
+    upsertMeta('property', 'og:locale', 'pt_BR');
+
+    upsertMeta('name', 'twitter:card', 'summary_large_image');
+    upsertMeta('name', 'twitter:title', PAGE_TITLE);
+    upsertMeta('name', 'twitter:description', PAGE_DESCRIPTION);
+    upsertMeta('name', 'twitter:image', absoluteCoverUrl);
+
+    let linkCanonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!linkCanonical) {
+      linkCanonical = document.createElement('link');
+      linkCanonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(linkCanonical);
+    }
+    linkCanonical.setAttribute('href', canonicalUrl);
+
+    const jsonLdId = 'rp-sim-a29-jsonld';
+    let scriptLd = document.getElementById(jsonLdId) as HTMLScriptElement | null;
+    if (!scriptLd) {
+      scriptLd = document.createElement('script');
+      scriptLd.id = jsonLdId;
+      scriptLd.type = 'application/ld+json';
+      document.head.appendChild(scriptLd);
+    }
+    scriptLd.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "RP Simulation | A-29 Super Tucano",
+      "operatingSystem": "Windows, Xbox",
+      "applicationCategory": "GameApplication",
+      "description": PAGE_DESCRIPTION,
+      "image": absoluteCoverUrl,
+      "url": canonicalUrl,
+      "author": {
+        "@type": "Organization",
+        "name": "RP Simulation",
+        "sameAs": [RP_DISCORD_URL]
+      }
+    });
 
     const unsubA29 = onSnapshot(
       doc(db, 'config', 'a29'),
@@ -56,20 +119,17 @@ export default function A29Page() {
         if (docSnap.exists()) {
           const d = docSnap.data();
           setRelease({
-            version: typeof d.version === 'string' && d.version.trim() ? d.version.trim() : FALLBACK_RELEASE.version,
-            releaseDate: typeof d.releaseDate === 'string' && d.releaseDate.trim() ? d.releaseDate.trim() : FALLBACK_RELEASE.releaseDate,
-            patchNotes:
-              Array.isArray(d.patchNotes) && d.patchNotes.filter(Boolean).length > 0
-                ? d.patchNotes.map((n: unknown) => String(n).trim()).filter(Boolean)
-                : FALLBACK_RELEASE.patchNotes,
+            version: typeof d.version === 'string' && d.version.trim() ? d.version.trim() : "v1.0.0",
+            releaseDate: typeof d.releaseDate === 'string' && d.releaseDate.trim() ? d.releaseDate.trim() : "--/--/----",
+            patchNotes: Array.isArray(d.patchNotes)
+              ? d.patchNotes.map((n: unknown) => String(n).trim()).filter(Boolean)
+              : [],
             updatedAt: d.updatedAt || undefined,
-            updatedBy: d.updatedBy || undefined,
           });
         }
         setLoadingRelease(false);
       },
-      (err) => {
-        console.error("Erro ao sincronizar config/a29:", err);
+      () => {
         setLoadingRelease(false);
       }
     );
@@ -80,7 +140,7 @@ export default function A29Page() {
           if (entry.isIntersecting) entry.target.classList.add('visible');
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
 
     const elements = document.querySelectorAll('.reveal-on-scroll');
@@ -99,282 +159,465 @@ export default function A29Page() {
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  const roadmapItems = [
+    { code: 'PRJ // 01', status: 'progress' },
+    { code: 'PRJ // 02', status: 'classified' },
+    { code: 'PRJ // 03', status: 'classified' },
+    { code: 'PRJ // 04', status: 'classified' },
+  ];
+
   return (
-    <div id="top" style={{ backgroundColor: '#030712', minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden', paddingBottom: '4rem' }}>
+    <main id="top" className="a29-page-root">
       <style>{`
+        @font-face { font-family: 'Comum'; src: url('/fonts/comum.otf') format('opentype'); font-display: swap; }
         @font-face { font-family: 'Regular'; src: url('/fonts/regular.otf') format('opentype'); font-display: swap; }
-        @font-face { font-family: 'Comum'; src: url('/fonts/comum.otf') format('opentype'); }
-        @font-face { font-family: 'StratumNo2'; src: url('/fonts/stratumno2_regular.otf') format('opentype'); }
-        @font-face { font-family: 'PosicaoFont'; src: url('/fonts/posicao.otf') format('opentype'); }
 
-        * { font-family: 'Regular', system-ui, -apple-system, sans-serif; box-sizing: border-box; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Comum', sans-serif; margin: 0; }
-
-        body, html {
-          background: #030712 !important; max-width: 100vw; overflow-x: hidden; scroll-behavior: smooth; color: #e2e8f0;
+        html, body {
+          background: #07090e !important;
+          max-width: 100vw;
+          overflow-x: hidden;
+          scroll-behavior: smooth;
+          scrollbar-width: thin;
+          scrollbar-color: #0ea5e9 #0a0d14;
         }
 
-        .reveal-on-scroll { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
-        .reveal-on-scroll.visible { opacity: 1; transform: translateY(0); }
-
-        .back-floating-btn {
-          position: fixed;
-          top: 1.5rem;
-          left: 1.5rem;
-          z-index: 60;
-          background: rgba(15, 23, 42, 0.65);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: #f8fafc;
-          padding: 0.6rem 1.15rem;
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #0a0d14;
+          border-left: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #0ea5e9;
           border-radius: 999px;
-          font-size: 0.82rem;
-          font-family: 'Comum', sans-serif;
-          letter-spacing: 0.04em;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
+          border: 2px solid #0a0d14;
         }
-        .back-floating-btn:hover {
-          background: rgba(14, 165, 233, 0.18);
-          border-color: #38bdf8;
-          color: #38bdf8;
+        ::-webkit-scrollbar-thumb:hover {
+          background: #38bdf8;
         }
 
-        .title-gradient {
-          font-family: 'StratumNo2', sans-serif !important;
-          background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 48%, #38bdf8 100%);
+        .a29-page-root {
+          background-color: #07090e;
+          background-image:
+            radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.09) 0%, transparent 50%),
+            linear-gradient(to right, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+          background-size: 100% 100%, 64px 64px, 64px 64px;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          overflow-x: hidden;
+          padding-bottom: 4.5rem;
+          color: #d4d8e2;
+          font-family: 'Regular', system-ui, -apple-system, 'Segoe UI', sans-serif;
+          font-weight: 400;
+        }
+
+        .a29-page-root * {
+          box-sizing: border-box;
+        }
+
+        .reveal-on-scroll {
+          opacity: 0;
+          transform: translateY(22px);
+          transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+        }
+        .reveal-on-scroll.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .hero-title-metallic {
+          font-family: 'Comum', system-ui, -apple-system, sans-serif !important;
+          font-weight: 600 !important;
+          text-transform: uppercase;
+          background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 58%, #7dd3fc 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 12px 28px rgba(14, 165, 233, 0.25));
+          filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.9));
+          margin: 0;
+          white-space: nowrap;
         }
 
-        .title-hollow-bg {
-          font-family: 'StratumNo2', sans-serif !important;
+        .section-heading-metallic {
+          font-family: 'Comum', system-ui, -apple-system, sans-serif !important;
+          font-weight: 500 !important;
+          text-transform: uppercase;
+          background: linear-gradient(90deg, #ffffff 0%, #e2e8f0 60%, #38bdf8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: 0.03em;
+          margin: 0;
+        }
+
+        .title-hollow-watermark {
+          font-family: 'Comum', system-ui, sans-serif !important;
+          font-weight: 600;
           color: transparent;
-          -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.15);
+          -webkit-text-stroke: 1.5px rgba(56, 189, 248, 0.09);
           user-select: none;
           pointer-events: none;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.06em;
           line-height: 0.85;
           white-space: nowrap;
         }
 
-        .overline-glow {
-          font-family: 'Comum', sans-serif;
-          color: #38bdf8;
-          text-transform: uppercase;
-          letter-spacing: 0.28em;
-          font-size: 0.78rem;
-          text-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
+        .accent-blue-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.48rem;
+          background-color: #0284c7;
+          border: 1px solid #38bdf8;
+          color: #ffffff;
+          padding: 0.46rem 1.05rem;
+          border-radius: 999px;
+          font-family: 'Comum', system-ui, sans-serif;
+          font-weight: 600;
+          font-size: 0.86rem;
+          letter-spacing: 0.06em;
         }
 
-        .anamorphic-line {
+        .subtle-divider-line {
           width: 100%;
-          max-width: 520px;
-          height: 2px;
-          margin: 1.4rem auto;
-          background: linear-gradient(90deg, transparent 0%, rgba(56,189,248,0.65) 35%, #ffffff 50%, rgba(56,189,248,0.65) 65%, transparent 100%);
-          box-shadow: 0 0 18px rgba(56, 189, 248, 0.65);
+          max-width: 460px;
+          height: 1px;
+          margin: 1.5rem auto;
+          background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.55) 50%, transparent 100%);
         }
 
-        .section-wrap {
-          padding: 4rem 2rem;
+        .section-container {
+          padding: 3.5rem 2rem;
           max-width: 1180px;
           margin: 0 auto;
           width: 100%;
         }
 
-        .hud-stats-bar {
+        .stats-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 1px;
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          overflow: hidden;
+          gap: 1.15rem;
         }
-        .hud-stat-cell {
-          background: rgba(9, 14, 26, 0.92);
-          padding: 1.6rem 1.25rem;
+        .stat-card {
+          background: rgba(15, 18, 26, 0.82);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 2px solid #0ea5e9;
+          border-radius: 14px;
+          padding: 1.55rem 1.25rem;
           text-align: center;
+          transition: transform 0.25s ease, border-color 0.25s ease;
         }
-        .hud-stat-val {
-          font-family: 'StratumNo2', sans-serif;
-          font-size: 2.1rem;
-          background: linear-gradient(90deg, #ffffff 0%, #7dd3fc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          display: block;
-          line-height: 1.05;
-        }
-        .hud-stat-lbl {
-          font-size: 0.72rem;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
-          margin-top: 0.35rem;
-          display: block;
-          font-weight: 600;
-        }
-
-        .feature-grid-4 {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.25rem;
-        }
-        .feature-box {
-          background: rgba(15, 23, 42, 0.45);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 14px;
-          padding: 1.6rem;
-          transition: border-color 0.25s ease, transform 0.25s ease;
-        }
-        .feature-box:hover {
-          border-color: rgba(56, 189, 248, 0.35);
+        .stat-card:hover {
           transform: translateY(-3px);
+          border-color: rgba(56, 189, 248, 0.4);
         }
-        .feature-num {
-          font-family: 'StratumNo2', sans-serif;
-          font-size: 0.9rem;
-          color: #0ea5e9;
-          letter-spacing: 0.12em;
+        .stat-number {
+          font-family: 'Comum', system-ui, sans-serif;
+          font-weight: 500;
+          font-size: 1.9rem;
+          letter-spacing: 0.02em;
+          color: #f8fafc;
           display: block;
-          margin-bottom: 0.35rem;
+          line-height: 1.1;
+        }
+        .stat-caption {
+          font-size: 0.76rem;
+          color: #8b95a5;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin-top: 0.45rem;
+          display: block;
+          font-weight: 400;
         }
 
-        .patch-card {
-          background: linear-gradient(160deg, rgba(15, 23, 42, 0.72) 0%, rgba(7, 11, 22, 0.9) 100%);
-          border: 1px solid rgba(56, 189, 248, 0.22);
-          border-radius: 18px;
-          padding: 2.2rem;
-          position: relative;
-          overflow: hidden;
+        .patch-panel {
+          background: rgba(14, 17, 24, 0.88);
+          border: 1px solid rgba(56, 189, 248, 0.18);
+          border-radius: 20px;
+          padding: 2.4rem;
+          box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
         }
-        .patch-header {
+        .patch-top {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
+          gap: 1.25rem;
           padding-bottom: 1.4rem;
-          margin-bottom: 1.5rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          margin-bottom: 1.6rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
         }
-        .patch-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          background: rgba(14, 165, 233, 0.15);
-          border: 1px solid rgba(56, 189, 248, 0.38);
-          color: #7dd3fc;
-          padding: 0.42rem 0.9rem;
-          border-radius: 999px;
-          font-family: 'StratumNo2', sans-serif;
-          font-size: 0.95rem;
-          letter-spacing: 0.08em;
-        }
-        .patch-date {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-          color: #94a3b8;
-          font-size: 0.85rem;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 0.42rem 0.9rem;
-          border-radius: 999px;
-        }
-        .patch-list {
+        .patch-notes-grid {
           list-style: none;
           padding: 0;
           margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 0.85rem;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.7rem;
         }
-        .patch-item {
+        .patch-note-row {
           display: flex;
           align-items: flex-start;
-          gap: 0.75rem;
-          color: #cbd5e1;
+          gap: 0.85rem;
+          background: rgba(0, 0, 0, 0.32);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 0.9rem 1.15rem;
+          border-radius: 11px;
+          color: #d1d5db;
           font-size: 0.94rem;
+          font-weight: 400;
           line-height: 1.55;
         }
+        .empty-patch-box {
+          padding: 2.2rem 1.5rem;
+          text-align: center;
+          background: rgba(0, 0, 0, 0.28);
+          border: 1px dashed rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          color: #8b95a5;
+          font-size: 0.94rem;
+          letter-spacing: 0.02em;
+        }
 
-        .spec-split {
+        .features-bento {
           display: grid;
-          grid-template-columns: 0.85fr 1.15fr;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem;
+        }
+        .bento-card {
+          background: rgba(14, 17, 24, 0.78);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          padding: 1.75rem;
+          transition: all 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+        .bento-card:hover {
+          border-color: rgba(56, 189, 248, 0.38);
+          transform: translateY(-3px);
+        }
+        .bento-icon-wrap {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: rgba(14, 165, 233, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.28);
+          color: #38bdf8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 0.3rem;
+        }
+
+        .roadmap-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.15rem;
+        }
+        .classified-card {
+          position: relative;
+          background:
+            repeating-linear-gradient(
+              -45deg,
+              rgba(255, 255, 255, 0.015),
+              rgba(255, 255, 255, 0.015) 10px,
+              transparent 10px,
+              transparent 20px
+            ),
+            rgba(12, 15, 22, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 16px;
+          padding: 1.75rem 1.4rem;
+          min-height: 170px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+          transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+        .classified-card.active-progress {
+          border-color: rgba(14, 165, 233, 0.5);
+          box-shadow: 0 14px 36px rgba(14, 165, 233, 0.14);
+        }
+        .classified-stamp {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-family: 'Comum', system-ui, sans-serif;
+          font-size: 0.72rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #64748b;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(0, 0, 0, 0.4);
+          padding: 0.3rem 0.65rem;
+          border-radius: 6px;
+          width: fit-content;
+        }
+        .redacted-bar {
+          height: 8px;
+          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.07);
+          width: 75%;
+          margin-top: 0.45rem;
+        }
+
+        @keyframes pulseBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.25; }
+        }
+        .blink-progress {
+          animation: pulseBlink 1.35s ease-in-out infinite;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #38bdf8;
+          font-family: 'Comum', system-ui, sans-serif;
+          font-size: 0.95rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+        .blink-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #0ea5e9;
+          box-shadow: 0 0 12px #0ea5e9;
+        }
+
+        .specs-showcase {
+          background: rgba(14, 17, 24, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          border-radius: 22px;
+          padding: 2.75rem 2.5rem;
+          display: grid;
+          grid-template-columns: 1.05fr 1fr;
           gap: 3rem;
           align-items: center;
+          position: relative;
+          overflow: hidden;
         }
-        .spec-table { width: 100%; border-collapse: collapse; }
-        .spec-table tr { border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .spec-table td { padding: 1.05rem 0; }
-        .spec-label { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-        .spec-value { color: #f8fafc; font-family: 'StratumNo2', monospace; font-size: 1.15rem; letter-spacing: 0.04em; text-align: right; }
-
-        .btn-discord {
-          background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-          color: #ffffff;
-          padding: 0.95rem 2.2rem;
-          border-radius: 10px;
-          border: none;
-          font-family: 'Comum', sans-serif;
-          font-size: 0.95rem;
+        .aircraft-render-box {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+        .aircraft-glow-orb {
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(14, 165, 233, 0.16) 0%, transparent 70%);
+          filter: blur(18px);
+          pointer-events: none;
+        }
+        .specs-rows {
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+        }
+        .spec-row-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: 0.9rem 1.15rem;
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 11px;
+        }
+        .spec-row-label {
+          color: #8b95a5;
+          font-size: 0.8rem;
+          text-transform: uppercase;
           letter-spacing: 0.06em;
+          font-weight: 400;
+        }
+        .spec-row-val {
+          color: #f8fafc;
+          font-family: 'Comum', system-ui, sans-serif;
+          font-weight: 500;
+          font-size: 0.96rem;
+          letter-spacing: 0.03em;
+          text-align: right;
+        }
+
+        .btn-primary-blue {
+          background: #0284c7;
+          color: #ffffff;
+          padding: 0.95rem 2.1rem;
+          border-radius: 11px;
+          border: 1px solid #38bdf8;
+          font-family: 'Comum', system-ui, sans-serif;
+          font-weight: 600;
+          font-size: 0.92rem;
+          letter-spacing: 0.05em;
           text-transform: uppercase;
           cursor: pointer;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 0.65rem;
-          box-shadow: 0 10px 28px rgba(14, 165, 233, 0.35);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          gap: 0.6rem;
+          box-shadow: 0 10px 28px rgba(2, 132, 199, 0.35);
+          transition: all 0.2s ease;
         }
-        .btn-discord:hover {
+        .btn-primary-blue:hover {
+          background: #0ea5e9;
           transform: translateY(-2px);
-          box-shadow: 0 14px 34px rgba(14, 165, 233, 0.5);
+          box-shadow: 0 14px 32px rgba(14, 165, 233, 0.45);
         }
 
-        .btn-ghost {
-          background: rgba(255,255,255,0.04);
-          color: #f8fafc;
-          padding: 0.95rem 2rem;
-          border-radius: 10px;
-          border: 1px solid rgba(255,255,255,0.16);
-          font-family: 'Comum', sans-serif;
-          font-size: 0.95rem;
+        .btn-secondary-outline {
+          background: rgba(7, 9, 14, 0.55);
+          backdrop-filter: blur(10px);
+          color: #f1f5f9;
+          padding: 0.95rem 1.9rem;
+          border-radius: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          font-family: 'Comum', system-ui, sans-serif;
+          font-weight: 500;
+          font-size: 0.92rem;
           letter-spacing: 0.05em;
           text-transform: uppercase;
+          cursor: pointer;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          gap: 0.55rem;
           transition: all 0.2s ease;
         }
-        .btn-ghost:hover { border-color: #38bdf8; color: #38bdf8; }
+        .btn-secondary-outline:hover {
+          border-color: #38bdf8;
+          color: #38bdf8;
+          background: rgba(14, 165, 233, 0.08);
+        }
 
         @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spin-icon { animation: spinSlow 1.2s linear infinite; }
 
-        @media (max-width: 900px) {
-          .back-floating-btn { top: 1rem; left: 1rem; padding: 0.5rem 0.9rem; font-size: 0.76rem; }
-          .hud-stats-bar { grid-template-columns: repeat(2, 1fr); }
-          .feature-grid-4, .spec-split { grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (max-width: 960px) {
+          .stats-grid, .roadmap-grid { grid-template-columns: repeat(2, 1fr); }
+          .features-bento, .specs-showcase { grid-template-columns: 1fr; gap: 2rem; }
+          .specs-showcase { padding: 2rem 1.5rem; }
           .hero-actions { flex-direction: column; width: 100%; }
-          .hero-actions a { width: 100%; }
-          .patch-card { padding: 1.5rem; }
+          .hero-actions a, .hero-actions button { width: 100%; }
+          .patch-panel { padding: 1.6rem; }
+        }
+
+        @media (max-width: 560px) {
+          .roadmap-grid { grid-template-columns: 1fr; }
+          .hero-title-metallic { white-space: normal; }
         }
       `}</style>
 
-      
-
-      <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', minHeight: '92vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5rem 0 3.5rem', overflow: 'hidden' }}>
         <div
           style={{
             position: 'absolute',
@@ -382,205 +625,261 @@ export default function A29Page() {
             backgroundImage: `url(${heroImg})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.42,
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 100%)',
+            opacity: 0.78,
+            filter: 'brightness(1.12) contrast(1.05)',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at center, rgba(7, 9, 14, 0.12) 0%, rgba(7, 9, 14, 0.74) 100%)',
           }}
         />
 
         <div
           aria-hidden="true"
-          className="title-hollow-bg"
-          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -54%)', fontSize: 'clamp(7rem, 22vw, 21rem)', zIndex: 2 }}
+          className="title-hollow-watermark"
+          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -54%)', fontSize: 'clamp(6rem, 20vw, 18rem)', zIndex: 2 }}
         >
           EMB-314
         </div>
 
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: '920px', width: '100%', padding: '0 2rem', textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.2rem' }}>
+        <div style={{ position: 'relative', zIndex: 10, maxWidth: '1040px', width: '100%', padding: '0 2rem', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.8rem' }}>
             <img
               src={rpLogo}
-              alt="RP Simulations"
+              alt="RP Simulation"
               style={{
-                height: '76px',
+                height: '84px',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.65))',
+                filter: 'drop-shadow(0 10px 28px rgba(0,0,0,0.85))',
               }}
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           </div>
 
-          <span className="overline-glow"> {release.version}</span>
-
-          <h1 className="title-gradient" style={{ fontSize: 'clamp(2.9rem, 6.8vw, 5.6rem)', lineHeight: 0.98, margin: '0.6rem 0 0', letterSpacing: '0.03em' }}>
+          <h1 className="hero-title-metallic" style={{ fontSize: 'clamp(1.85rem, 4.3vw, 3.7rem)', lineHeight: 1.08, letterSpacing: '0.03em' }}>
             A-29 SUPER TUCANO
           </h1>
 
-          <div className="anamorphic-line" />
+          <div className="subtle-divider-line" />
 
-          <p style={{ fontSize: '1.08rem', color: '#cbd5e1', lineHeight: 1.6, margin: '0 auto 2.4rem', maxWidth: '640px' }}>
-            Aeronave desenvolvida pela <strong>RP Simulations</strong> e utilizada nas demonstrações da Esquadrilha da Fumaça Virtual. Disponível diretamente no <strong>Marketplace oficial do simulador</strong>.
+          <p style={{ fontSize: '1.06rem', color: '#e2e8f0', fontWeight: 400, lineHeight: 1.65, margin: '0 auto 2.4rem', maxWidth: '640px', textShadow: '0 2px 14px rgba(0,0,0,0.85)' }}>
+            Projeto oficial desenvolvido pela <span style={{ color: '#ffffff', fontWeight: 500 }}>RP Simulation</span> com fidelidade avançada de sistemas, aviônica e envelope de voo para o Microsoft Flight Simulator. Disponível exclusivamente no Marketplace oficial.
           </p>
 
-          <div className="hero-actions" style={{ display: 'flex', gap: '0.9rem', justifyContent: 'center' }}>
-            <a href={RP_DISCORD_URL} target="_blank" rel="noopener noreferrer" className="btn-discord">
-              <DiscordIcon />RP Simulations
+          <div className="hero-actions" style={{ display: 'flex', gap: '0.95rem', justifyContent: 'center' }}>
+            <a href={RP_DISCORD_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-blue">
+              <DiscordIcon /> Discord Oficial
             </a>
-            <a href="#atualizacoes" className="btn-ghost">
-              Patch Notes ({release.version})
+            <a href="#atualizacoes" className="btn-secondary-outline">
+              Notas da Versão
             </a>
           </div>
         </div>
       </section>
 
-      {/* 2. MÉTRICAS RÁPIDAS */}
-      <section className="section-wrap reveal-on-scroll" style={{ paddingTop: '0.5rem', paddingBottom: '2rem' }}>
-        <div className="hud-stats-bar">
-          <div className="hud-stat-cell">
-            <span className="hud-stat-val">1.600 SHP</span>
-            <span className="hud-stat-lbl">Pratt & Whitney PT6A-68C</span>
+      <section className="section-container reveal-on-scroll" style={{ paddingTop: '0.5rem', paddingBottom: '2.5rem' }}>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <span className="stat-number">1.600 SHP</span>
+            <span className="stat-caption">Pratt & Whitney PT6A-68C</span>
           </div>
-          <div className="hud-stat-cell">
-            <span className="hud-stat-val">280 KT</span>
-            <span className="hud-stat-lbl">Velocidade de Cruzeiro</span>
+          <div className="stat-card">
+            <span className="stat-number">280 KT</span>
+            <span className="stat-caption">Velocidade de Cruzeiro</span>
           </div>
-          <div className="hud-stat-cell">
-            <span className="hud-stat-val">+7G / -3.5G</span>
-            <span className="hud-stat-lbl">Envelope Acrobático</span>
+          <div className="stat-card">
+            <span className="stat-number">+7G / -3.5G</span>
+            <span className="stat-caption">Envelope Acrobático</span>
           </div>
-          <div className="hud-stat-cell">
-            <span className="hud-stat-val">35.000 FT</span>
-            <span className="hud-stat-lbl">Teto Operacional</span>
+          <div className="stat-card">
+            <span className="stat-number">35.000 FT</span>
+            <span className="stat-caption">Teto Operacional</span>
           </div>
         </div>
       </section>
 
-      
-      <section id="atualizacoes" className="section-wrap reveal-on-scroll">
-        <div className="patch-card" style={{ opacity: loadingRelease ? 0.7 : 1, transition: 'opacity 0.3s ease' }}>
-          <div className="patch-header">
-            <div>
-              <span className="overline-glow" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                Registro de Alterações
-                {loadingRelease && <RefreshCw size={12} className="spin-icon" />}
-              </span>
-              <h2 className="title-gradient" style={{ fontSize: 'clamp(1.7rem, 3vw, 2.3rem)', marginTop: '0.35rem' }}>
+      <section id="atualizacoes" className="section-container reveal-on-scroll">
+        <div className="patch-panel" style={{ opacity: loadingRelease ? 0.7 : 1, transition: 'opacity 0.3s ease' }}>
+          <div className="patch-top">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <h2 className="section-heading-metallic" style={{ fontSize: 'clamp(1.6rem, 2.8vw, 2.15rem)' }}>
                 VERSÃO & PATCH NOTES
               </h2>
+              {loadingRelease && <RefreshCw size={15} color="#38bdf8" className="spin-icon" />}
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
-              <span className="patch-badge">
-                <GitCommit size={16} /> {release.version}
+              <span className="accent-blue-tag">
+                <GitCommit size={15} color="#ffffff" />
+                <span>{release.version}</span>
               </span>
-              <span className="patch-date">
-                <Calendar size={15} color="#38bdf8" /> {release.releaseDate}
+              <span className="accent-blue-tag">
+                <Calendar size={15} color="#ffffff" />
+                <span>{release.releaseDate}</span>
               </span>
             </div>
           </div>
 
-          <ul className="patch-list">
-            {release.patchNotes.map((nota, idx) => (
-              <li key={`${idx}-${nota.slice(0, 12)}`} className="patch-item">
-                <CheckCircle2 size={18} color="#0ea5e9" style={{ flexShrink: 0, marginTop: '3px' }} />
-                <span>{nota}</span>
-              </li>
-            ))}
-          </ul>
+          {release.patchNotes.length === 0 ? (
+            <div className="empty-patch-box">
+              Esta versão não possui notas públicas.
+            </div>
+          ) : (
+            <ul className="patch-notes-grid">
+              {release.patchNotes.map((nota, idx) => (
+                <li key={`${idx}-${nota.slice(0, 12)}`} className="patch-note-row">
+                  <CheckCircle2 size={18} color="#0ea5e9" style={{ flexShrink: 0, marginTop: '3px' }} />
+                  <span>{nota}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {formatSyncTime(release.updatedAt) && (
-            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.75rem', color: '#64748b', textAlign: 'right' }}>
-              Atualizado no painel oficial em {formatSyncTime(release.updatedAt)}
+            <div style={{ marginTop: '1.4rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.76rem', color: '#64748b', textAlign: 'right' }}>
+              Sincronizado em {formatSyncTime(release.updatedAt)}
             </div>
           )}
         </div>
       </section>
 
-      <section className="section-wrap reveal-on-scroll">
-        <div style={{ marginBottom: '2.5rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <img src={a29Feature} alt="A-29 Super Tucano em voo" style={{ width: '100%', display: 'block', maxHeight: '500px', objectFit: 'cover' }} />
+      <section className="section-container reveal-on-scroll">
+        <div style={{ marginBottom: '2.8rem', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.09)', boxShadow: '0 24px 48px rgba(0,0,0,0.6)' }}>
+          <img src={a29Feature} alt="A-29 Super Tucano RP Simulation em voo" style={{ width: '100%', display: 'block', maxHeight: '510px', objectFit: 'cover' }} />
         </div>
 
-        <div style={{ marginBottom: '2rem' }}>
-          <span className="overline-glow">Recursos da Aeronave</span>
-          <h2 className="title-gradient" style={{ fontSize: 'clamp(1.9rem, 3.5vw, 2.7rem)', marginTop: '0.4rem' }}>
-            PRECISÃO PARA VOO EM FORMAÇÃO
+        <div style={{ marginBottom: '1.8rem' }}>
+          <h2 className="section-heading-metallic" style={{ fontSize: 'clamp(1.75rem, 3.2vw, 2.35rem)' }}>
+            RECURSOS DA AERONAVE
           </h2>
         </div>
 
-        <div className="feature-grid-4">
-          <div className="feature-box">
-            <span className="feature-num">01 // MODELAGEM PBR</span>
-            <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', marginBottom: '0.45rem' }}>Exterior & Cabine Dupla</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.55, margin: 0 }}>
-              Acabamento externo em alta resolução, pilotagem dianteira e traseira, pinturas operacionais e de demonstração com superfícies totalmente animadas.
+        <div className="features-bento">
+          <div className="bento-card">
+            <div className="bento-icon-wrap"><Shield size={19} /></div>
+            <h3 style={{ fontSize: '1.12rem', color: '#f8fafc', fontWeight: 500 }}>Exterior PBR & Cabine Tandem</h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.93rem', fontWeight: 400, lineHeight: 1.6, margin: 0 }}>
+              Modelagem em alta definição com texturas PBR, operação completa nos assentos dianteiro e traseiro, múltiplas pinturas e animações externas fiéis.
             </p>
           </div>
 
-          <div className="feature-box">
-            <span className="feature-num">02 // GLASS COCKPIT</span>
-            <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', marginBottom: '0.45rem' }}>HUD, UFCP & MFDs</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.55, margin: 0 }}>
-              Aviônica digital dedicada com EICAS, ADHSI, gerenciamento de navegação acoplado ao piloto automático e ajuste independente de iluminação interna.
+          <div className="bento-card">
+            <div className="bento-icon-wrap"><Cpu size={19} /></div>
+            <h3 style={{ fontSize: '1.12rem', color: '#f8fafc', fontWeight: 500 }}>Glass Cockpit: HUD, UFCP & MFDs</h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.93rem', fontWeight: 400, lineHeight: 1.6, margin: 0 }}>
+              Suíte aviônica digital com EICAS, ADHSI, gerenciamento integrado de navegação com piloto automático e controle independente de iluminação noturna.
             </p>
           </div>
 
-          <div className="feature-box">
-            <span className="feature-num">03 // DEMONSTRAÇÃO AÉREA</span>
-            <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', marginBottom: '0.45rem' }}>Gerador de Fumaça</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.55, margin: 0 }}>
-              Traço de fumaça exclusivo para exibições aéreas (acionado pelo atalho de <em>Logo Light</em>) e envelope aerodinâmico ajustado para o modelo de voo moderno.
+          <div className="bento-card">
+            <div className="bento-icon-wrap"><Flame size={19} /></div>
+            <h3 style={{ fontSize: '1.12rem', color: '#f8fafc', fontWeight: 500 }}>Dinâmica de Voo & Fumaça</h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.93rem', fontWeight: 400, lineHeight: 1.6, margin: 0 }}>
+              Modelo de voo moderno calibrado para manobras de alto G e gerador de fumaça dedicado nas variantes de exibição aérea (acionado via <em>Logo Light</em>).
             </p>
           </div>
 
-          <div className="feature-box">
-            <span className="feature-num">04 // SISTEMAS INTERNOS</span>
-            <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', marginBottom: '0.45rem' }}>Cargas & Combustível</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.55, margin: 0 }}>
-              Gerenciamento de tanques externos nos pilones com rotina real de transferência de combustível e bloqueio de segurança no tanque central.
+          <div className="bento-card">
+            <div className="bento-icon-wrap"><Gauge size={19} /></div>
+            <h3 style={{ fontSize: '1.12rem', color: '#f8fafc', fontWeight: 500 }}>Cargas SMS & Combustível</h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.93rem', fontWeight: 400, lineHeight: 1.6, margin: 0 }}>
+              Configuração dinâmica de tanques subalares nos pilones com lógica real de transferência e intertravamento de segurança do freio aerodinâmico.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="ficha" className="section-wrap reveal-on-scroll" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="spec-split">
-          <div style={{ textAlign: 'center' }}>
-            <img src={a29Specs} alt="Planta A-29 Super Tucano" style={{ width: '100%', maxWidth: '290px', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.75))' }} />
+      <section id="roadmap" className="section-container reveal-on-scroll">
+        <div style={{ marginBottom: '1.8rem' }}>
+          <h2 className="section-heading-metallic" style={{ fontSize: 'clamp(1.75rem, 3.2vw, 2.35rem)' }}>
+            ROADMAP
+          </h2>
+        </div>
+
+        <div className="roadmap-grid">
+          {roadmapItems.map((item) => {
+            const isProgress = item.status === 'progress';
+            return (
+              <div key={item.code} className={`classified-card ${isProgress ? 'active-progress' : ''}`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', letterSpacing: '0.1em' }}>{item.code}</span>
+                  <span className="classified-stamp">
+                    <Lock size={11} /> Classified
+                  </span>
+                </div>
+
+                <div style={{ marginTop: '1.6rem' }}>
+                  {isProgress ? (
+                    <div className="blink-progress">
+                      <span className="blink-dot" />
+                      EM PROGRESSO...
+                    </div>
+                  ) : (
+                    <span style={{ fontFamily: 'Comum, system-ui, sans-serif', fontSize: '1.05rem', letterSpacing: '0.14em', color: '#475569', textTransform: 'uppercase' }}>
+                      [ CLASSIFIED ]
+                    </span>
+                  )}
+                  <div className="redacted-bar" />
+                  <div className="redacted-bar" style={{ width: '48%', opacity: 0.5 }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section id="ficha" className="section-container reveal-on-scroll">
+        <div className="specs-showcase">
+          <div className="aircraft-render-box">
+            <div className="aircraft-glow-orb" />
+            <img
+              src={a29SpecsImg}
+              alt="Ficha técnica A-29 Super Tucano RP Simulation"
+              style={{
+                position: 'relative',
+                zIndex: 2,
+                width: '100%',
+                maxWidth: '480px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 22px 36px rgba(0, 0, 0, 0.85))',
+              }}
+            />
           </div>
 
           <div>
-            <span className="overline-glow">Ficha Técnica</span>
-            <h2 className="title-gradient" style={{ fontSize: '2.2rem', margin: '0.35rem 0 1.5rem' }}>
-              ESPECIFICAÇÕES
+            <h2 className="section-heading-metallic" style={{ fontSize: 'clamp(1.75rem, 3vw, 2.25rem)', marginBottom: '1.4rem' }}>
+              FICHA TÉCNICA
             </h2>
 
-            <table className="spec-table">
-              <tbody>
-                <tr>
-                  <td className="spec-label">Desenvolvedor</td>
-                  <td className="spec-value" style={{ color: '#38bdf8' }}>RP SIMULATIONS</td>
-                </tr>
-                <tr>
-                  <td className="spec-label">Plataforma</td>
-                  <td className="spec-value">MARKETPLACE MSFS 2020 / 2024</td>
-                </tr>
-                <tr>
-                  <td className="spec-label">Dimensões (Comp. / Env.)</td>
-                  <td className="spec-value">11,38 m / 11,14 m</td>
-                </tr>
-                <tr>
-                  <td className="spec-label">Peso Vazio</td>
-                  <td className="spec-value">3.200 kg (7.055 lb)</td>
-                </tr>
-                <tr>
-                  <td className="spec-label">Razão de Subida</td>
-                  <td className="spec-value">3.230 ft/min</td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="specs-rows">
+              <div className="spec-row-card">
+                <span className="spec-row-label">Desenvolvedor</span>
+                <span className="spec-row-val" style={{ color: '#38bdf8' }}>RP SIMULATION</span>
+              </div>
+              <div className="spec-row-card">
+                <span className="spec-row-label">Disponibilidade</span>
+                <span className="spec-row-val">MARKETPLACE MSFS 2020 / 2024</span>
+              </div>
+              <div className="spec-row-card">
+                <span className="spec-row-label">Comprimento / Envergadura</span>
+                <span className="spec-row-val">11,38 m / 11,14 m</span>
+              </div>
+              <div className="spec-row-card">
+                <span className="spec-row-label">Peso Vazio</span>
+                <span className="spec-row-val">3.200 kg (7.055 lb)</span>
+              </div>
+              <div className="spec-row-card">
+                <span className="spec-row-label">Razão de Subida</span>
+                <span className="spec-row-val">3.230 ft/min</span>
+              </div>
+            </div>
 
-            <p style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.5, marginTop: '1.25rem' }}>
+            <p style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 400, lineHeight: 1.55, marginTop: '1.2rem', marginBottom: 0 }}>
               * Projeto desenvolvido com base em dados públicos para uso recreativo em simuladores civis.
             </p>
           </div>
@@ -588,29 +887,38 @@ export default function A29Page() {
 
         <div
           style={{
-            marginTop: '3.5rem',
-            padding: '2.5rem 2rem',
-            borderRadius: '18px',
-            background: 'linear-gradient(135deg, rgba(14,165,233,0.12) 0%, rgba(15,23,42,0.75) 100%)',
-            border: '1px solid rgba(56, 189, 248, 0.25)',
+            marginTop: '3.25rem',
+            padding: '2.4rem 2.25rem',
+            borderRadius: '20px',
+            background: 'rgba(14, 17, 24, 0.9)',
+            border: '1px solid rgba(56, 189, 248, 0.22)',
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '1.5rem',
+            boxShadow: '0 20px 45px rgba(0, 0, 0, 0.5)',
           }}
         >
           <div>
-            <h3 className="title-gradient" style={{ fontSize: '1.75rem' }}>ACOMPANHE A RP SIMULATIONS</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: '0.35rem 0 0' }}>
-              Suporte oficial, avisos de novas versões e comunidade no Discord.
+            <h3 className="section-heading-metallic" style={{ fontSize: 'clamp(1.4rem, 2.4vw, 1.8rem)' }}>
+              COMUNIDADE OFICIAL RP SIMULATION
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.94rem', fontWeight: 400, margin: '0.4rem 0 0' }}>
+              Suporte direto com os desenvolvedores, avisos de atualizações e canal de feedback no Discord.
             </p>
           </div>
-          <a href={RP_DISCORD_URL} target="_blank" rel="noopener noreferrer" className="btn-discord">
-            <DiscordIcon /> Entrar no Discord Oficial
-          </a>
+
+          <div className="hero-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem' }}>
+            <a href={RP_DISCORD_URL} target="_blank" rel="noopener noreferrer" className="btn-primary-blue">
+              <DiscordIcon /> Entrar no Discord Oficial
+            </a>
+            <button type="button" onClick={() => navigate('/')} className="btn-secondary-outline">
+              <Globe size={17} color="#38bdf8" /> Visitar EDAFS
+            </button>
+          </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
